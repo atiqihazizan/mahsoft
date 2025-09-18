@@ -770,6 +770,31 @@ useEffect(() => {
   ```
 - **Status**: ✅ Build berjaya, custom classes berfungsi
 
+## Bug Fix - Font Decoding & Preload Issues (2024-12-19)
+
+### Masalah Font Decoding
+- **Masalah**: 
+  - `Failed to decode downloaded font: <URL>`
+  - `OTS parsing error: invalid sfntVersion: 1008821359`
+  - `The resource <URL> was preloaded using link preload but not used within a few seconds`
+- **Punca**: 
+  - Path font di CSS tidak sepadan dengan path sebenar font yang telah di-build
+  - Font preload menggunakan path yang salah
+- **Penyelesaian**: 
+  - Kemas kini path font di `frontend/src/styles/print.css` untuk menggunakan path relatif yang betul
+  - Pastikan font preload di `frontend/index.html` menggunakan path yang betul untuk development mode
+  - Font akan di-load dengan betul tanpa decoding error
+
+### Fail Yang Diubah
+- `frontend/src/styles/print.css` - Kemas kini path font @font-face
+- `frontend/index.html` - Pastikan preload path betul
+- Backup: `backup/frontend-index.html.bak`, `backup/print-css.bak`
+
+### Kesan
+- Font Audiowide dan Roboto dimuat dengan betul tanpa error
+- Print preview berfungsi dengan font yang betul
+- Preload resource tidak lagi menunjukkan warning
+
 ## Bug Fix - DateFormat Component (2024-12-19)
 
 ### Masalah Date Display

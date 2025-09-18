@@ -1,11 +1,24 @@
 /* Print CSS untuk Invoice, Quote dan Receipt Preview */
+/* Berdasarkan template CSS yang disediakan */
 
-@font-face { font-family: audiowide; src: local('Audiowide'), url(/fonts/Audiowide-Regular.ttf) format('truetype'); font-display: swap; }
-@font-face { font-family: roboto; src: local('Roboto'), url(/fonts/Roboto-Regular.ttf) format('truetype'); font-display: swap; }
+@font-face { 
+  font-family: audiowide; 
+  src: url(../assets/fonts/Audiowide-Regular.ttf); 
+  font-display: swap; /* Mempercepatkan loading dengan fallback font */
+}
+@font-face { 
+  font-family: roboto; 
+  src: url(../assets/fonts/Roboto-Regular.ttf); 
+  font-display: swap; /* Mempercepatkan loading dengan fallback font */
+}
 
 /* Base Styles */
-.paper .sheet { margin: auto; font-size: .9rem; background-color: white; line-height: 1.65; color: #212529; text-align: left; }
+/* .paper { background-color: #f8fafc; padding: 2rem; min-height: 100vh; } */
 .paper .sheet table td { font-size: 0.7rem; font-weight: 300; }
+.paper .sheet { margin: auto; font-size: .9rem; background-color: white; line-height: 1.65; color: #212529; text-align: left; }
+/* .paper .sheet { margin: auto; border: 1px solid #e5e7eb; box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); } */
+
+/* .sheet hr { margin: .5rem 0; color: inherit; background-color: currentColor; border: 0; opacity: .25; border-bottom: 1px solid #e5e7eb; } */
 .sheet hr { margin: .1rem 0; border-bottom: 1px solid #e5e7eb; }
 /* Utility Classes */
 .display-inline { display: inline; }
@@ -13,7 +26,7 @@
 .text-center { text-align: center; }
 .text-start { text-align: start; }
 .text-end { text-align: end; }
-.font-audiowide { font-family: audiowide, roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif; }
+.font-audiowide { font-family: audiowide; }
 .weight-400 { font-weight: 400; }
 .weight-600 { font-weight: 600; }
 .uppertext { text-transform: uppercase; }
@@ -22,11 +35,13 @@
 .pre { white-space: pre-wrap; }
 
 /* Letter Head */
-.letter-head table p { padding: 0; margin: 0; }
+.letter-head table p { padding: 0; margin: 0; margin-bottom: 0; }
 .vtable { border: 0; border-collapse: collapse; border-spacing: 0; }
 .fwb td { font-weight: 600; }
 .letter-head table tr th, .letter-head table tr td { vertical-align: top; }
 .letter-head table, .clientinfo table, .issuence table, .footer-bottom table { width: 100%; border: 0; border-collapse: collapse; border-spacing: 0; }
+/* .issuence { padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb; } */
+/* .issuence .header { margin-bottom: 0.5rem; } */
 
 /* Letter Head Layout */
 .letter-head table tr td:first-child { width: 80px; vertical-align: top; }
@@ -43,13 +58,13 @@
 .issuence table tr th, .issuence table tr td { padding: 0.1rem 0.3rem; }
 .issuence .header.line { margin-top: .5rem; }
 .issuence .linebottom { padding: 0; width: 99.9%; }
-.issuence .header tr th:nth-child(1), .issuence .rowbody tr td:nth-child(1) { width: auto; text-align: left; padding-left: 0 !important; }
+.issuence .header tr th:nth-child(1), .issuence .rowbody tr td:nth-child(1) { width: auto; text-align: left;  padding-left: 0 !important; }
 .issuence .header tr th:nth-child(2), .issuence .rowbody tr td:nth-child(2) { width: 60px; text-align: center; }
 .issuence .header tr th:nth-child(3), .issuence .rowbody tr td:nth-child(3) { width: 75px; text-align: right; }
 .issuence .header th, .issuence .footer tr th { font-weight: 500; font-size: .85rem; }
 .issuence .footer tr th { text-align: right !important; }
 
-.issuence .rowbody td:nth-child(4), .issuence .header th:nth-child(4), .issuence .footer tr th:last-child, .inv-amt th:last-child, .inv-amt td:last-child { width: 80px; text-align: right; }
+.issuence .rowbody td:nth-child(4), .issuence .header th:nth-child(4), .issuence .footer tr th:last-child,.inv-amt th:last-child,.inv-amt td:last-child{ width:80px; text-align: right; }
 
 /* Issuance Header */
 .issuence .header th { font-weight: 600; font-size: 0.8rem; text-align: left; }
@@ -59,6 +74,7 @@
 /* Issuance Row Body */
 .issuence .rowbody { width: 100%; border-collapse: collapse; border-spacing: 0; }
 .issuence .rowbody td { vertical-align: top; }
+/* .issuence .rowbody td p, .issuence .rowbody td span { font-size: 0.6rem; line-height: 1.2; } */
 .issuence .rowbody td p, .issuence .rowbody td span, .issuence .rowbody td, .issuence .rowbody td li { font-size: 0.7rem; }
 .issuence .rowbody td li, .issuence .rowbody td div { line-height: 1.2; }
 .issuence .rowbody tr.fwb td { font-weight: 600; }
@@ -68,10 +84,12 @@
 .small, small { font-size: 80%; font-weight: 400; }
 .issuence .body td { vertical-align: top; padding-top: 1rem; }
 .issuence .body td, .footer-bottom { margin-top: 1rem; }
+
 .issuence .rowbody td, .issuence .header th { padding: 0.5rem 0.1rem; }
 
 /* Footer */
-.footer-bottom { width: 100%; }
+/* .footer-bottom { width: 100%; margin-top: 1rem; } */
+.footer-bottom { width: 100%;}
 .bankinfo { float: right; border: 1px solid #e5e7eb; border-radius: 3px; padding: .6rem; }
 .bankinfo p { margin: 0; padding: 0; font-weight: bold; font-size: 8pt; }
 
@@ -80,17 +98,20 @@
 .table-signature tr { align-items: center; }
 .table-signature td:first-child { align-self: center; }
 .table-signature td:nth-child(2) { align-self: center; }
+/* .table-signature td:last-child { width: 23.33%; } */
 
 /* Bank Info */
-.bank-info { display: grid; grid-template-columns: auto auto 1fr; column-gap: .5rem; align-items: center; }
 .bank-info td { white-space: nowrap; font-size: 9pt; }
 .bank-info td:first-child { width: 65px; }
 .bank-info td:nth-child(2) { width: 0px; text-align: center; }
 .bank-info td:last-child { width: auto; padding-left: 0.5rem; font-size: 0.7rem; }
+.bank-info { display: grid; grid-template-columns: auto auto 1fr; column-gap: .5rem; /* row-gap: .25rem; */ align-items: center; }
 
 /* Invoice Amount */
+/* .inv-amt td { padding: 0.2rem 0; font-size: 9pt !important; } */
 .inv-amt td { font-size: 9pt !important; }
 .inv-amt td:first-child { width: 60px; }
+/* .inv-amt td:last-child { width: 100px; text-align: right; } */
 .inv-amt tr.font-big th { font-size: 0.9rem; font-weight: 600; padding: 0.3rem 0; border-top: 1px solid #e5e7eb; }
 
 /* Body Content */
@@ -112,14 +133,23 @@
 .bank-info td, .sign-info td { white-space: nowrap; }
 .table-signature tr th, .table-signature tr td, .bank-info td, .sign-info td { font-size: 9pt; }
 
-.docinfo p { width: 100%; display: grid; grid-template-columns: 40px 10px 1fr; font-size: 0.7rem; margin: 0; }
-.docinfo p span { font-size: 0.7rem; margin: 0; }
+.docinfo p { width: 100%; display: grid; grid-template-columns: 40px 10px 1fr; font-size: '0.7rem'; margin: 0px; }
+.docinfo p span { font-size: 0.7rem; /* font-weight: 900; */ margin: 0px; }
 .docinfo p span:last-child { text-align: right; }
+
+/* .docinfo p { width: 100%; display: flex; justify-content: space-between; } */
+/* .docinfo p span:first-child { width: 40px; }
+.docinfo p span:nth-child(2) { width: 10px; text-align: center; }
+.docinfo p span:last-child {  text-align: right; } */
+
+/* Print Layout */
+/* .sheet { margin: auto; overflow: hidden; position: relative; box-sizing: border-box; background-color: white; } */
 
 /* Paper Sizes */
 .paper.A3 .sheet { width: 297mm; height: 419mm; }
 .paper.A3.landscape .sheet { width: 420mm; height: 296mm; }
-.paper.A4 .sheet { width: 210mm; }
+/* .paper.A4 .sheet { width: 210mm; height: 296mm; } */
+.paper.A4 .sheet { width: 210mm;  }
 .paper.A4.landscape .sheet { width: 297mm; height: 209mm; }
 .paper.A5 .sheet { width: 148mm; height: 209mm; }
 .paper.A5.landscape .sheet { width: 210mm; height: 147mm; }

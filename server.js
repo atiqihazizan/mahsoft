@@ -3,13 +3,27 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "http://localhost:5000", "https://invoice.mahsites.com", "https://invoice.mahsites.net"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "data:", "https:"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: []
+    }
+  }
+}));
 app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
@@ -44,6 +58,9 @@ app.use('/api/v1/dashboard', require('./routes/dashboard'));
 // Serve static files from public directory
 app.use(express.static('public'));
 
+// Serve static files from public directory with /public/ prefix
+app.use('/public', express.static('public'));
+
 // Health check
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -51,6 +68,20 @@ app.get('/health', (req, res) => {
     message: 'Server berjalan dengan baik',
     timestamp: new Date().toISOString()
   });
+});
+
+// Serve React app for all non-API routes (SPA routing)
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({
+      error: 'API endpoint tidak ditemui',
+      message: `Route ${req.method} ${req.originalUrl} tidak wujud`
+    });
+  }
+  
+  // Serve index.html for SPA routing
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // 404 handler

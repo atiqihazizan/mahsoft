@@ -6,7 +6,7 @@ import { invoicesAPI, quotesAPI, receiptsAPI } from '../utils/apiClient'
 // Helper functions untuk mengelakkan pengulangan kod
 const createCompanyData = (company) => ({
   name: company?.name || '',
-  registration: company?.registration || '',
+  registration: company?.ssm || '',
   address: company?.address || '',
   email: company?.email || '',
   phone: company?.phone || '',
