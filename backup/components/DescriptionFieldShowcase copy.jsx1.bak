@@ -1,0 +1,55 @@
+import React, { useState } from 'react'
+import DescriptionFieldDemo from './DescriptionFieldDemo'
+import WhatsAppFormatDemo from './WhatsAppFormatDemo'
+import InvoicePreviewDemo from './InvoicePreviewDemo'
+import StandardFormDemo from './StandardFormDemo'
+
+const DescriptionFieldShowcase = () => {
+  const [activeDemo, setActiveDemo] = useState('overview')
+
+  const demos = [
+    { id: 'overview', name: 'Overview', component: DescriptionFieldDemo },
+    { id: 'whatsapp', name: 'Format WhatsApp', component: WhatsAppFormatDemo },
+    { id: 'invoice', name: 'Preview Invoice', component: InvoicePreviewDemo },
+    { id: 'standardform', name: 'StandardForm', component: StandardFormDemo }
+  ]
+
+  const ActiveComponent = demos.find(demo => demo.id === activeDemo)?.component || DescriptionFieldDemo
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Navigation */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <h1 className="text-2xl font-bold text-gray-800">
+              DescriptionField Showcase
+            </h1>
+            <div className="flex space-x-1">
+              {demos.map((demo) => (
+                <button
+                  key={demo.id}
+                  onClick={() => setActiveDemo(demo.id)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeDemo === demo.id
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  }`}
+                >
+                  {demo.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-7xl mx-auto py-6">
+        <ActiveComponent />
+      </div>
+    </div>
+  )
+}
+
+export default DescriptionFieldShowcase

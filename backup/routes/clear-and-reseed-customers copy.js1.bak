@@ -1,0 +1,82 @@
+// Script untuk clear customers dan seed semula
+const { PrismaClient } = require('@prisma/client');
+const customers = require('./prisma/data/customers');
+
+const prisma = new PrismaClient();
+
+async function clearAndReseedCustomers() {
+  try {
+    console.log('🗑️ Clearing related data first...');
+    
+    // Clear related data first (respecting foreign key constraints)
+    await prisma.detail.deleteMany({});
+    await prisma.payment.deleteMany({});
+    await prisma.debtor.deleteMany({});
+    await prisma.deliveryDetail.deleteMany({});
+    await prisma.deliveryOrder.deleteMany({});
+    await prisma.invoice.deleteMany({});
+    await prisma.quote.deleteMany({});
+    await prisma.receipt.deleteMany({});
+    
+    console.log('🗑️ Clearing customers table...');
+    
+    // Clear all customers
+    await prisma.customer.deleteMany({});
+    console.log('✅ Customers table cleared');
+    
+    console.log('👥 Seeding customers...');
+    
+    for (const customerData of customers) {
+      // Map data to match Prisma schema
+      const mappedData = {
+        name: customerData.name,
+        email: customerData.email,
+        phone: customerData.phone,
+        address: customerData.address,
+        taxNumber: customerData.taxNumber
+      };
+      
+      await prisma.customer.create({
+        data: mappedData
+      });
+      
+      console.log(`✅ Created customer: ${customerData.name} (${customerData.code})`);
+    }
+    
+    console.log(`\n🎉 ${customers.length} customers seeded successfully!`);
+    
+    // Show all customers
+    const allCustomers = await prisma.customer.findMany({
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        email: true,
+        phone: true,
+        taxNumber: true
+      }
+    });
+    
+    console.log('\n📋 Customers in database:');
+    allCustomers.forEach(customer => {
+      console.log(`- ${customer.name}`);
+      if (customer.address) {
+        console.log(`  Address: ${customer.address.replace(/\n/g, ', ')}`);
+      }
+      if (customer.phone) {
+        console.log(`  Phone: ${customer.phone}`);
+      }
+      if (customer.email) {
+        console.log(`  Email: ${customer.email}`);
+      }
+      console.log('');
+    });
+    
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+clearAndReseedCustomers();

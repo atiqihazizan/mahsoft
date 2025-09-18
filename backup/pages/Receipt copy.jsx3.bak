@@ -1,0 +1,271 @@
+import React, { useState, useEffect } from 'react'
+import { SimplePageLayout, SimpleTable, StatusBadge, CurrencyFormat, DateFormat } from '../components'
+
+const Receipt = () => {
+  const [receipts, setReceipts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all') // Default kepada all
+  const [showHistory, setShowHistory] = useState(false) // Toggle untuk sejarah
+
+  // Function to calculate payment age (days since payment)
+  const calculatePaymentAge = (paymentDate) => {
+    if (!paymentDate) return 0
+    const today = new Date()
+    const payment = new Date(paymentDate)
+    const diffTime = today - payment
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  }
+
+  // Mock data untuk demo
+  useEffect(() => {
+    const mockReceipts = [
+      {
+        id: 1,
+        receiptNumber: 'RCP-2024-001',
+        customerName: 'Syarikat ABC Sdn Bhd',
+        amount: 2500.00,
+        status: 'completed',
+        date: '2024-01-15',
+        paymentMethod: 'Bank Transfer',
+        paymentDate: '2024-01-15'
+      },
+      {
+        id: 2,
+        receiptNumber: 'RCP-2024-002',
+        customerName: 'XYZ Enterprise',
+        amount: 1800.50,
+        status: 'completed',
+        date: '2024-01-16',
+        paymentMethod: 'Cash',
+        paymentDate: '2024-01-16'
+      },
+      {
+        id: 3,
+        receiptNumber: 'RCP-2024-003',
+        customerName: 'Tech Solutions Sdn Bhd',
+        amount: 3200.75,
+        status: 'completed',
+        date: '2024-01-10',
+        paymentMethod: 'Cheque',
+        paymentDate: '2024-01-10'
+      },
+      {
+        id: 4,
+        receiptNumber: 'RCP-2024-004',
+        customerName: 'Digital Corp',
+        amount: 4500.00,
+        status: 'cancelled',
+        date: '2024-01-20',
+        paymentMethod: 'Credit Card',
+        paymentDate: null
+      }
+    ]
+    
+    setTimeout(() => {
+      setReceipts(mockReceipts)
+      setLoading(false)
+    }, 1000)
+  }, [])
+
+  const filteredReceipts = receipts.filter(receipt => {
+    const matchesSearch = receipt.receiptNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         receipt.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // Filter berdasarkan status yang dipilih
+    if (filterStatus === 'all') {
+      return matchesSearch
+    } else if (filterStatus === 'active') {
+      // Tunjukkan receipt yang aktif (pending, completed)
+      const isActive = receipt.status === 'pending' || receipt.status === 'completed'
+      return matchesSearch && isActive
+    } else if (filterStatus === 'done') {
+      // Tunjukkan receipt yang selesai (cancelled)
+      const isDone = receipt.status === 'cancelled'
+      return matchesSearch && isDone
+    }
+    
+    return matchesSearch
+  })
+
+  const getPaymentMethodIcon = (method) => {
+    const icons = {
+      'Bank Transfer': '🏦',
+      'Cash': '💵',
+      'Cheque': '📝',
+      'Credit Card': '💳'
+    }
+    return icons[method] || '💰'
+  }
+
+  // Debug logging (remove in production)
+  console.log('Receipts:', receipts)
+  console.log('Filtered receipts:', filteredReceipts)
+  console.log('Show history:', showHistory)
+  console.log('Filter status:', filterStatus)
+
+  // Table columns configuration
+  const columns = [
+    {
+      key: 'receiptNumber',
+      header: 'No. Resit',
+      render: (value) => <span className="font-medium text-gray-900">{value}</span>
+    },
+    {
+      key: 'customerName',
+      header: 'Pelanggan'
+    },
+    {
+      key: 'amount',
+      header: 'Jumlah',
+      render: (value) => <CurrencyFormat amount={value} />
+    },
+    {
+      key: 'paymentMethod',
+      header: 'Kaedah Bayar',
+      render: (value) => (
+        <div className="flex items-center">
+          <span className="mr-2">{getPaymentMethodIcon(value)}</span>
+          {value}
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (value) => <StatusBadge status={value} />
+    },
+    {
+      key: 'date',
+      header: 'Tarikh',
+      render: (value) => <DateFormat date={value} />
+    },
+    {
+      key: 'paymentDate',
+      header: 'Umur Bayaran',
+      render: (value, row) => {
+        if (!value || row.status === 'cancelled') {
+          return (
+            <span className="text-gray-400">
+              -
+            </span>
+          )
+        }
+        const paymentAge = calculatePaymentAge(value)
+        if (paymentAge === 0) {
+          return (
+            <span className="text-green-600 font-medium">
+              Hari ini
+            </span>
+          )
+        } else if (paymentAge === 1) {
+          return (
+            <span className="text-blue-600 font-medium">
+              Semalam
+            </span>
+          )
+        } else {
+          return (
+            <span className="text-gray-600">
+              {paymentAge} hari lepas
+            </span>
+          )
+        }
+      }
+    }
+  ]
+
+  // Table actions configuration
+  const actions = [
+    {
+      label: 'Lihat',
+      className: 'text-blue-600 hover:text-blue-900',
+      onClick: (row) => console.log('View receipt:', row.id)
+    },
+    {
+      label: 'Edit',
+      className: 'text-green-600 hover:text-green-900',
+      onClick: (row) => window.location.href = `/receipts/${row.id}/edit`
+    },
+    {
+      label: 'Cetak',
+      className: 'text-purple-600 hover:text-purple-900',
+      onClick: (row) => console.log('Print receipt:', row.id)
+    },
+    {
+      label: 'Padam',
+      className: 'text-red-600 hover:text-red-900',
+      onClick: (row) => console.log('Delete receipt:', row.id)
+    }
+  ]
+
+  // Stats configuration
+  const stats = [
+    {
+      label: 'Total Resit',
+      value: receipts.length,
+      icon: '🧾',
+      bgGradient: 'bg-purple-500',
+      textColor: 'text-white',
+      subtitle: '+15% dari bulan lepas'
+    },
+    {
+      label: 'Selesai',
+      value: receipts.filter(r => r.status === 'completed').length,
+      icon: '✅',
+      bgGradient: 'bg-green-500',
+      textColor: 'text-white',
+      subtitle: 'Pembayaran selesai'
+    },
+    {
+      label: 'Menunggu',
+      value: receipts.filter(r => r.status === 'pending').length,
+      icon: '⏳',
+      bgGradient: 'bg-yellow-500',
+      textColor: 'text-white',
+      subtitle: 'Menunggu pengesahan'
+    },
+    {
+      label: 'Dibatalkan',
+      value: receipts.filter(r => r.status === 'cancelled').length,
+      icon: '❌',
+      bgGradient: 'bg-red-500',
+      textColor: 'text-white',
+      subtitle: 'Tidak sah'
+    }
+  ]
+
+  // Filter options for history mode
+  const filterOptions = [
+    { value: 'all', label: 'Semua Status' },
+    { value: 'completed', label: 'Selesai' },
+    { value: 'pending', label: 'Menunggu' },
+    { value: 'cancelled', label: 'Dibatalkan' }
+  ]
+
+  return (
+    <SimplePageLayout
+      title="PENGURUSAN RESIT"
+      newButtonText="+ BUAT RESIT BARU"
+      onNewClick={() => console.log('Create new receipt')}
+      filterOptions={["SEMUA", "AKTIF", "SELESAI"]}
+      activeFilter={filterStatus === 'all' ? 'SEMUA' : filterStatus === 'active' ? 'AKTIF' : 'SELESAI'}
+      onFilterChange={(filter) => {
+        if (filter === 'SEMUA') setFilterStatus('all')
+        else if (filter === 'AKTIF') setFilterStatus('active')
+        else if (filter === 'SELESAI') setFilterStatus('done')
+      }}
+    >
+      <SimpleTable
+        data={filteredReceipts}
+        columns={columns}
+        onEdit={(row) => console.log('Edit receipt:', row)}
+        onDuplicate={(row) => console.log('Duplicate receipt:', row)}
+        onDelete={(row) => console.log('Delete receipt:', row)}
+      />
+    </SimplePageLayout>
+  )
+}
+
+export default Receipt

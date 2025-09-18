@@ -1,0 +1,291 @@
+// Debug data untuk development dan testing
+// File ini mengandungi semua dummy data untuk invoice, quote dan receipt
+
+// Dummy data untuk customers
+export const debugCustomers = [
+  { id: 1, name: 'Syarikat ABC Sdn Bhd' },
+  { id: 2, name: 'XYZ Enterprise' },
+  { id: 3, name: 'Tech Solutions Sdn Bhd' },
+  { id: 4, name: 'Digital Corp' },
+  { id: 5, name: 'ISMAWADEE Sdn Bhd' }
+]
+
+// Dummy data untuk companies
+export const debugCompanies = [
+  { id: 1, name: 'Mahsoft Sdn Bhd' },
+  { id: 2, name: 'Digital Solutions' },
+  { id: 3, name: 'Tech Innovations' }
+]
+
+// Dummy data untuk invoices
+export const debugInvoices = [
+  {
+    id: 1,
+    invoiceNumber: 'INV-2024-001',
+    customerName: 'Syarikat ABC Sdn Bhd',
+    amount: 2500.00,
+    status: 'paid',
+    date: '2024-01-15',
+    dueDate: '2024-02-15',
+    paymentMethod: 'Bank Transfer'
+  },
+  {
+    id: 2,
+    invoiceNumber: 'INV-2024-002',
+    customerName: 'XYZ Enterprise',
+    amount: 1800.50,
+    status: 'pending',
+    date: '2024-01-16',
+    dueDate: '2024-02-16',
+    paymentMethod: 'Cash'
+  },
+  {
+    id: 3,
+    invoiceNumber: 'INV-2024-003',
+    customerName: 'Tech Solutions Sdn Bhd',
+    amount: 3200.75,
+    status: 'overdue',
+    date: '2024-01-10',
+    dueDate: '2024-01-25',
+    paymentMethod: 'Cheque'
+  },
+  {
+    id: 4,
+    invoiceNumber: 'INV-2024-004',
+    customerName: 'Digital Corp',
+    amount: 1500.00,
+    status: 'pending',
+    date: '2024-01-20',
+    dueDate: '2024-02-20',
+    paymentMethod: 'Credit Card'
+  },
+  {
+    id: 5,
+    invoiceNumber: 'INV-2024-005',
+    customerName: 'ISMAWADEE Sdn Bhd',
+    amount: 26500.00,
+    status: 'draft',
+    date: '2024-01-25',
+    dueDate: '2024-02-25',
+    paymentMethod: 'Bank Transfer'
+  }
+]
+
+// Dummy data untuk quotes
+export const debugQuotes = [
+  {
+    id: 1,
+    quoteNumber: 'QUO-2024-001',
+    customerName: 'Syarikat ABC Sdn Bhd',
+    amount: 2500.00,
+    status: 'sent',
+    date: '2024-01-15',
+    validUntil: '2024-02-15'
+  },
+  {
+    id: 2,
+    quoteNumber: 'QUO-2024-002',
+    customerName: 'XYZ Enterprise',
+    amount: 1800.50,
+    status: 'accepted',
+    date: '2024-01-16',
+    validUntil: '2024-02-16'
+  },
+  {
+    id: 3,
+    quoteNumber: 'QUO-2024-003',
+    customerName: 'Tech Solutions Sdn Bhd',
+    amount: 3200.75,
+    status: 'rejected',
+    date: '2024-01-10',
+    validUntil: '2024-01-25'
+  },
+  {
+    id: 4,
+    quoteNumber: 'QUO-2024-004',
+    customerName: 'Digital Corp',
+    amount: 1500.00,
+    status: 'expired',
+    date: '2024-01-20',
+    validUntil: '2024-02-20'
+  }
+]
+
+// Dummy data untuk receipts
+export const debugReceipts = [
+  {
+    id: 1,
+    receiptNumber: 'REC-2024-001',
+    customerName: 'Syarikat ABC Sdn Bhd',
+    subject: 'Payment for Invoice INV-2024-001',
+    amount: 2500.00,
+    status: 'active',
+    date: '2024-01-15',
+    paymentMethod: 'Bank Transfer'
+  },
+  {
+    id: 2,
+    receiptNumber: 'REC-2024-002',
+    customerName: 'XYZ Enterprise',
+    subject: 'Payment for Invoice INV-2024-002',
+    amount: 1800.50,
+    status: 'active',
+    date: '2024-01-16',
+    paymentMethod: 'Cash'
+  },
+  {
+    id: 3,
+    receiptNumber: 'REC-2024-003',
+    customerName: 'Tech Solutions Sdn Bhd',
+    subject: 'Payment for Invoice INV-2024-003',
+    amount: 3200.75,
+    status: 'active',
+    date: '2024-01-10',
+    paymentMethod: 'Cheque'
+  },
+  {
+    id: 4,
+    receiptNumber: 'REC-2024-004',
+    customerName: 'Digital Corp',
+    subject: 'Payment for Invoice INV-2024-004',
+    amount: 1500.00,
+    status: 'cancelled',
+    date: '2024-01-20',
+    paymentMethod: 'Credit Card'
+  }
+]
+
+// Dummy data untuk invoice items dengan DescriptionField
+export const debugInvoiceItems = [
+  {
+    id: 1,
+    description: `**Membangunkan sistem untuk pengurusan ISMAWADEE secara online**
+• Menghasilkan Audit Working Paper
+• Menghasilkan Balance Sheet
+• Memudahkan untuk membuat semakan, pengesahan dan kelulusan bagi pihak atasan secaran online tanpa dimuaturun dokumen tersebut
+• Menyimpan rekod yang sudah diluluskan
+• Memudahkan untuk membuat pencarian rekod yang selesai atau belum selesai mengikut tarikh atau nama pelanggan
+• Membuat cetakan secara online`,
+    quantity: 1,
+    unitPrice: 13000.00,
+    amount: 13000.00
+  },
+  {
+    id: 2,
+    description: `**Perkhidmatan dan selenggara selama 12 bulan**
+• Sewaan domain dan hosting untuk tahunan bertujuan bagi menjalankan sistem tersebut secara online
+• Membuat latihan kepada penggunaan
+• Membantu pengguna keyin rekod
+• Membuat pemantauan untuk memastikan proses work flow berjalan mengikut keperluan pengguna
+• Membuat backup database sebulan sekali atau mengikut keperluan pengguna
+• Menyediakan khidmat perunding untuk menaiktaraf cara kerja yang lebih cekap`,
+    quantity: 1,
+    unitPrice: 12000.00,
+    amount: 12000.00
+  }
+]
+
+// Dummy data untuk quote items
+export const debugQuoteItems = [
+  {
+    id: 1,
+    description: `**Website Development Package**
+• Responsive design untuk semua peranti
+• Content Management System (CMS)
+• SEO optimization
+• Mobile app integration
+• 6 bulan support dan maintenance`,
+    quantity: 1,
+    unitPrice: 15000.00,
+    amount: 15000.00
+  },
+  {
+    id: 2,
+    description: `**E-commerce Integration**
+• Payment gateway setup
+• Inventory management
+• Order tracking system
+• Customer portal
+• Analytics dashboard`,
+    quantity: 1,
+    unitPrice: 8000.00,
+    amount: 8000.00
+  }
+]
+
+// Dummy data untuk receipt items
+export const debugReceiptItems = [
+  {
+    id: 1,
+    description: `**Payment for Invoice INV-2024-001**
+• System development services
+• 12 months maintenance included
+• Training and support`,
+    quantity: 1,
+    unitPrice: 2500.00,
+    amount: 2500.00
+  }
+]
+
+// Dummy data untuk invoice notes (WhatsApp format)
+export const debugInvoiceNotes = `**Terma & Syarat Pembayaran**
+• Pembayaran dalam tempoh 30 hari dari tarikh invoice
+• Bayaran melalui bank transfer atau cek
+• _Nota:_ Sila pastikan nombor rujukan invoice disertakan dalam pembayaran
+
+**Warranty & Support**
+• \`Warranty\` 1 tahun penuh untuk sistem
+• Support teknikal 24/7 melalui email dan telefon
+• ~Latihan tambahan~ *Latihan percuma* untuk 5 pengguna pertama`
+
+// Dummy data untuk quote notes
+export const debugQuoteNotes = `**Terma & Syarat Quote**
+• Quote ini sah selama 30 hari dari tarikh dikeluarkan
+• Harga termasuk GST 6%
+• _Nota:_ Harga boleh berubah tanpa notis
+
+**Warranty & Support**
+• \`Warranty\` 1 tahun untuk semua perkhidmatan
+• Support teknikal 24/7
+• *Latihan percuma* untuk 3 pengguna`
+
+// Dummy data untuk receipt notes
+export const debugReceiptNotes = `**Payment Confirmation**
+• Pembayaran telah diterima dan diproses
+• Receipt ini adalah bukti pembayaran yang sah
+• _Nota:_ Sila simpan receipt ini untuk rujukan
+
+**Next Steps**
+• Sistem akan diaktifkan dalam 24 jam
+• Anda akan menerima email konfirmasi
+• \`Support team\` akan menghubungi anda untuk setup`
+
+// Helper functions untuk mendapatkan data
+export const getDebugData = {
+  customers: () => debugCustomers,
+  companies: () => debugCompanies,
+  invoices: () => debugInvoices,
+  quotes: () => debugQuotes,
+  receipts: () => debugReceipts,
+  invoiceItems: () => debugInvoiceItems,
+  quoteItems: () => debugQuoteItems,
+  receiptItems: () => debugReceiptItems,
+  invoiceNotes: () => debugInvoiceNotes,
+  quoteNotes: () => debugQuoteNotes,
+  receiptNotes: () => debugReceiptNotes
+}
+
+// Export default untuk kemudahan import
+export default {
+  customers: debugCustomers,
+  companies: debugCompanies,
+  invoices: debugInvoices,
+  quotes: debugQuotes,
+  receipts: debugReceipts,
+  invoiceItems: debugInvoiceItems,
+  quoteItems: debugQuoteItems,
+  receiptItems: debugReceiptItems,
+  invoiceNotes: debugInvoiceNotes,
+  quoteNotes: debugQuoteNotes,
+  receiptNotes: debugReceiptNotes
+}

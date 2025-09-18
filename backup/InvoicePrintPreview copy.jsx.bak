@@ -1,0 +1,384 @@
+import React, { useState, useRef, useEffect } from 'react'
+import { CurrencyFormat, DateFormat } from '../components/index'
+import '../styles/print.css'
+import logoImage from '../assets/logo/logo.png'
+import { useParams } from 'react-router-dom'
+import { invoicesAPI } from '../utils/apiClient'
+import { renderStructuredText } from '../components/TextFormatting'
+
+const InvoicePrintPreview = () => {
+  const iframeRef = useRef(null)
+  const { id } = useParams()
+  
+  const [invoiceData, setInvoiceData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  // Fetch invoice data by id and map to local state shape
+  useEffect(() => {
+    const fetchInvoice = async () => {
+      setLoading(true)
+      if (!id) {
+        setLoading(false)
+        return
+      }
+      
+      try {
+        const res = await invoicesAPI.getById(id)
+        if (!res?.success || !res?.data) {
+          setInvoiceData(null)
+          setLoading(false)
+          return
+        }
+
+        const inv = res.data
+        console.log(inv)
+        
+        setInvoiceData({
+          invoiceNumber: inv.invoiceNumber || '',
+          date: inv.date ? new Date(inv.date).toISOString().slice(0, 10) : '',
+          dueDate: inv.dueDate ? new Date(inv.dueDate).toISOString().slice(0, 10) : '',
+          company: {
+            name: inv.company?.name || '',
+            registration: inv.company?.registration || '',
+            address: inv.company?.address || '',
+            email: inv.company?.email || '',
+            phone: inv.company?.phone || ''
+          },
+          customer: {
+            name: inv.customer?.name || '',
+            address: inv.customer?.address || '',
+            phone: inv.customer?.phone || '',
+            mobile: inv.customer?.mobile || '',
+            attn: inv.customer?.attn || ''
+          },
+          items: Array.isArray(inv.items) && inv.items.length > 0
+            ? inv.items.map((item, index) => ({
+                id: item.id || index + 1,
+                description: item.description || '',
+                details: [],
+                unitPrice: parseFloat(item.unitPrice ?? 0),
+                quantity: parseFloat(item.quantity ?? 0),
+                amount: parseFloat(item.amount ?? ((parseFloat(item.quantity ?? 0) * parseFloat(item.unitPrice ?? 0))))
+              }))
+            : [],
+          subtotal: inv.subtotal != null ? parseFloat(inv.subtotal) : 0,
+          tax: inv.taxAmount != null ? parseFloat(inv.taxAmount) : 0,
+          total: inv.total != null ? parseFloat(inv.total) : 0,
+          bank: {
+            accountNumber: inv.company?.bankacc || '',
+            bankName: inv.company?.bankname || '',
+            accountHolder: inv.company?.bankholder || ''
+          },
+          issuedBy: inv.user?.name || '',
+          notes: inv.notes || ''
+        })
+      } catch (error) {
+        console.error('Error fetching invoice:', error)
+        setInvoiceData(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchInvoice()
+  }, [id])
+
+  const handlePrint = () => {
+    if (iframeRef.current) {
+      const iframe = iframeRef.current
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document
+      
+      // Create print content with styles
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <link rel="stylesheet" href="/src/index.css">
+          <link rel="stylesheet" href="/src/styles/print.css">
+          <style>
+            @page { margin: 0; padding: 0; }
+            body { margin: 0; padding: 0; }
+            .print-content { width: 100%; }
+          </style>
+        </head>
+        <body>
+          ${document.getElementById('print-content').innerHTML}
+        </body>
+        </html>
+      `
+      
+      iframeDoc.open()
+      iframeDoc.write(printContent)
+      iframeDoc.close()
+      
+      // Wait for content to load then print
+      iframe.onload = () => {
+        iframe.contentWindow.focus()
+        iframe.contentWindow.print()
+      }
+    }
+  }
+
+  const handleBack = () => {
+    window.history.back()
+  }
+
+  // Return null if loading or no data
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="bg-blue-600 text-white px-6 py-4">
+            <h1 className="text-xl font-semibold">Invoice Print Preview</h1>
+          </div>
+          <div className="p-6 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading invoice data...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!invoiceData) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="bg-blue-600 text-white px-6 py-4">
+            <h1 className="text-xl font-semibold">Invoice Print Preview</h1>
+          </div>
+          <div className="p-6 text-center">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Invoice Not Found</h2>
+            <p className="text-gray-600 mb-4">The requested invoice could not be found or does not exist.</p>
+            <button
+              onClick={handleBack}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors duration-200"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {/* Hidden iframe for printing */}
+      <iframe
+        ref={iframeRef}
+        style={{ display: 'none' }}
+        title="Print Frame"
+      />
+      
+      {/* Card Layout */}
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Card */}
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          {/* Card Header */}
+          <div className="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
+            <h1 className="text-xl font-semibold">Invoice Print Preview</h1>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleBack}
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Back</span>
+              </button>
+              <button
+                onClick={handlePrint}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <span>Print</span>
+              </button>
+            </div>
+          </div>
+          
+          {/* Card Body */}
+          <div className="p-6">
+            {/* Print Content - Modern Layout */}
+            <div id="print-content" className="paper A4">
+              <div className="sheet" style={{ margin: 'auto', padding: '15mm', height: 'auto', minHeight: '148mm', width: '210mm' }}>
+                {/* Header */}
+                <table style={{ width: '100%', marginBottom: '2rem' }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ textAlign: 'left', width: '80px' }}>
+                        <img src={logoImage} alt="Mahsoft Logo" style={{ height: '72px' }} />
+                      </td>
+                      <td style={{ textAlign: 'left', verticalAlign: 'top', }}>
+                        <div>
+                          <h1 className="font-audiowide" style={{ fontSize: '1.5rem', margin: '0',padding: '0', color: '#333' }}>
+                            {invoiceData.company.name}
+                            <span style={{ fontSize: '0.7rem', paddingLeft: '.5rem', color: '#666',fontFamily: 'roboto' }}>
+                              {invoiceData.company.registration}
+                            </span>
+                          </h1>
+                        </div>
+                        <div style={{ fontSize: '0.6rem' }}>
+                          <p style={{ padding: '0' ,margin: '0', fontWeight: 'normal'}}>{invoiceData.company.address}</p>
+                          <p style={{ display: 'flex', gap: '1rem', margin: '0', fontWeight: 'normal' }}>
+                            <span>Email: {invoiceData.company.email}</span>
+                            <span>Phone: {invoiceData.company.phone}</span>
+                          </p>
+                        </div>
+                      </td>
+                      <td style={{ textAlign: 'right', verticalAlign: 'top', }}>
+                        <h1 className="font-audiowide" style={{ fontSize: '1.5rem', margin: '0', color: '#333' }}>INVOICE</h1>
+                        <p style={{ fontSize: '0.7rem',fontWeight: '900', margin: '0' }}>
+                          # {invoiceData.invoiceNumber}
+                        </p>
+                        <p style={{ fontSize: '0.7rem', margin: '0', color: '#666' }}>
+                          Date: <DateFormat date={invoiceData.date} />
+                        </p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <table style={{ width: '100%', marginBottom: '2rem' }}>
+                  <tbody>
+                    <tr>
+                      <td valign="top" style={{ fontSize: '0.8rem', fontWeight: '600' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: '800', display: 'block' }}>
+                          {invoiceData.customer.name}
+                        </span>
+                        <span style={{ fontSize: '0.7rem', display: 'block', fontWeight: 'normal' }}>
+                          {invoiceData.customer.address}
+                        </span>
+                        <span style={{ display: 'flex', gap: '1rem', fontSize: '0.7rem', fontWeight: 'normal' }}>
+                          <span>Tel: {invoiceData.customer.phone}</span>
+                          <span>Mobile: {invoiceData.customer.mobile}</span>
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ fontSize: '0.8rem', fontWeight: '600' }}>
+                          Attn : <span style={{ fontSize: '0.8rem', fontWeight: '600' , marginLeft: '.5rem' }}>{invoiceData.customer.attn}</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* Items Table */}
+                <div className='issuence'>
+                  <table className='header' >
+                    <tbody>
+                      <tr >
+                        <th>Description</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Amount</th>
+                      </tr>
+                    </tbody>
+                  </table>
+                  
+                  <div className='separator-line'></div>
+
+                  <table className='rowbody'>
+                    <tbody>
+                      {invoiceData.items.map((item, index) => (
+                        <React.Fragment key={item.id}>
+                          <tr>
+                            <td>
+                               <div style={{ fontSize: '0.8rem' }}>
+                                 {renderStructuredText(item.description)}
+                               </div>
+                            </td>
+                            <td>
+                              {item.quantity}
+                            </td>
+                            <td>
+                              <CurrencyFormat amount={item.unitPrice} />
+                            </td>
+                            <td>
+                              <CurrencyFormat amount={item.amount} />
+                            </td>
+                          </tr>
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* <hr style={{borderBottom: '1px solid black'}} /> */}
+                {/* Footer */}
+                <div className='footer-bottom'>
+                  <table className='table-signature'>
+                    <tbody>
+                      <tr style={{display: 'flex'}}>
+                        <td style={{alignSelf: 'center'}}>
+                          <table className='bank-info'>
+                            <tbody>
+                              <tr>
+                                <td>Acc No.</td>
+                                <td>:</td>
+                                <td>{invoiceData.bank.accountNumber}</td>
+                              </tr>
+                              <tr>
+                                <td>Acc Name</td>
+                                <td>:</td>
+                                <td>{invoiceData.bank.bankName}</td>
+                              </tr>
+                              <tr>
+                                <td>Acc Holder</td>
+                                <td>:</td>
+                                <td>{invoiceData.bank.accountHolder}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </td>
+                        <td style={{alignSelf: 'center', flex: 1}}>
+                          <div style={{margin: 'auto', width: '150px', textAlign: 'center'}}>
+                            <i>{invoiceData.issuedBy}</i>
+                            <hr style={{margin: '.5rem 0', borderBottom: '1px solid black'}} />
+                            Issued By
+                          </div>
+                        </td>
+                        <td style={{alignSelf: 'center'}}>
+                          <table className='inv-amt'>
+                            <tbody>
+                              <tr>
+                                <td>Subtotal</td>
+                                <td>{<CurrencyFormat amount={invoiceData.subtotal} />}</td>
+                              </tr>
+                              <tr>
+                                <td>Tax</td>
+                                <td>{<CurrencyFormat amount={invoiceData.tax} />}</td>
+                              </tr>
+                              <tr className='font-big'>
+                                <td style={{fontWeight: '800'}}>Total</td>
+                                <td style={{fontWeight: '800'}}>{<CurrencyFormat amount={invoiceData.total} />}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Notes */}
+                {/* <div className='print-notes'>
+                  <h3 style={{fontWeight: 'bold',fontSize: '.7rem',margin: '0'}}>Terms & Conditions</h3>
+                  <div className='remark'>
+                    <p style={{fontSize: '0.7rem'}}>{invoiceData.notes}</p>
+                  </div>
+                </div> */}
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export default InvoicePrintPreview

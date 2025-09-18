@@ -1,0 +1,53 @@
+module.exports = [
+  {
+    receiptNumber: 'RCP20240001',
+    date: new Date(),
+    status: 'ISSUED',
+    subtotal: 500.00,
+    taxAmount: 30.00,
+    total: 530.00,
+    notes: 'Resit untuk pembayaran deposit',
+    details: [
+      {
+        description: 'Deposit Projek',
+        quantity: 1,
+        unitPrice: 500.00,
+        amount: 500.00
+      }
+    ]
+  },
+  {
+    receiptNumber: 'RCP20240002',
+    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+    status: 'ISSUED',
+    subtotal: 1200.00,
+    taxAmount: 72.00,
+    total: 1272.00,
+    notes: 'Resit untuk pembayaran sewa server',
+    details: [
+      {
+        description: 'Sewa Server - 6 Bulan',
+        quantity: 1,
+        unitPrice: 1200.00,
+        amount: 1200.00
+      }
+    ]
+  },
+  {
+    receiptNumber: 'RCP20240003',
+    date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+    status: 'ISSUED',
+    subtotal: 300.00,
+    taxAmount: 18.00,
+    total: 318.00,
+    notes: 'Resit untuk perkhidmatan domain',
+    details: [
+      {
+        description: 'Pendaftaran Domain - 1 Tahun',
+        quantity: 2,
+        unitPrice: 150.00,
+        amount: 300.00
+      }
+    ]
+  }
+];

@@ -1,0 +1,116 @@
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import './index.css'
+import MainLayout from './layouts/MainLayout.jsx'
+import Login from './pages/Login.jsx'
+import Dashboard from './pages/Dashboard.jsx'
+import Invoice from './pages/Invoice.jsx'
+import Quote from './pages/Quote.jsx'
+import Receipt from './pages/Receipt.jsx'
+import InvoiceForm from './pages/InvoiceForm.jsx'
+import QuoteForm from './pages/QuoteForm.jsx'
+import ReceiptForm from './pages/ReceiptForm.jsx'
+import ProtectedRoute from './routes/ProtectedRoute.jsx'
+import { ErrorBoundary } from './components'
+import { AuthProvider } from './contexts/AuthContext.jsx'
+
+const router = createBrowserRouter([
+  { path: '/login', element: <Login /> },
+  { path: '/', element: <Navigate to="/dashboard" replace /> },
+  {
+    element: <MainLayout />,
+    children: [
+      { 
+        path: '/dashboard', 
+        element: (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        )
+      },
+      { 
+        path: '/invoices', 
+        element: (
+          <ProtectedRoute>
+            <Invoice />
+          </ProtectedRoute>
+        )
+      },
+      { 
+        path: '/invoices/new', 
+        element: (
+          <ProtectedRoute>
+            <InvoiceForm />
+          </ProtectedRoute>
+        )
+      },
+      { 
+        path: '/invoices/:id/edit', 
+        element: (
+          <ProtectedRoute>
+            <InvoiceForm />
+          </ProtectedRoute>
+        )
+      },
+      { 
+        path: '/quotes', 
+        element: (
+          <ProtectedRoute>
+            <Quote />
+          </ProtectedRoute>
+        )
+      },
+      { 
+        path: '/quotes/new', 
+        element: (
+          <ProtectedRoute>
+            <QuoteForm />
+          </ProtectedRoute>
+        )
+      },
+      { 
+        path: '/quotes/:id/edit', 
+        element: (
+          <ProtectedRoute>
+            <QuoteForm />
+          </ProtectedRoute>
+        )
+      },
+      { 
+        path: '/receipts', 
+        element: (
+          <ProtectedRoute>
+            <Receipt />
+          </ProtectedRoute>
+        )
+      },
+      { 
+        path: '/receipts/new', 
+        element: (
+          <ProtectedRoute>
+            <ReceiptForm />
+          </ProtectedRoute>
+        )
+      },
+      { 
+        path: '/receipts/:id/edit', 
+        element: (
+          <ProtectedRoute>
+            <ReceiptForm />
+          </ProtectedRoute>
+        )
+      },
+    ],
+  },
+])
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <ErrorBoundary>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </ErrorBoundary>
+  </StrictMode>,
+)

@@ -1,0 +1,224 @@
+// Backup of 01-frontend/src/hooks/usePrintPreview.js
+// Timestamped copy for reference
+
+const fetchInvoice = async () => {
+  setLoading(true)
+  if (!id) {
+    setLoading(false)
+    return
+  }
+  
+  try {
+    const res = await invoicesAPI.getById(id)
+    if (!res?.success || !res?.data) {
+      setInvoiceData(null)
+      setLoading(false)
+      return
+    }
+
+    const inv = res.data
+    
+    setInvoiceData({
+      invoiceNumber: inv.invoiceNumber || '',
+      status: (inv.status || '').toLowerCase(),
+      date: inv.date ? new Date(inv.date).toISOString().slice(0, 10) : '',
+      dueDate: inv.dueDate ? new Date(inv.dueDate).toISOString().slice(0, 10) : '',
+      company: {
+        name: inv.company?.name || '',
+        registration: inv.company?.registration || '',
+        address: inv.company?.address || '',
+        email: inv.company?.email || '',
+        phone: inv.company?.phone || ''
+      },
+      customer: {
+        name: inv.customer?.name || '',
+        address: inv.customer?.address || '',
+        phone: inv.customer?.phone || '',
+        mobile: inv.customer?.mobile || '',
+        attn: inv.customer?.attn || ''
+      },
+      items: Array.isArray(inv.items) && inv.items.length > 0
+        ? inv.items.map((item, index) => ({
+            id: item.id || index + 1,
+            description: item.description || '',
+            details: [],
+            unitPrice: parseFloat(item.unitPrice ?? 0),
+            quantity: parseFloat(item.quantity ?? 0),
+            amount: parseFloat(item.amount ?? ((parseFloat(item.quantity ?? 0) * parseFloat(item.unitPrice ?? 0)))),
+            // Tambahan untuk kawal rendering description
+            variant: item.variant || 'structured',
+            listType: item.listType || undefined,
+            spacing: item.spacing || undefined
+          }))
+        : [],
+      subtotal: inv.subtotal != null ? parseFloat(inv.subtotal) : 0,
+      tax: inv.taxAmount != null ? parseFloat(inv.taxAmount) : 0,
+      total: inv.total != null ? parseFloat(inv.total) : 0,
+      bank: {
+        accountNumber: inv.company?.bankacc || '',
+        bankName: inv.company?.bankname || '',
+        accountHolder: inv.company?.bankholder || ''
+      },
+      issuedBy: inv.company?.manager || '',
+      notes: inv.notes || ''
+    })
+  } catch (error) {
+    console.error('Error fetching invoice:', error)
+    setInvoiceData(null)
+  } finally {
+    setLoading(false)
+  }
+}
+
+if (hasFetchedRef.current) return
+hasFetchedRef.current = true
+fetchInvoice()
+
+const fetchQuote = async () => {
+  setLoading(true)
+  if (!id) {
+    setLoading(false)
+    return
+  }
+
+  try {
+    const res = await quotesAPI.getById(id)
+    if (!res?.success || !res?.data) {
+      setQuoteData(null)
+      setLoading(false)
+      return
+    }
+
+    const q = res.data
+    setQuoteData({
+      quoteNumber: q.quoteNumber || '',
+      status: (q.status || '').toLowerCase(),
+      date: q.date ? new Date(q.date).toISOString().slice(0, 10) : '',
+      validUntil: q.validUntil ? new Date(q.validUntil).toISOString().slice(0, 10) : '',
+      company: {
+        name: q.company?.name || '',
+        registration: q.company?.registration || '',
+        address: q.company?.address || '',
+        email: q.company?.email || '',
+        phone: q.company?.phone || '',
+        manager: q.company?.manager || ''
+      },
+      customer: {
+        name: q.customer?.name || '',
+        address: q.customer?.address || '',
+        phone: q.customer?.phone || '',
+        mobile: q.customer?.mobile || '',
+        attn: q.customer?.attn || q.customer?.attention || ''
+      },
+      items: Array.isArray(q.items) && q.items.length > 0
+        ? q.items.map((item, index) => ({
+          id: item.id || index + 1,
+          description: item.description || '',
+          unitPrice: parseFloat(item.unitPrice ?? item.price ?? 0),
+          quantity: parseFloat(item.quantity ?? 0),
+          amount: parseFloat(
+            item.amount ?? (
+              (parseFloat(item.quantity ?? 0) * parseFloat(item.unitPrice ?? item.price ?? 0))
+            )
+          ),
+          // Tambahan untuk kawal rendering description
+          variant: item.variant || 'structured',
+          listType: item.listType || undefined,
+          spacing: item.spacing || undefined
+        }))
+        : [],
+      subtotal: q.subtotal != null ? parseFloat(q.subtotal) : 0,
+      tax: q.taxAmount != null ? parseFloat(q.taxAmount) : 0,
+      total: q.total != null ? parseFloat(q.total) : 0,
+      bank: {
+        accountNumber: q.company?.bankacc || '',
+        bankName: q.company?.bankname || '',
+        accountHolder: q.company?.bankholder || ''
+      },
+      issuedBy: q.company?.manager || '',
+      notes: q.notes || ''
+    })
+  } catch (error) {
+    setQuoteData(null)
+  } finally {
+    setLoading(false)
+  }
+}
+
+fetchQuote()
+
+const fetchReceipt = async () => {
+  setLoading(true)
+  if (!id) {
+    setLoading(false)
+    return
+  }
+
+  try {
+    const res = await receiptsAPI.getById(id)
+    if (!res?.success || !res?.data) {
+      setReceiptData(null)
+      setLoading(false)
+      return
+    }
+
+    const rec = res.data
+    setReceiptData({
+      receiptNumber: rec.receiptNumber || '',
+      status: (rec.status || '').toLowerCase(),
+      date: rec.date ? new Date(rec.date).toISOString().slice(0, 10) : '',
+      company: {
+        name: rec.company?.name || '',
+        registration: rec.company?.registration || '',
+        address: rec.company?.address || '',
+        email: rec.company?.email || '',
+        phone: rec.company?.phone || '',
+        manager: rec.company?.manager || ''
+      },
+      customer: {
+        name: rec.customer?.name || '',
+        address: rec.customer?.address || '',
+        phone: rec.customer?.phone || '',
+        mobile: rec.customer?.mobile || '',
+        attention: rec.customer?.attn || ''
+      },
+      items: Array.isArray(rec.items) && rec.items.length > 0
+        ? rec.items.map((item, index) => ({
+          id: item.id || index + 1,
+          description: item.description || '',
+          unitPrice: parseFloat(item.unitPrice ?? item.price ?? 0),
+          quantity: parseFloat(item.quantity ?? 0),
+          amount: parseFloat(
+            item.amount ?? (
+              (parseFloat(item.quantity ?? 0) * parseFloat(item.unitPrice ?? item.price ?? 0))
+            )
+          ),
+          // Tambahan untuk kawal rendering description
+          variant: item.variant || 'structured',
+          listType: item.listType || undefined,
+          spacing: item.spacing || undefined
+        }))
+        : [],
+      subtotal: rec.subtotal != null ? parseFloat(rec.subtotal) : 0,
+      tax: rec.taxAmount != null ? parseFloat(rec.taxAmount) : 0,
+      total: rec.total != null ? parseFloat(rec.total) : 0,
+      bank: {
+        accountNumber: rec.company?.bankacc || '',
+        bankName: rec.company?.bankname || '',
+        accountHolder: rec.company?.bankholder || ''
+      },
+      issuedBy: rec.company?.manager || '',
+      notes: rec.notes || ''
+    })
+  } catch (error) {
+    setReceiptData(null)
+  } finally {
+    setLoading(false)
+  }
+}
+
+if (hasFetchedRef.current) return
+hasFetchedRef.current = true
+fetchReceipt()
+
+

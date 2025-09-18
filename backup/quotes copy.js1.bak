@@ -1,0 +1,68 @@
+module.exports = [
+  {
+    quoteNumber: 'QT20240001',
+    date: new Date(),
+    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+    status: 'SENT',
+    subtotal: 1000.00,
+    taxAmount: 60.00,
+    total: 1060.00,
+    notes: 'Sebut harga untuk perkhidmatan pembangunan sistem',
+    details: [
+      {
+        description: 'Pembangunan Sistem Pengurusan Invois',
+        quantity: 1,
+        unitPrice: 800.00,
+        amount: 800.00
+      },
+      {
+        description: 'Latihan Pengguna',
+        quantity: 2,
+        unitPrice: 100.00,
+        amount: 200.00
+      }
+    ]
+  },
+  {
+    quoteNumber: 'QT20240002',
+    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+    validUntil: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000), // 25 days
+    status: 'ACCEPTED',
+    subtotal: 2500.00,
+    taxAmount: 150.00,
+    total: 2650.00,
+    notes: 'Sebut harga untuk projek e-commerce',
+    details: [
+      {
+        description: 'Pembangunan Website E-commerce',
+        quantity: 1,
+        unitPrice: 2000.00,
+        amount: 2000.00
+      },
+      {
+        description: 'Integrasi Payment Gateway',
+        quantity: 1,
+        unitPrice: 500.00,
+        amount: 500.00
+      }
+    ]
+  },
+  {
+    quoteNumber: 'QT20240003',
+    date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+    validUntil: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // Expired 5 days ago
+    status: 'EXPIRED',
+    subtotal: 750.00,
+    taxAmount: 45.00,
+    total: 795.00,
+    notes: 'Sebut harga untuk maintenance sistem',
+    details: [
+      {
+        description: 'Maintenance Bulanan',
+        quantity: 3,
+        unitPrice: 250.00,
+        amount: 750.00
+      }
+    ]
+  }
+];

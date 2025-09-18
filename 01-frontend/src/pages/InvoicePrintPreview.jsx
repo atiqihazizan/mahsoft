@@ -1,0 +1,129 @@
+import React, { useState, useEffect, useRef } from 'react'
+import { PrintPreview } from '../components'
+import { useParams } from 'react-router-dom'
+import { invoicesAPI } from '../utils/apiClient'
+// import { renderStructuredText } from '../components/TextFormatting'
+
+const InvoicePrintPreview = () => {
+  const { id } = useParams()
+  
+  const [invoiceData, setInvoiceData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const hasFetchedRef = useRef(false)
+
+  // Legacy print.css injection kini dikendalikan oleh PrintPreview
+  // useEffect(() => {
+  //   import('../styles/print.css')
+  //   return () => {
+  //     const existingLink = document.querySelector('link[href*="print.css"]')
+  //     if (existingLink) existingLink.remove()
+  //   }
+  // }, [])
+
+  // Fetch invoice data by id and map to local state shape
+  useEffect(() => {
+    const fetchInvoice = async () => {
+      setLoading(true)
+      if (!id) {
+        setLoading(false)
+        return
+      }
+      
+      try {
+        const res = await invoicesAPI.getById(id)
+        if (!res?.success || !res?.data) {
+          setInvoiceData(null)
+          setLoading(false)
+          return
+        }
+
+        const inv = res.data
+        
+        setInvoiceData({
+          invoiceNumber: inv.invoiceNumber || '',
+          status: (inv.status || '').toLowerCase(),
+          date: inv.date ? new Date(inv.date).toISOString().slice(0, 10) : '',
+          dueDate: inv.dueDate ? new Date(inv.dueDate).toISOString().slice(0, 10) : '',
+          company: {
+            name: inv.company?.name || '',
+            registration: inv.company?.registration || '',
+            address: inv.company?.address || '',
+            email: inv.company?.email || '',
+            phone: inv.company?.phone || ''
+          },
+          customer: {
+            name: inv.customer?.name || '',
+            address: inv.customer?.address || '',
+            phone: inv.customer?.phone || '',
+            mobile: inv.customer?.mobile || '',
+            attn: inv.customer?.attn || ''
+          },
+          items: Array.isArray(inv.items) && inv.items.length > 0
+            ? inv.items.map((item, index) => ({
+                id: item.id || index + 1,
+                description: item.description || '',
+                details: [],
+                unitPrice: parseFloat(item.unitPrice ?? 0),
+                quantity: parseFloat(item.quantity ?? 0),
+                amount: parseFloat(item.amount ?? ((parseFloat(item.quantity ?? 0) * parseFloat(item.unitPrice ?? 0)))),
+                // Tambahan untuk kawal rendering description
+                variant: item.variant || 'structured',
+                listType: item.listType || undefined,
+                spacing: item.spacing || undefined
+              }))
+            : [],
+          subtotal: inv.subtotal != null ? parseFloat(inv.subtotal) : 0,
+          tax: inv.taxAmount != null ? parseFloat(inv.taxAmount) : 0,
+          total: inv.total != null ? parseFloat(inv.total) : 0,
+          bank: {
+            accountNumber: inv.company?.bankacc || '',
+            bankName: inv.company?.bankname || '',
+            accountHolder: inv.company?.bankholder || ''
+          },
+          issuedBy: inv.company?.manager || '',
+          notes: inv.notes || ''
+        })
+      } catch (error) {
+        console.error('Error fetching invoice:', error)
+        setInvoiceData(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (hasFetchedRef.current) return
+    hasFetchedRef.current = true
+    fetchInvoice()
+  }, [id])
+
+  // Legacy handlers digantikan oleh PrintPreview
+  // const handlePrint = () => {}
+  // const handleBack = () => { window.history.back() }
+
+  // Return null if loading or no data
+  const isActive = ['draft','sent','overdue'].includes(invoiceData?.status)
+
+  return (
+    <PrintPreview
+      documentType="INVOICE"
+      customer={invoiceData?.customer}
+      documentNumber={invoiceData?.invoiceNumber || ''}
+      date={invoiceData?.date || ''}
+      validUntil={invoiceData?.dueDate || ''}
+      items={invoiceData?.items || []}
+      subtotal={invoiceData?.subtotal || 0}
+      tax={invoiceData?.tax || 0}
+      total={invoiceData?.total || 0}
+      company={invoiceData?.company || {}}
+      bank={invoiceData?.bank || {}}
+      issuedBy={invoiceData?.issuedBy || invoiceData?.company?.manager || ''}
+      notes={invoiceData?.notes || ''}
+      onEdit={() => window.location.href = `/invoices/${id}/edit`}
+      showEditButton={isActive}
+      loading={loading}
+      error={!loading && !invoiceData ? 'Invoice not found' : null}
+    />
+  )
+}
+
+export default InvoicePrintPreview

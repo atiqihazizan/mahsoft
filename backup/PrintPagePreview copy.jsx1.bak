@@ -1,0 +1,287 @@
+import React, { useState, useEffect } from 'react'
+import { CurrencyFormat, DateFormat } from '../components/index'
+import logoImage from '../assets/logo/logo.png'
+
+const PrintPagePreview = () => {
+  // Dynamic import print.css hanya untuk print preview
+  useEffect(() => {
+    // Import print.css secara dinamik
+    import('../styles/print.css')
+    
+    // Cleanup function untuk remove CSS apabila component unmount
+    return () => {
+      // Remove print.css dari document head jika ada
+      const existingLink = document.querySelector('link[href*="print.css"]')
+      if (existingLink) {
+        existingLink.remove()
+      }
+    }
+  }, [])
+
+  const [invoiceData, setInvoiceData] = useState({
+    invoiceNumber: 'MSV1019',
+    date: '2024-12-19',
+    company: {
+      name: 'MAHSOFT Engineering',
+      registration: '(003198940-K)',
+      address: 'No 3436 Mukim 9, Kampung Tok Elong, Tanah Liat,\n14000 Bukit Mertajam, Pulau Pinang',
+      email: 'aqi852000@gmail.com',
+      phone: '018 766 9492'
+    },
+    customer: {
+      name: 'CL SOLUTION SDN BHD',
+      address: '2-4-37, Wisma Rampai\nJalan 34/26. Taman Sri Rampai\n53300 Kuala Lumpur',
+      phone: '0341492414',
+      mobile: '011588975586',
+      attention: 'Mohd Nasir Mohamed Yunus'
+    },
+    items: [
+      {
+        id: 1,
+        description: 'Pendahuluan untuk menaiktaraf sistem IDM di tabung haji plantation',
+        details: [
+          '- membuat integrasi Weather station dengan box (baru)',
+          '- membuat infra untuk memboleh remote site Arip & Karangan berkongsi timbangan'
+        ],
+        unitPrice: 1500.00,
+        quantity: 1,
+        amount: 1500.00
+      }
+    ],
+    subtotal: 1500.00,
+    tax: 0.00,
+    total: 1500.00,
+    bank: {
+      accountNumber: '557344079235',
+      bankName: 'Maybank Berhad',
+      accountHolder: 'Mahsoft Engineering Enterprise'
+    },
+    issuedBy: 'Muhammad Atiqi Hazizan'
+  })
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Print Controls */}
+      <div className="bg-white shadow-sm border-b p-4 print:hidden">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <h1 className="text-xl font-bold text-gray-800">Print Preview</h1>
+          <div className="flex space-x-2">
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              🖨️ Print
+            </button>
+            <button
+              onClick={() => window.history.back()}
+              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+            >
+              ← Kembali
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Print Content */}
+      <div className="paper A4">
+        <div className="sheet" style={{margin: 'auto', padding: '10mm', height: 'auto', minHeight: '148mm'}}>
+          {/* Letter Head */}
+          <div className="letter-head">
+            <table>
+              <tbody>
+                <tr>
+                  <td>
+                    <img src={logoImage} alt="Mahsoft Logo" style={{height: '72px'}} />
+                  </td>
+                  <td>
+                    <div>
+                      <h4 className="font-audiowide display-inline" style={{marginRight: '0.2rem'}}>
+                        {invoiceData.company.name}
+                      </h4>
+                      <small>({invoiceData.company.registration})</small>
+                    </div>
+                    <div>
+                      <p style={{fontSize: '0.7rem'}} className="pre">
+                        {invoiceData.company.address}
+                      </p>
+                      <p style={{fontSize: '0.7rem', display: 'flex', marginTop: '3px'}}>
+                        <span style={{marginRight: '1rem'}}>
+                          Email&nbsp;:&nbsp;{invoiceData.company.email}
+                        </span>
+                        <span>H/P&nbsp;:&nbsp;{invoiceData.company.phone}</span>
+                      </p>
+                    </div>
+                  </td>
+                  <td>
+                    <h4 className="weight-600 font-audiowide text-end">INVOICE</h4>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Client Info */}
+          <div className="clientinfo" style={{marginTop: '1.5rem', marginBottom: '1.5rem'}}>
+            <table>
+              <tbody>
+                <tr>
+                  <td>
+                    <p className="weight-600" style={{marginBottom: '.3rem'}}>
+                      {invoiceData.customer.name}
+                    </p>
+                    <p className="pre" style={{margin: '0', minHeight: '1rem'}}>
+                      {invoiceData.customer.address}
+                      <br /><br />
+                      Tel : {invoiceData.customer.phone}
+                      <br />
+                      H/p : {invoiceData.customer.mobile}
+                    </p>
+                    <p className="weight-600 mt-2 mb-0">
+                      Attn: {invoiceData.customer.attention}
+                    </p>
+                  </td>
+                  <td style={{width: '20%'}}>
+                    <table>
+                      <tbody>
+                        <tr>
+                          <td>No</td>
+                          <td>:</td>
+                          <td className="weight-600 text-end">{invoiceData.invoiceNumber}</td>
+                        </tr>
+                        <tr>
+                          <td>Date</td>
+                          <td>:</td>
+                          <td className="text-end">
+                            <DateFormat date={invoiceData.date} />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <hr style={{borderBottom: '1px solid black'}} />
+
+          {/* Items Section */}
+          <div className="issuence" style={{minHeight: '100px'}}>
+            <table className="header" style={{marginBottom: '1.2rem'}}>
+              <tbody>
+                <tr>
+                  <th>Item Description</th>
+                  <th>UPrice</th>
+                  <th>Qty</th>
+                  <th>Amount</th>
+                </tr>
+              </tbody>
+            </table>
+
+            <table className="rowbody">
+              <tbody>
+                {invoiceData.items.map((item, index) => (
+                  <React.Fragment key={item.id}>
+                    <tr className="fwb">
+                      <td>{item.description}</td>
+                      <td className="text-end">
+                        <CurrencyFormat amount={item.unitPrice} />
+                      </td>
+                      <td className="text-center">{item.quantity}</td>
+                      <td className="text-end">
+                        <CurrencyFormat amount={item.amount} />
+                      </td>
+                    </tr>
+                    {item.details && item.details.length > 0 && (
+                      <tr>
+                        <td>
+                          {item.details.map((detail, detailIndex) => (
+                            <span key={detailIndex}>
+                              {detail}
+                              {detailIndex < item.details.length - 1 && <br />}
+                            </span>
+                          ))}
+                        </td>
+                        <td colSpan="3"></td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <hr style={{borderBottom: '1px solid black'}} />
+
+          {/* Footer */}
+          <div className="footer-bottom">
+            <table className="table-signature">
+              <tbody>
+                <tr style={{display: 'flex'}}>
+                  <td style={{alignSelf: 'center'}}>
+                    <table className="bank-info">
+                      <tbody>
+                        <tr>
+                          <td>Acc No.</td>
+                          <td>:</td>
+                          <td>{invoiceData.bank.accountNumber}</td>
+                        </tr>
+                        <tr>
+                          <td>Acc Name</td>
+                          <td>:</td>
+                          <td>{invoiceData.bank.bankName}</td>
+                        </tr>
+                        <tr>
+                          <td>Acc Holder</td>
+                          <td>:</td>
+                          <td>{invoiceData.bank.accountHolder}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                  <td style={{alignSelf: 'center', flex: 1}}>
+                    <div style={{margin: 'auto', width: '150px', textAlign: 'center'}}>
+                      <i>{invoiceData.issuedBy}</i>
+                      <hr style={{margin: '.5rem 0', borderBottom: '1px solid black'}} />
+                      Issued By
+                    </div>
+                  </td>
+                  <td style={{width: '25.33%'}}>
+                    <table className="inv-amt" style={{width: 'auto', marginLeft: 'auto'}}>
+                      <tbody>
+                        <tr>
+                          <td>Subtotal</td>
+                          <td className="text-end">
+                            <CurrencyFormat amount={invoiceData.subtotal} />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Tax</td>
+                          <td className="text-end">
+                            <CurrencyFormat amount={invoiceData.tax} />
+                          </td>
+                        </tr>
+                        <tr className="font-big">
+                          <th>Total</th>
+                          <th className="text-end" style={{width: '100px'}}>
+                            <CurrencyFormat amount={invoiceData.total} />
+                          </th>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default PrintPagePreview

@@ -1,0 +1,1032 @@
+const quotations = [
+  {
+    quoteNumber: "MAH0005",
+    date: "2021-03-29T00:00:00.000Z",
+    validUntil: "2021-04-07T00:00:00.000Z",
+    status: "SENT",
+    subject: "",
+    subtotal: 7730.00,
+    taxAmount: 0.00,
+    total: 7730.00,
+    notes: "",
+    items: [
+      {
+        description: "Windows 10",
+        unit: null,
+        price: 919.0,
+        quantity: 5.0,
+        textbold: 0
+      },
+      {
+        description: "MS Office 2019",
+        unit: null,
+        price: 529.0,
+        quantity: 2.0,
+        textbold: 0
+      },
+      {
+        description: "Surge Protector AVR + UPS 800",
+        unit: null,
+        price: 250.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "WD My Cloud Home Duo 4TB",
+        unit: null,
+        price: 1827.0,
+        quantity: 1.0,
+        textbold: 0
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "4"
+  },
+  {
+    quoteNumber: "MAH0006",
+    date: "2021-03-31T00:00:00.000Z",
+    validUntil: "2021-04-07T00:00:00.000Z",
+    status: "SENT",
+    subject: "",
+    subtotal: 350.00,
+    taxAmount: 0.00,
+    total: 350.00,
+    notes: "",
+    items: [
+      {
+        description: "Wall Rack Mount 12u",
+        unit: null,
+        price: 350.0,
+        quantity: 1.0,
+        textbold: 0
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "4"
+  },
+  {
+    quoteNumber: "MAH0004",
+    date: "2021-03-27T00:00:00.000Z",
+    validUntil: "2021-03-30T00:00:00.000Z",
+    status: "ACCEPTED",
+    subject: "",
+    subtotal: 1500.00,
+    taxAmount: 0.00,
+    total: 1500.00,
+    notes: "",
+    items: [
+      {
+        description: "Installation Sistem POS di Mart Balik Pulau",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 1
+      },
+      {
+        description: "Setup local server and configuration",
+        unit: null,
+        price: 200.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "install pos sistem setting for cashier and supervisior",
+        unit: null,
+        price: 1200.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "install driver and configuration printer receipt",
+        unit: null,
+        price: 100.0,
+        quantity: 1.0,
+        textbold: 0
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "3"
+  },
+  {
+    quoteNumber: "MAH0015",
+    date: "2021-06-24T00:00:00.000Z",
+    validUntil: "2021-07-01T00:00:00.000Z",
+    status: "ACCEPTED",
+    subject: "Sistem KPW Menteri Besar Incorporation",
+    subtotal: 30000.00,
+    taxAmount: 0.00,
+    total: 30000.00,
+    notes: "",
+    items: [
+      {
+        description: "Sistem KPW MBI",
+        unit: null,
+        price: 30000.0,
+        quantity: 1.0,
+        textbold: 1
+      },
+      {
+        description: "- Pengurusan aliran dokument\n- Kawalan pengguna mengikut level\n- Monitoring route sheet\n- Laporan dan rumusan KPW\n- Pengurusan database\n- Penyediaan sewaan domain dan hosting untuk 1 tahun\n- Latihan Pengguna dan Pemantauan\n\n\n*Domain dan hosting perlu renew setiap tahun",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 0
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "7"
+  },
+  {
+    quoteNumber: "MAH0022",
+    date: "2021-09-07T00:00:00.000Z",
+    validUntil: "2021-09-10T00:00:00.000Z",
+    status: "SENT",
+    subject: "Dummy",
+    subtotal: 16400.00,
+    taxAmount: 0.00,
+    total: 16400.00,
+    notes: "",
+    items: [
+      {
+        description: "pH Kit , #KIT-101P",
+        unit: null,
+        price: 1400.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Temperature Kit , #KIT-30",
+        unit: null,
+        price: 600.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Dissolved Oxygen Kit , #Kit-103DX",
+        unit: null,
+        price: 2500.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Digital Salinity Kit , IP68 2M DSS-600",
+        unit: null,
+        price: 2000.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Analog Turbidity Kit , SEN0189",
+        unit: null,
+        price: 400.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Electrical Conductivity Kit , DFR0300-H",
+        unit: null,
+        price: 600.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Online Water Ammonium Ion Sensor",
+        unit: null,
+        price: 2500.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "ESP32 Microcontroller System",
+        unit: null,
+        price: 2800.0,
+        quantity: 1.0,
+        textbold: 0
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "8"
+  },
+  {
+    quoteNumber: "MAH0029",
+    date: "2021-12-28T00:00:00.000Z",
+    validUntil: "2021-12-31T00:00:00.000Z",
+    status: "ACCEPTED",
+    subject: "Pemasangan CCTV",
+    subtotal: 14180.00,
+    taxAmount: 0.00,
+    total: 14180.00,
+    notes: "",
+    items: [
+      {
+        description: "Installation CCTV and Wiring Cable",
+        unit: null,
+        price: 390.0,
+        quantity: 33.0,
+        textbold: 0
+      },
+      {
+        description: "Wiring and mounting monitor + hdmi to cable extender network transmission",
+        unit: null,
+        price: 690.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Setting and configuration",
+        unit: null,
+        price: 470.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "- Wiring",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 0
+      },
+      {
+        description: "- Hacking",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 0
+      },
+      {
+        description: "- Mounting CCTV Dome and Outlet",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 0
+      },
+      {
+        description: "Wiring electrical ELCB",
+        unit: null,
+        price: 150.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "\r\n\r\n\r\n\r\n* 30% for deposit",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 1
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "9"
+  },
+  {
+    quoteNumber: "MAH0030",
+    date: "2021-12-28T00:00:00.000Z",
+    validUntil: "2021-12-31T00:00:00.000Z",
+    status: "SENT",
+    subject: "dummy",
+    subtotal: 95000.00,
+    taxAmount: 0.00,
+    total: 95000.00,
+    notes: "",
+    items: [
+      {
+        description: "Sebutharga Pembangunan 'PMTG Intelligent System'",
+        unit: null,
+        price: 95000.0,
+        quantity: 1.0,
+        textbold: 1
+      },
+      {
+        description: "Module Jadual Waktu",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 1
+      },
+      {
+        description: "Module Kehadiran Pelajar",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 1
+      },
+      {
+        description: "Module Aktiviti Pelajar",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 1
+      },
+      {
+        description: "Module eSurat (Pengurusan)",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 1
+      },
+      {
+        description: "Lain-lain",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 1
+      },
+      {
+        description: "1. Latihan Pengguna\r\n2. Penyelenggaraan selama 1 tahun",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 0
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "9"
+  },
+  {
+    quoteNumber: "MAH0036",
+    date: "2022-03-02T00:00:00.000Z",
+    validUntil: "2022-03-05T00:00:00.000Z",
+    status: "SENT",
+    subject: "purpose harga hosting dan domain serta email rentail storage",
+    subtotal: 988.00,
+    taxAmount: 0.00,
+    total: 988.00,
+    notes: "",
+    items: [
+      {
+        description: "Perkhidmatan di MZZ Setia Sdn Bhd selama setahun",
+        unit: null,
+        price: 0.0,
+        quantity: 0.0,
+        textbold: 1
+      },
+      {
+        description: "- Penyediaan DOMAIN dan HOSTING - 65.67/mon x 12\r\n- Termasuk maintenance sistem 2 kali setahun\r\n\r\n",
+        unit: null,
+        price: 788.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "- Membantu membayar storage email untuk 12 bulan\r\n a) mzzsetia1@gmail.com - rm 84.99/yr\r\n b) mzzsetiaenterprise@gmail.com - rm 84.99/yr\r\n- Service charge",
+        unit: null,
+        price: 200.0,
+        quantity: 1.0,
+        textbold: 0
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "4"
+  },
+  {
+    quoteNumber: "MAH0037",
+    date: "2022-03-02T00:00:00.000Z",
+    validUntil: "2022-03-05T00:00:00.000Z",
+    status: "SENT",
+    subject: "dummy",
+    subtotal: 18600.00,
+    taxAmount: 0.00,
+    total: 18600.00,
+    notes: "",
+    items: [
+      {
+        description: "pH Sensor",
+        unit: null,
+        price: 1400.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Temperature Sensor",
+        unit: null,
+        price: 600.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Dissolved Oxygen Sensor",
+        unit: null,
+        price: 2500.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Digital Salinity Sensor",
+        unit: null,
+        price: 2000.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Analog Turbidity Sensor",
+        unit: null,
+        price: 400.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Ammonium Ion Sensor ",
+        unit: null,
+        price: 2500.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Nitrate Sensor",
+        unit: null,
+        price: 2600.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "ESP32 Microcontroller System",
+        unit: null,
+        price: 2800.0,
+        quantity: 1.0,
+        textbold: 0
+      },
+      {
+        description: "Sensing Chamber and Enclosure",
+        unit: null,
+        price: 3400.0,
+        quantity: 1,
+        textbold: 0
+      },
+      {
+        description: "Battery 12 Volt DC",
+        unit: null,
+        price: 200.0,
+        quantity: 1,
+        textbold: 0
+      },
+      {
+        description: "12 Volt DC Power Supply Adapter",
+        unit: null,
+        price: 200.0,
+        quantity: 1,
+        textbold: 0
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "8"
+  },
+  {
+    quoteNumber: "MAH0038",
+    date: "2022-12-12T00:00:00.000Z",
+    validUntil: "2022-12-15T00:00:00.000Z",
+    status: "ACCEPTED",
+    subject: "dummy server mbi",
+    subtotal: 30000.00,
+    taxAmount: 0.00,
+    total: 30000.00,
+    notes: "",
+    items: [
+      {
+        description: "Server Intel with NVMe SSD\n- 4 GB / 2 Intel CPUs\r\n- 80 GB NVMe SSDs\r\n- 4 TB Speed transfer\r\n\r\n#include with database",
+        unit: null,
+        price: "30000",
+        quantity: "1",
+        textbold: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "7"
+  },
+  {
+    quoteNumber: "MAH0041",
+    date: "2022-12-13T00:00:00.000Z",
+    validUntil: "2022-12-16T00:00:00.000Z",
+    status: "ACCEPTED",
+    subject: "Relocate CCTV di Mutiara PNBC",
+    subtotal: 3500.00,
+    taxAmount: 0.00,
+    total: 3500.00,
+    notes: "",
+    items: [
+      {
+        description: "Relocation of cctv from staircase to lift lobby PNBC",
+        unit: null,
+        price: "0",
+        quantity: "1",
+        textbold: "1"
+      },
+      {
+        description: "- Dismantle cctv and install at new location.\r\n- Lay new UTP cable with conduit",
+        unit: null,
+        price: "600",
+        quantity: "5"
+      },
+      {
+        separator: true
+      },
+      {
+        description: "- Re-configure CCTV adjust position\r\n- Naming display\r\n- Testing and commissioning",
+        unit: null,
+        price: "500",
+        quantity: "1"
+      },
+      {
+        separator: true
+      },
+      {
+        description: "Mobilization 5 working days",
+        unit: null,
+        price: "0",
+        quantity: "1",
+        textbold: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "9"
+  },
+  {
+    quoteNumber: "MAH0042",
+    date: "2023-02-01T00:00:00.000Z",
+    validUntil: "2023-02-04T00:00:00.000Z",
+    status: "ACCEPTED",
+    subject: "mbi pc workstation",
+    subtotal: 7200.00,
+    taxAmount: 0.00,
+    total: 7200.00,
+    notes: "",
+    items: [
+      {
+        description: "Membekalkan PC Workstation bagi penggunaan backup Email, cPanel, dan database untuk keperluan akaun dan HR\n- CPU 12th gen Intel Core i5\r\n- Memory 8gb\r\n- Storeage 1 TB HDD\r\n- OS : Linux Ubuntu\r\n- Software WHM & cPanel for Email backup\r\n- Uninterruptible power sources (UPS)",
+        unit: null,
+        price: "7200",
+        quantity: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "7"
+  },
+  {
+    quoteNumber: "MAH0043",
+    date: "2023-06-16T00:00:00.000Z",
+    validUntil: "2023-06-19T00:00:00.000Z",
+    status: "SENT",
+    subject: "dummy wacom",
+    subtotal: 1145.00,
+    taxAmount: 0.00,
+    total: 1145.00,
+    notes: "",
+    items: [
+      {
+        description: "USB CARD READER",
+        unit: null,
+        price: "20",
+        quantity: "10"
+      },
+      {
+        description: "MICRO SD CARD (32G)",
+        unit: null,
+        price: "30",
+        quantity: "25"
+      },
+      {
+        description: "DATA CABLE FOR MICRO TYPE",
+        unit: null,
+        price: "13",
+        quantity: "15"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "11"
+  },
+  {
+    quoteNumber: "MAH0044",
+    date: "2023-06-26T00:00:00.000Z",
+    validUntil: "2023-06-29T00:00:00.000Z",
+    status: "SENT",
+    subject: "dummy wacom",
+    subtotal: 460.00,
+    taxAmount: 0.00,
+    total: 460.00,
+    notes: "",
+    items: [
+      {
+        description: "MINI USB CARD READER\nmobile phone and computer (supports OTG type-c interface device)",
+        unit: null,
+        price: "23",
+        quantity: "20",
+        textbold: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "11"
+  },
+  {
+    quoteNumber: "MAH0045",
+    date: "2023-11-29T00:00:00.000Z",
+    validUntil: "2023-12-02T00:00:00.000Z",
+    status: "ACCEPTED",
+    subject: "cctv masjid tuan abdullah",
+    subtotal: 4870.00,
+    taxAmount: 0.00,
+    total: 4870.00,
+    notes: "",
+    items: [
+      {
+        description: "Pemasangan CCTV untuk keperluan di kawasan parkir dan tabung masjid",
+        unit: null,
+        price: "0",
+        quantity: "1",
+        textbold: "1"
+      },
+      {
+        description: "- 8 channel DVR\r\n- 8 camera\r\n- 2 TB HDD",
+        unit: null,
+        price: "1620",
+        quantity: "1"
+      },
+      {
+        description: "Cable and wiring",
+        unit: null,
+        price: "370",
+        quantity: "8"
+      },
+      {
+        description: "Rack 6u",
+        unit: null,
+        price: "290",
+        quantity: "1"
+      },
+      {
+        description: "Installation, testing and commissioning",
+        unit: null,
+        price: "0",
+        quantity: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "14"
+  },
+  {
+    quoteNumber: "MAH0046",
+    date: "2024-01-22T00:00:00.000Z",
+    validUntil: "2024-01-23T00:00:00.000Z",
+    status: "ACCEPTED",
+    subject: "MBI SERVER",
+    subtotal: 25000.00,
+    taxAmount: 0.00,
+    total: 25000.00,
+    notes: "",
+    items: [
+      {
+        description: "Memberi Perkhidmatan Penyewaan Server dan Database secara online untuk kegunaan seperti berikut",
+        unit: null,
+        price: "25000",
+        quantity: "1"
+      },
+      {
+        description: "- Website Portal MBI\r\n- Sistem mbiclicks\r\n- Email\r\n- Penyelenggaraan sistem dan pangkalan data pada setiap bulan\r\n\r\nLain-lain perkara yang berkaitan dengan adalah seperti berikut: \r\n- domain\r\n- ⁠hosting\r\n- cpanel\r\n- ssl hosting (secure socket layer)\r\n- backup database\r\n- spam security\r\n\r\nYearly rental",
+        unit: null,
+        price: "0",
+        quantity: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "7"
+  },
+  {
+    quoteNumber: "MAH0047",
+    date: "2024-01-04T00:00:00.000Z",
+    validUntil: "2024-01-07T00:00:00.000Z",
+    status: "DRAFT",
+    subject: "cctv sg petani",
+    subtotal: 0.00,
+    taxAmount: 0.00,
+    total: 0.00,
+    notes: "",
+    items: [
+      {
+        description: "HIK VISION\n- 4 channel\r\n- 3 dome camera",
+        unit: null,
+        price: "0",
+        quantity: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "15"
+  },
+  {
+    quoteNumber: "MAH0049",
+    date: "2024-05-12T00:00:00.000Z",
+    validUntil: "2024-05-15T00:00:00.000Z",
+    status: "ACCEPTED",
+    subject: "wiring cctv surau pauh jaya",
+    subtotal: 5812.00,
+    taxAmount: 0.00,
+    total: 5812.00,
+    notes: "",
+    items: [
+      {
+        description: "Wiring and Installation CCTV",
+        unit: null,
+        price: "0",
+        quantity: "1",
+        textbold: "1"
+      },
+      {
+        description: "Wiring CCTV\n- Cat6 Lan cable\r\n- RJ45 connector\r\n- PVC Coduit",
+        unit: null,
+        price: "380",
+        quantity: "10"
+      },
+      {
+        description: "Installation Camera\n- include Encloser Box - 4 x 4",
+        unit: null,
+        price: "120",
+        quantity: "9"
+      },
+      {
+        description: "Wall hacking",
+        unit: null,
+        price: "300",
+        quantity: "1"
+      },
+      {
+        description: "Rack 4u - 530mm(W) x 400mm(D) x 240mm(H)",
+        unit: null,
+        price: "296",
+        quantity: "1"
+      },
+      {
+        description: "Rack 6u - 600mm(W) x 450mm(D) x 350mm(H)",
+        unit: null,
+        price: "336",
+        quantity: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "16"
+  },
+  {
+    quoteNumber: "MAH0050",
+    date: "2024-05-20T00:00:00.000Z",
+    validUntil: "2024-05-23T00:00:00.000Z",
+    status: "ACCEPTED",
+    subject: "wiring soket",
+    subtotal: 1350.00,
+    taxAmount: 0.00,
+    total: 1350.00,
+    notes: "",
+    items: [
+      {
+        description: "Pendawaian semula soket PA audio masjid\nmembuat pendawai semula untuk 3fasa",
+        unit: null,
+        price: "1350",
+        quantity: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "14"
+  },
+  {
+    quoteNumber: "MAH0051",
+    date: "2024-08-16T00:00:00.000Z",
+    validUntil: "2024-08-19T00:00:00.000Z",
+    status: "SENT",
+    subject: "projector",
+    subtotal: 6917.00,
+    taxAmount: 0.00,
+    total: 6917.00,
+    notes: "",
+    items: [
+      {
+        description: "Projector Epson EBX51\nBrightness  3,800ANSI Lumens\r\nNative Resolution  XGA (1024 x 768)\r\nContrast Ratio  16,000:1\r\nInternal Speakers  Monoaural: 2W x 1\r\nDimension (D X W X H)  234 x 302 x 77 mm\r\nWeight  2.5 kg\r\nLamp  327W/225W\r\n\r\ninclude : WALL MOUNT KIT (70-110CM)",
+        unit: null,
+        price: "3590",
+        quantity: "1",
+        textbold: "1"
+      },
+      {
+        description: null,
+        unit: null,
+        price: "0",
+        quantity: "1"
+      },
+      {
+        description: "Screen Projector\nEZ MEKI 7'X7 (84inchx84inch) Electronic Motorized Screen White/MOTORIZED SCREEN MATT WHITE 96inch x 96inch Projector screen/Electronic Motorized Screen White 6' x 6' (70inch x 70inch",
+        unit: null,
+        price: "2547",
+        quantity: "1",
+        textbold: "1"
+      },
+      {
+        description: null,
+        unit: null,
+        price: "0",
+        quantity: "1"
+      },
+      {
+        description: "Testing and commesional\nwiring and installation\r\ninclude soket plug",
+        unit: null,
+        price: "780",
+        quantity: "1",
+        textbold: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "17"
+  },
+  {
+    quoteNumber: "MAH0052",
+    date: "2024-09-17T00:00:00.000Z",
+    validUntil: "2024-09-20T00:00:00.000Z",
+    status: "SENT",
+    subject: "dummy",
+    subtotal: 850.00,
+    taxAmount: 0.00,
+    total: 850.00,
+    notes: "",
+    items: [
+      {
+        description: "HDMI System Troubleshooting and Determination\n\n**Test Scenario -HDMI System**",
+        unit: null,
+        price: "0",
+        quantity: "1",
+        textbold: "1"
+      },
+      {
+        description: "a). Replace existing SmartTV with HDMI Monitor and Power-Off Monitor for about 1-2 hours . Power-On monitor after 2 hours shutdown and determine if the delay display of view still occur.",
+        unit: null,
+        price: "170",
+        quantity: "1"
+      },
+      {
+        description: "b). Check physical connectivity UTP Cat 6 cable from Ground Floor to 1st Floor using RJ45 tester. Determine any connectivity faulty (LED indicator no light)",
+        unit: null,
+        price: "170",
+        quantity: "1"
+      },
+      {
+        description: "c). Performance network connectivity test using notebook and SmartTV. Run ping test from notebook to destination IP address of SmartTV. Determine any loss packet during ping test.",
+        unit: null,
+        price: "170",
+        quantity: "1"
+      },
+      {
+        description: "d). Replace HDMI cable at HDMI receiver (connection to SmartTV) and performance Power Off and Power On cycle - interval 1-2 hours Power-Off. Determine if delay display of view still occur",
+        unit: null,
+        price: "170",
+        quantity: "1"
+      },
+      {
+        description: "e). To place a switch between HDMI receiver at 1st Floor and UTP Cat 6 from Ground Floor. Determine if the switch can boost HDMI signal to eliminate delay display in view upon power on SmartTV",
+        unit: null,
+        price: "170",
+        quantity: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "9"
+  },
+  {
+    quoteNumber: "MAH0053",
+    date: "2024-09-24T00:00:00.000Z",
+    validUntil: "2024-09-27T00:00:00.000Z",
+    status: "ACCEPTED",
+    subject: "kvm switch and re-arrange server and monitor keyboard",
+    subtotal: 1648.80,
+    taxAmount: 0.00,
+    total: 1648.80,
+    notes: "",
+    items: [
+      {
+        description: "Selenggara Bilik Server\n- HDMI KVM Switch 4 IN 1 OUT For Sharing Monitor Keyboard Mouse USB 2.0 Laptop PC\n- Heavy Duty Monitor Mount Arm Support Monitor 24\" - 42\"\n- UPS power backup and stablelizer voltage\n- Menyusun semula Server dan Monitor\n- Membuat setting dan konfigurasi semula selepas membuat pengubahan",
+        unit: null,
+        price: "1098.8",
+        quantity: "1",
+        textbold: "1"
+      },
+      {
+        description: "Information Digital Media (IDM) di paparan ruang tamu\n- Memaparkan gambar kerja di site\n- Memaparkan maklumat-maklumat terkini\n- Memaparkan hebahan semasa",
+        unit: null,
+        price: "550",
+        quantity: "1",
+        textbold: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "7"
+  },
+  {
+    quoteNumber: "MAH0054",
+    date: "2025-01-01T00:00:00.000Z",
+    validUntil: "2025-01-31T00:00:00.000Z",
+    status: "SENT",
+    subject: "revise quotation mbi",
+    subtotal: 30000.00,
+    taxAmount: 0.00,
+    total: 30000.00,
+    notes: "",
+    items: [
+      {
+        description: "**Perkhidmatan Sokongan Teknikal dan Penyelenggaraan**\n\n1. **Penyelesaian Masalah:** Memberi bantuan teknikal secara proaktif dan responsif untuk memastikan operasi sistem tidak terganggu.\n2. **Konfigurasi dan Integrasi Sistem:** Menyediakan sokongan dalam konfigurasi aplikasi untuk memastikan keserasian dengan sistem sedia ada.\n3. **Latihan dan Panduan Pengguna:** Menawarkan sesi latihan sederhana dengan pendekatan interaktif serta dokumentasi ringkas untuk kefahaman pengguna.\n4. **Pemantauan dan Penilaian Sistem:** Melaksanakan pemantauan berterusan bagi mengesan masalah teknikal lebih awal dan memastikan prestasi sistem yang stabil.\n5. **Kemas Kini dan Keselamatan:** Menyediakan kemas kini sistem yang meliputi penambahbaikan fungsi serta perlindungan terhadap ancaman keselamatan siber terkini.\n6. **Pengurusan Insiden dan Pemulihan:** Memberikan tindak balas pantas terhadap insiden teknologi untuk memastikan gangguan diminimumkan berdasarkan SLA.\n7. **Sandaran Data Automatik:** Menyediakan mekanisme sandaran berjadual untuk memastikan data sentiasa tersedia dan selamat.\n8. **Laporan dan Cadangan Teknikal:** Menyediakan laporan berkala yang merangkumi prestasi aplikasi, insiden, dan cadangan penambahbaikan.",
+        unit: "Yearly",
+        price: "30000",
+        quantity: "1",
+        textbold: "1"
+      },
+      {
+        description: "**Penyelenggaraan Preventif Server (Suku Tahunan)**\n\n1. **Penyelenggaraan Rutin:** Menjalankan pemeriksaan sistem secara menyeluruh sebanyak dua (2) kali setiap suku tahun bagi memastikan kelancaran operasi.\n2. **Audit Keselamatan Berkala:** Melaksanakan audit keselamatan yang mengguna pakai alat diagnostik untuk mengenal pasti kelemahan sistem.\n3. **Penyelenggaraan Storan Data:** Melakukan defragmentasi dan pembersihan cakera untuk memastikan kecekapan sistem penyimpanan data.\n4. **Optimasi Sistem:** Menganalisis dan menyesuaikan konfigurasi sistem berdasarkan corak penggunaan semasa.\n5. **Penjagaan Perkakasan:** Menyemak dan menyelenggara komponen perkakasan penting untuk memastikan jangka hayat sistem.\n6. **Kuasa Sandaran dan Kesediaan:** Memastikan sistem UPS dan pelan kecemasan tersedia untuk menghadapi gangguan bekalan kuasa.",
+        unit: null,
+        price: "0",
+        quantity: "1",
+        textbold: "1"
+      },
+      {
+        description: "**Tempoh Perkhidmatan**\n\nPerkhidmatan ini akan disediakan sepanjang tempoh perjanjian, dengan waktu operasi sokongan teknikal dari pukul 8:00 pagi hingga 5:00 petang pada hari bekerja.",
+        unit: null,
+        price: "0",
+        quantity: "1",
+        textbold: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "7"
+  },
+  {
+    quoteNumber: "MAH0055",
+    date: "2024-10-24T00:00:00.000Z",
+    validUntil: "2024-10-27T00:00:00.000Z",
+    status: "SENT",
+    subject: "dev system",
+    subtotal: 25000.00,
+    taxAmount: 0.00,
+    total: 25000.00,
+    notes: "",
+    items: [
+      {
+        description: "**Membangunkan sistem untuk pengurusan ISMAWADEE secara online**\n\n- Menghasilkan Audit Working Paper\n- Menghasilkan Balance Sheet\n- Memudahkan untuk membuat semakan, pengesahan dan kelulusan bagi pihak atasan secaran online tanpa dimuaturun dokumen tersebut\n- Menyimpan rekod yang sudah diluluskan\n- Memudahkan untuk membuat pencarian rekod yang selesai atau belum selesai mengikut tarikh atau nama pelanggan\n- Membuat cetakan secara online",
+        unit: null,
+        price: "13000",
+        quantity: "1"
+      },
+      {
+        description: "Perkhidmatan dan selenggara selama 12 bulan\n\n- Sewaan domain dan hosting untuk tahunan bertujuan bagi menjalankan sistem tersebut secara online\n- Membuat latihan kepada penggunaan\n- Membantu pengguna keyin rekod\n- Membuat pemantauan untuk memastikan proses work flow berjalan mengikut keperluan pengguna\n- Membuat backup database sebulan sekali atau mengikut keperluan pengguna\n- Menyediakan khidmat perunding untuk menaiktaraf cara kerja yang lebih cekap",
+        unit: null,
+        price: "12000",
+        quantity: "1"
+      },
+      {
+        description: "*Deposit 12% bagi mendaftar domain dan hosting serta permulaan kerja*",
+        unit: null,
+        price: "0",
+        quantity: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "12"
+  },
+  {
+    quoteNumber: "MAH0056",
+    date: "2025-02-26T00:00:00.000Z",
+    validUntil: "2025-03-01T00:00:00.000Z",
+    status: "DRAFT",
+    subject: "audit luaran",
+    subtotal: 4978.00,
+    taxAmount: 0.00,
+    total: 4978.00,
+    notes: "",
+    items: [
+      {
+        description: "Pembinaan Laporan Prestasi Kewangan GLC MBI Kedah Secara Online\n\nProjek ini merangkumi pembangunan sistem laporan prestasi kewangan dengan ciri-ciri berikut:\n\n- Pembangunan sistem laporan prestasi kewangan interaktif\n- Integrasi dengan pangkalan data kewangan sedia ada\n- Dashboard analitik dengan grafik dan carta visual\n- Akses pengguna dengan tahap kebenaran berbeza\n- Fungsi eksport laporan dalam format PDF dan Excel\n- Latihan penggunaan sistem dan dokumentasi lengkap",
+        unit: null,
+        price: "4978",
+        quantity: "1",
+        textbold: "1"
+      }
+    ],
+    companyId: "1",
+    userId: "1",
+    customerId: "7"
+  }
+];
+
+module.exports = quotations;

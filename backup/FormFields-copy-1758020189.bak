@@ -1,0 +1,309 @@
+import React from 'react'
+
+// Label component
+export const Label = ({ children, required = false, className = "" }) => (
+  <label className={`block text-sm font-medium text-gray-700 mb-1 ${className}`}>
+    {children}
+    {required && <span className="text-red-500 ml-1">*</span>}
+  </label>
+)
+
+// Text Input component
+export const TextInput = ({ 
+  value, 
+  onChange, 
+  placeholder = "", 
+  required = false, 
+  disabled = false,
+  className = "",
+  ...props 
+}) => (
+  <input
+    type="text"
+    value={value || ''}
+    onChange={onChange}
+    placeholder={placeholder}
+    required={required}
+    disabled={disabled}
+    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+    {...props}
+  />
+)
+
+// Email Input component
+export const EmailInput = ({ 
+  value, 
+  onChange, 
+  placeholder = "", 
+  required = false, 
+  disabled = false,
+  className = "",
+  ...props 
+}) => (
+  <input
+    type="email"
+    value={value || ''}
+    onChange={onChange}
+    placeholder={placeholder}
+    required={required}
+    disabled={disabled}
+    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+    {...props}
+  />
+)
+
+// Tel Input component
+export const TelInput = ({ 
+  value, 
+  onChange, 
+  placeholder = "", 
+  required = false, 
+  disabled = false,
+  className = "",
+  ...props 
+}) => (
+  <input
+    type="tel"
+    value={value || ''}
+    onChange={onChange}
+    placeholder={placeholder}
+    required={required}
+    disabled={disabled}
+    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+    {...props}
+  />
+)
+
+// Textarea component
+export const Textarea = ({ 
+  value, 
+  onChange, 
+  placeholder = "", 
+  required = false, 
+  disabled = false,
+  rows = 3,
+  className = "",
+  ...props 
+}) => (
+  <textarea
+    value={value || ''}
+    onChange={onChange}
+    placeholder={placeholder}
+    required={required}
+    disabled={disabled}
+    rows={rows}
+    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-[11pt] ${className}`}
+    {...props}
+  />
+)
+
+// Select component
+export const Select = ({ 
+  value, 
+  onChange, 
+  options = [], 
+  placeholder = "Select an option...", 
+  required = false, 
+  disabled = false,
+  className = "",
+  ...props 
+}) => (
+  <select
+    value={value || ''}
+    onChange={onChange}
+    required={required}
+    disabled={disabled}
+    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+    {...props}
+  >
+    <option value="">{placeholder}</option>
+    {options.map((option, index) => (
+      <option key={index} value={option.value}>
+        {option.label}
+      </option>
+    ))}
+  </select>
+)
+
+// Checkbox component
+export const Checkbox = ({ 
+  checked, 
+  onChange, 
+  label = "", 
+  disabled = false,
+  className = "",
+  ...props 
+}) => (
+  <div className={`flex items-center ${className}`}>
+    <input
+      type="checkbox"
+      checked={checked || false}
+      onChange={onChange}
+      disabled={disabled}
+      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+      {...props}
+    />
+    {label && (
+      <label className="ml-2 block text-sm text-gray-900">
+        {label}
+      </label>
+    )}
+  </div>
+)
+
+// Radio component
+export const Radio = ({ 
+  name, 
+  value, 
+  checked, 
+  onChange, 
+  label = "", 
+  disabled = false,
+  className = "",
+  ...props 
+}) => (
+  <div className={`flex items-center ${className}`}>
+    <input
+      type="radio"
+      name={name}
+      value={value}
+      checked={checked || false}
+      onChange={onChange}
+      disabled={disabled}
+      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+      {...props}
+    />
+    {label && (
+      <label className="ml-2 block text-sm text-gray-900">
+        {label}
+      </label>
+    )}
+  </div>
+)
+
+// Radio Group component
+export const RadioGroup = ({ 
+  name, 
+  value, 
+  onChange, 
+  options = [], 
+  disabled = false,
+  className = "",
+  ...props 
+}) => (
+  <div className={`space-y-2 ${className}`}>
+    {options.map((option, index) => (
+      <Radio
+        key={index}
+        name={name}
+        value={option.value}
+        checked={value === option.value}
+        onChange={onChange}
+        label={option.label}
+        disabled={disabled}
+        {...props}
+      />
+    ))}
+  </div>
+)
+
+// Number Input component
+export const NumberInput = ({ 
+  value, 
+  onChange, 
+  placeholder = "", 
+  required = false, 
+  disabled = false,
+  min,
+  max,
+  step,
+  className = "",
+  ...props 
+}) => (
+  <input
+    type="number"
+    value={value || ''}
+    onChange={onChange}
+    placeholder={placeholder}
+    required={required}
+    disabled={disabled}
+    min={min}
+    max={max}
+    step={step}
+    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+    {...props}
+  />
+)
+
+// Date Input component
+export const DateInput = ({ 
+  value, 
+  onChange, 
+  required = false, 
+  disabled = false,
+  className = "",
+  ...props 
+}) => (
+  <input
+    type="date"
+    value={value || ''}
+    onChange={onChange}
+    required={required}
+    disabled={disabled}
+    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+    {...props}
+  />
+)
+
+// Password Input component
+export const PasswordInput = ({ 
+  value, 
+  onChange, 
+  placeholder = "", 
+  required = false, 
+  disabled = false,
+  className = "",
+  ...props 
+}) => (
+  <input
+    type="password"
+    value={value || ''}
+    onChange={onChange}
+    placeholder={placeholder}
+    required={required}
+    disabled={disabled}
+    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+    {...props}
+  />
+)
+
+// Description Field component (enhanced textarea with formatting)
+export const DescriptionField = ({ 
+  value, 
+  onChange, 
+  label = "", 
+  placeholder = "", 
+  required = false, 
+  disabled = false,
+  rows = 4,
+  className = "",
+  ...props 
+}) => (
+  <div className={className}>
+    {label && (
+      <Label required={required}>
+        {label}
+      </Label>
+    )}
+    <Textarea
+      value={value || ''}
+      onChange={onChange}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      rows={rows}
+      className="resize-none"
+      {...props}
+    />
+  </div>
+)

@@ -1,0 +1,2 @@
+const quotesExtended = require('./quotes_extended');
+module.exports = quotesExtended;

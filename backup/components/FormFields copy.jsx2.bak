@@ -1,0 +1,482 @@
+import React from 'react'
+
+// Component untuk field pelanggan
+export const CustomerField = ({ 
+  value, 
+  onChange, 
+  customers = [], 
+  error = '', 
+  required = true 
+}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      Pelanggan {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      value={value}
+      onChange={onChange}
+      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        error ? 'border-red-500' : 'border-gray-300'
+      }`}
+    >
+      <option value="">Pilih pelanggan...</option>
+      {customers.map(customer => (
+        <option key={customer.id} value={customer.id}>
+          {customer.name}
+        </option>
+      ))}
+    </select>
+    {error && (
+      <p className="text-red-500 text-sm mt-1">{error}</p>
+    )}
+  </div>
+)
+
+// Component untuk field syarikat
+export const CompanyField = ({ 
+  value, 
+  onChange, 
+  companies = [], 
+  error = '', 
+  required = true 
+}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      Syarikat {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      value={value}
+      onChange={onChange}
+      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        error ? 'border-red-500' : 'border-gray-300'
+      }`}
+    >
+      <option value="">Pilih syarikat...</option>
+      {companies.map(company => (
+        <option key={company.id} value={company.id}>
+          {company.name}
+        </option>
+      ))}
+    </select>
+    {error && (
+      <p className="text-red-500 text-sm mt-1">{error}</p>
+    )}
+  </div>
+)
+
+// Component untuk field tarikh
+export const DateField = ({ 
+  value, 
+  onChange, 
+  label = 'Tarikh',
+  error = '', 
+  required = true 
+}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      type="date"
+      value={value}
+      onChange={onChange}
+      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        error ? 'border-red-500' : 'border-gray-300'
+      }`}
+    />
+    {error && (
+      <p className="text-red-500 text-sm mt-1">{error}</p>
+    )}
+  </div>
+)
+
+// Component untuk field kadar cukai
+export const TaxRateField = ({ 
+  value, 
+  onChange, 
+  error = '' 
+}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      Kadar Cukai (%)
+    </label>
+    <input
+      type="number"
+      step="0.01"
+      min="0"
+      max="100"
+      value={value}
+      onChange={onChange}
+      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        error ? 'border-red-500' : 'border-gray-300'
+      }`}
+    />
+    {error && (
+      <p className="text-red-500 text-sm mt-1">{error}</p>
+    )}
+  </div>
+)
+
+// Component untuk field catatan
+export const NotesField = ({ 
+  value, 
+  onChange, 
+  rows = 3,
+  placeholder = 'Masukkan catatan tambahan (pilihan)...'
+}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      Catatan
+    </label>
+    <textarea
+      value={value}
+      onChange={onChange}
+      rows={rows}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      placeholder={placeholder}
+    />
+  </div>
+)
+
+// Component untuk field input text umum
+export const TextField = ({ 
+  value, 
+  onChange, 
+  label,
+  placeholder = '',
+  error = '', 
+  required = false,
+  type = 'text'
+}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        error ? 'border-red-500' : 'border-gray-300'
+      }`}
+    />
+    {error && (
+      <p className="text-red-500 text-sm mt-1">{error}</p>
+    )}
+  </div>
+)
+
+// Component untuk field input number
+export const NumberField = ({ 
+  value, 
+  onChange, 
+  label,
+  placeholder = '',
+  error = '', 
+  required = false,
+  min = 0,
+  max = null,
+  step = '0.01'
+}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      type="number"
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      min={min}
+      max={max}
+      step={step}
+      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        error ? 'border-red-500' : 'border-gray-300'
+      }`}
+    />
+    {error && (
+      <p className="text-red-500 text-sm mt-1">{error}</p>
+    )}
+  </div>
+)
+
+// Component untuk field select umum
+export const SelectField = ({ 
+  value, 
+  onChange, 
+  label,
+  options = [],
+  placeholder = 'Pilih...',
+  error = '', 
+  required = false
+}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      value={value}
+      onChange={onChange}
+      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        error ? 'border-red-500' : 'border-gray-300'
+      }`}
+    >
+      <option value="">{placeholder}</option>
+      {options.map(option => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+    {error && (
+      <p className="text-red-500 text-sm mt-1">{error}</p>
+    )}
+  </div>
+)
+
+// Component untuk field status
+export const StatusField = ({ 
+  value, 
+  onChange, 
+  type = 'invoice', // 'invoice', 'quote', 'receipt'
+  error = '' 
+}) => {
+  const getStatusOptions = () => {
+    switch (type) {
+      case 'invoice':
+        return [
+          { value: 'DRAFT', label: 'Draf' },
+          { value: 'SENT', label: 'Dihantar' },
+          { value: 'PAID', label: 'Dibayar' },
+          { value: 'OVERDUE', label: 'Tertunggak' },
+          { value: 'CANCELLED', label: 'Dibatalkan' }
+        ]
+      case 'quote':
+        return [
+          { value: 'DRAFT', label: 'Draf' },
+          { value: 'SENT', label: 'Dihantar' },
+          { value: 'ACCEPTED', label: 'Diterima' },
+          { value: 'REJECTED', label: 'Ditolak' },
+          { value: 'EXPIRED', label: 'Tamat Tempoh' }
+        ]
+      case 'receipt':
+        return [
+          { value: 'DRAFT', label: 'Draf' },
+          { value: 'PENDING', label: 'Menunggu' },
+          { value: 'COMPLETED', label: 'Selesai' },
+          { value: 'CANCELLED', label: 'Dibatalkan' }
+        ]
+      default:
+        return []
+    }
+  }
+
+  return (
+    <SelectField
+      value={value}
+      onChange={onChange}
+      label="Status"
+      options={getStatusOptions()}
+      placeholder="Pilih status..."
+      error={error}
+    />
+  )
+}
+
+// Component untuk field kaedah pembayaran (untuk resit)
+export const PaymentMethodField = ({ 
+  value, 
+  onChange, 
+  error = '' 
+}) => {
+  const paymentMethods = [
+    { value: 'CASH', label: 'Tunai' },
+    { value: 'BANK_TRANSFER', label: 'Pemindahan Bank' },
+    { value: 'CHEQUE', label: 'Cek' },
+    { value: 'CREDIT_CARD', label: 'Kad Kredit' },
+    { value: 'DEBIT_CARD', label: 'Kad Debit' },
+    { value: 'ONLINE_PAYMENT', label: 'Pembayaran Online' }
+  ]
+
+  return (
+    <SelectField
+      value={value}
+      onChange={onChange}
+      label="Kaedah Pembayaran"
+      options={paymentMethods}
+      placeholder="Pilih kaedah pembayaran..."
+      error={error}
+    />
+  )
+}
+
+// Component untuk field description dengan variant yang berbeza
+export const DescriptionField = ({ 
+  value, 
+  onChange, 
+  label = 'Penerangan',
+  placeholder = 'Masukkan penerangan...',
+  error = '', 
+  required = false,
+  variant = 'simple', // 'simple' atau 'structured'
+  rows = 4
+}) => {
+  const [description, setDescription] = React.useState(value || '')
+  const [isPreview, setIsPreview] = React.useState(false)
+
+  // Handle input change
+  const handleChange = (e) => {
+    const newValue = e.target.value
+    setDescription(newValue)
+    onChange && onChange(e)
+  }
+
+  // Parse description untuk variant structured
+  const parseStructuredDescription = (text) => {
+    if (!text) return []
+    
+    const lines = text.split('\n').filter(line => line.trim())
+    const parsed = []
+    let currentTitle = null
+    
+    lines.forEach((line, index) => {
+      const trimmedLine = line.trim()
+      
+      // Check if line is a title (bold text)
+      if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
+        // This is a title
+        currentTitle = {
+          title: trimmedLine.slice(2, -2),
+          items: []
+        }
+        parsed.push(currentTitle)
+      } else if (currentTitle) {
+        // This is an item under current title
+        currentTitle.items.push(trimmedLine)
+      } else {
+        // This is a standalone item
+        parsed.push({
+          title: null,
+          items: [trimmedLine]
+        })
+      }
+    })
+    
+    return parsed
+  }
+
+  // Render preview untuk variant structured
+  const renderStructuredPreview = () => {
+    const parsed = parseStructuredDescription(description)
+    
+    return (
+      <div className="border border-gray-300 rounded-md p-3 bg-gray-50 min-h-[100px]">
+        {parsed.length === 0 ? (
+          <p className="text-gray-500 italic">Tiada penerangan</p>
+        ) : (
+          parsed.map((section, index) => (
+            <div key={index} className="mb-2">
+              {section.title && (
+                <p className="font-bold text-gray-800 mb-1">{section.title}</p>
+              )}
+              {section.items.map((item, itemIndex) => (
+                <p key={itemIndex} className="text-gray-700 ml-2">
+                  • {item}
+                </p>
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+    )
+  }
+
+  // Render preview untuk variant simple
+  const renderSimplePreview = () => {
+    return (
+      <div className="border border-gray-300 rounded-md p-3 bg-gray-50 min-h-[100px]">
+        {description ? (
+          <div className="whitespace-pre-wrap text-gray-700">
+            {description.split('\n').map((line, index) => (
+              <div key={index} className="mb-1">
+                {line.startsWith('**') && line.endsWith('**') ? (
+                  <span className="font-bold">{line.slice(2, -2)}</span>
+                ) : (
+                  line
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 italic">Tiada penerangan</p>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-sm font-medium text-gray-700">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <div className="flex space-x-2">
+          <button
+            type="button"
+            onClick={() => setIsPreview(!isPreview)}
+            className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+          >
+            {isPreview ? 'Edit' : 'Preview'}
+          </button>
+          {variant === 'structured' && (
+            <div className="text-xs text-gray-500">
+              <span className="font-semibold">Format:</span> **Tajuk** untuk bold
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {isPreview ? (
+        variant === 'structured' ? renderStructuredPreview() : renderSimplePreview()
+      ) : (
+        <textarea
+          value={description}
+          onChange={handleChange}
+          rows={rows}
+          placeholder={placeholder}
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            error ? 'border-red-500' : 'border-gray-300'
+          }`}
+        />
+      )}
+      
+      {variant === 'structured' && !isPreview && (
+        <div className="mt-2 text-xs text-gray-600">
+          <p><strong>Petunjuk:</strong></p>
+          <p>• Gunakan <code>**Tajuk**</code> untuk membuat tajuk bold</p>
+          <p>• Baris selepas tajuk akan menjadi item di bawah tajuk tersebut</p>
+          <p>• Baris tanpa ** akan menjadi item biasa</p>
+        </div>
+      )}
+      
+      {error && (
+        <p className="text-red-500 text-sm mt-1">{error}</p>
+      )}
+    </div>
+  )
+}
+
+export default {
+  CustomerField,
+  CompanyField,
+  DateField,
+  TaxRateField,
+  NotesField,
+  TextField,
+  NumberField,
+  SelectField,
+  StatusField,
+  PaymentMethodField,
+  DescriptionField
+}

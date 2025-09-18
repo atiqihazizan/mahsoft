@@ -1,0 +1,156 @@
+import React, { useState } from 'react'
+import { DescriptionField } from './FormFields'
+
+const WhatsAppFormatDemo = () => {
+  const [whatsappDescription, setWhatsappDescription] = useState('')
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 space-y-8">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">
+        Demo DescriptionField - Format WhatsApp
+      </h1>
+
+      {/* WhatsApp Format Demo */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">
+          Format WhatsApp - Bold, Italic, Strikethrough, Monospace
+        </h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Variant ini menyokong format text seperti dalam WhatsApp dengan simbol khas.
+        </p>
+        
+        <DescriptionField
+          value={whatsappDescription}
+          onChange={(e) => setWhatsappDescription(e.target.value)}
+          label="Penerangan dengan Format WhatsApp"
+          placeholder="Masukkan penerangan dengan format WhatsApp..."
+          variant="whatsapp"
+          rows={6}
+        />
+
+        <div className="mt-4 p-3 bg-green-50 rounded-md">
+          <h3 className="font-semibold text-green-800 mb-2">Contoh Input:</h3>
+          <pre className="text-sm text-green-700 whitespace-pre-wrap">
+{`*Harga Khas* untuk pelanggan istimewa!
+
+_Nota Penting:_
+• Pembayaran dalam tempoh 30 hari
+• ~Harga lama: RM500~ *Harga baru: RM400*
+• `Warranty` 1 tahun penuh
+
+*Terma & Syarat:*
+_1._ Pembayaran tunai atau kad kredit
+_2._ ~Tidak boleh tukar~ Boleh tukar dalam 7 hari
+_3._ `Support` teknikal 24/7`}
+          </pre>
+        </div>
+      </div>
+
+      {/* Format Guide */}
+      <div className="bg-blue-50 p-6 rounded-lg">
+        <h2 className="text-lg font-semibold text-blue-800 mb-4">
+          Panduan Format WhatsApp
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <code className="bg-white px-2 py-1 rounded text-sm">*text*</code>
+              <span>→</span>
+              <strong className="text-gray-700">Bold</strong>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <code className="bg-white px-2 py-1 rounded text-sm">_text_</code>
+              <span>→</span>
+              <em className="text-gray-700">Italic</em>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <code className="bg-white px-2 py-1 rounded text-sm">~text~</code>
+              <span>→</span>
+              <span className="line-through text-gray-700">Strikethrough</span>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <code className="bg-white px-2 py-1 rounded text-sm">`text`</code>
+              <span>→</span>
+              <code className="font-mono bg-gray-100 px-1 rounded text-gray-700">Monospace</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Comparison with Other Variants */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">
+          Perbandingan Variant DescriptionField
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="border rounded-lg p-4">
+            <h3 className="font-semibold text-gray-700 mb-2">Simple</h3>
+            <p className="text-sm text-gray-600 mb-2">Untuk penerangan ringkas</p>
+            <code className="text-xs bg-gray-100 p-2 rounded block">
+              **Bold text**<br/>
+              Normal text
+            </code>
+          </div>
+          
+          <div className="border rounded-lg p-4">
+            <h3 className="font-semibold text-gray-700 mb-2">Structured</h3>
+            <p className="text-sm text-gray-600 mb-2">Untuk tajuk dan item</p>
+            <code className="text-xs bg-gray-100 p-2 rounded block">
+              **Tajuk**<br/>
+              • Item 1<br/>
+              • Item 2
+            </code>
+          </div>
+          
+          <div className="border rounded-lg p-4">
+            <h3 className="font-semibold text-gray-700 mb-2">WhatsApp</h3>
+            <p className="text-sm text-gray-600 mb-2">Format seperti WhatsApp</p>
+            <code className="text-xs bg-gray-100 p-2 rounded block">
+              *Bold* _italic_<br/>
+              ~strikethrough~ `code`
+            </code>
+          </div>
+        </div>
+      </div>
+
+      {/* Real Example */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">
+          Contoh Penggunaan Sebenar
+        </h2>
+        
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-medium text-gray-700 mb-2">Invoice Description:</h3>
+            <div className="bg-gray-50 p-3 rounded text-sm">
+              <p><strong>Perkhidmatan IT Support</strong></p>
+              <p><em>Terma:</em> Pembayaran dalam 30 hari</p>
+              <p><span className="line-through">Harga lama: RM1000</span> <strong>Harga baru: RM800</strong></p>
+              <p><code className="font-mono bg-gray-200 px-1 rounded">Warranty</code> 1 tahun</p>
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="font-medium text-gray-700 mb-2">Quote Description:</h3>
+            <div className="bg-gray-50 p-3 rounded text-sm">
+              <p><strong>Website Development Package</strong></p>
+              <p><em>Included:</em></p>
+              <p>• Responsive design</p>
+              <p>• <code className="font-mono bg-gray-200 px-1 rounded">CMS</code> integration</p>
+              <p>• <span className="line-through">Basic SEO</span> <strong>Advanced SEO</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default WhatsAppFormatDemo

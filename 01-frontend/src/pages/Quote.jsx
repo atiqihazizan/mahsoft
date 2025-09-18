@@ -1,0 +1,262 @@
+import React, { useState, useEffect } from 'react'
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
+import { PageWrapper } from '../components'
+import { DataTable, StatusBadge, CurrencyFormat, DateFormat, ExpiryStatus, TableCell } from '../components'
+import { quotesAPI } from '../utils/apiClient'
+
+const Quote = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { onPreview } = useOutletContext?.() || {}
+  const [quotes, setQuotes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('active') // Default kepada active
+  const [showHistory, setShowHistory] = useState(false) // Toggle untuk sejarah
+  const [actionLoading, setActionLoading] = useState({})
+
+  // Function to calculate days until expiry
+  const calculateDaysUntilExpiry = (validUntil) => {
+    if (!validUntil) return 0
+    const today = new Date()
+    const validDate = new Date(validUntil)
+    const diffTime = validDate - today
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  }
+
+  // Function to check and update expired status
+  const checkAndUpdateExpiredStatus = async (quotes) => {
+    const today = new Date()
+    const expiredQuotes = []
+    
+    for (const quote of quotes) {
+      // Hanya check quote yang status SENT dan belum expired
+      if (quote.status === 'sent' && quote.validUntil) {
+        const validUntil = new Date(quote.validUntil)
+        if (today > validUntil) {
+          expiredQuotes.push(quote.id)
+        }
+      }
+    }
+    
+    // Update status kepada EXPIRED untuk quote yang lewat
+    if (expiredQuotes.length > 0) {
+      try {
+        await Promise.all(
+          expiredQuotes.map(id => 
+            quotesAPI.updateStatus(id, 'EXPIRED')
+          )
+        )
+        console.log(`Updated ${expiredQuotes.length} quotes to EXPIRED status`)
+        
+        // Update local state untuk quote yang telah diubah status
+        setQuotes(prevQuotes => 
+          prevQuotes.map(quote => 
+            expiredQuotes.includes(quote.id) 
+              ? { ...quote, status: 'expired' }
+              : quote
+          )
+        )
+      } catch (error) {
+        console.error('Error updating expired status:', error)
+      }
+    }
+  }
+
+  // Function to handle quote status change
+  const handleQuoteStatusChange = async (quoteId, action) => {
+    // Confirmation dialog to prevent accidental clicks
+    const actionText = action === 'accept' ? 'accept' : action === 'reject' ? 'reject' : 'mark as dummy'
+    const confirmMessage = `Are you sure you want to ${actionText} this quote?`
+    
+    if (!window.confirm(confirmMessage)) {
+      return // User cancelled, exit function
+    }
+
+    try {
+      setActionLoading(prev => ({ ...prev, [quoteId]: true }))
+      
+      const statusMap = { 'accept': 'ACCEPTED', 'reject': 'REJECTED', 'dummy': 'DUMMY' }
+      const response = await quotesAPI.updateStatus(quoteId, statusMap[action] || action.toUpperCase())
+
+      if (response?.success) {
+        const newStatus = action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : action.toLowerCase()
+        setQuotes(prev => prev.map(quote => quote.id === quoteId ? { ...quote, status: newStatus } : quote))
+        // alert(`Quote ${actionText}ed successfully!`)
+      } else {
+        const errorMessage = response?.message || response?.error || 'Unknown error'
+        const statusMessages = { 400: `Invalid request: ${errorMessage}`, 404: 'Quote not found', 500: `Server error: ${errorMessage}` }
+        // alert(statusMessages[response?.status] || `Failed to ${action} quote: ${errorMessage}`)
+      }
+    } catch (error) {
+      // alert(`Error ${action}ing quote: ${error.message}`)
+      console.error(`Error ${action}ing quote: ${error.message}`)
+    } finally {
+      setActionLoading(prev => ({ ...prev, [quoteId]: false }))
+    }
+  }
+
+  // Function to fetch quotes
+  const fetchQuotes = async () => {
+    try {
+      setLoading(true)
+      const response = await quotesAPI.getAll()
+      
+      if (response?.success) {
+        const transformedQuotes = response.data.quotes.map(quote => ({
+          id: quote.id,
+          quoteNumber: quote.quoteNumber,
+          customerName: quote.customer?.name || 'N/A',
+          amount: parseFloat(quote.total),
+          status: quote.status.toLowerCase(),
+          date: quote.date,
+          validUntil: quote.validUntil,
+          subject: quote.subject || 'N/A'
+        }))
+        
+        // Set quotes first
+        setQuotes(transformedQuotes)
+        
+        // Check dan update expired status selepas set state
+        await checkAndUpdateExpiredStatus(transformedQuotes)
+      } else {
+        throw new Error('API response not successful')
+      }
+    } catch (error) {
+      setQuotes([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch quotes from API
+  useEffect(() => {
+    fetchQuotes()
+  }, [])
+
+  // Refresh data when location changes (e.g., after edit)
+  useEffect(() => {
+    if (location.state?.refresh) fetchQuotes()
+  }, [location])
+
+  const filteredQuotes = quotes.filter(quote => {
+    const matchesSearch = quote.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.subject.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    if (filterStatus === 'all') return matchesSearch
+    if (filterStatus === 'active') return matchesSearch && (quote.status === 'draft' || quote.status === 'sent' || quote.status === 'expired')
+    if (filterStatus === 'done') return matchesSearch && (quote.status === 'accepted' || quote.status === 'rejected' || quote.status === 'dummy')
+    return matchesSearch
+  })
+  // Table columns configuration
+  const columns = [
+      {
+        key: 'quoteNumber',
+        header: 'Quote No.',
+        headerClassName: 'text-center',
+        cellClassName: 'text-center text-sm',
+        render: (value) => <TableCell value={value} className="font-medium text-gray-900" />
+      },
+      {
+        key: 'customerName',
+        header: 'Customer',
+        render: (value) => <TableCell value={value} className="text-sm text-gray-900" title={value} />
+      },
+      {
+        key: 'subject',
+        header: 'Subject',
+        render: (value) => <TableCell value={value} className="text-sm text-gray-600" title={value} />
+      },
+      {
+        key: 'amount',
+        header: 'Amount',
+        headerClassName: 'text-right',
+        cellClassName: 'text-right font-semibold',
+        render: (value) => <CurrencyFormat amount={value} />
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        headerClassName: 'text-center',
+        cellClassName: 'text-center',
+        render: (value) => <StatusBadge status={value} />
+      },
+      {
+        key: 'date',
+        header: 'Date',
+        headerClassName: 'text-center',
+        cellClassName: 'text-center text-sm',
+        render: (value) => <DateFormat date={value} />
+      },
+    {
+      key: 'validUntil',
+      header: 'Validity',
+      headerClassName: 'text-center',
+      cellClassName: 'text-center text-sm font-medium',
+      render: (value) => <DateFormat date={value} />
+      // render: (value, row) => (
+      //   <ExpiryStatus 
+      //     validUntil={value} 
+      //     status={row.status} 
+      //     calculateDaysUntilExpiry={calculateDaysUntilExpiry} 
+      //   />
+      // )
+    }
+  ]
+  return (
+    <PageWrapper
+      title="QUOTE MANAGEMENT"
+      newButtonText="+ CREATE NEW QUOTE"
+      onNewClick={() => navigate('/quotes/new')}
+      buttonColor="green"
+      filterOptions={["ALL", "ACTIVE", "DONE"]}
+      activeFilter={{ 'all': 'ALL', 'active': 'ACTIVE', 'done': 'DONE' }[filterStatus] || 'ACTIVE'}
+      onFilterChange={(filter) => {
+        const statusMap = { 'ALL': 'all', 'ACTIVE': 'active', 'DONE': 'done' }
+        setFilterStatus(statusMap[filter] || 'active')
+      }}
+      onRefresh={fetchQuotes}
+    >
+      <DataTable
+        data={filteredQuotes}
+        columns={columns}
+        loading={loading}
+        onAccept={(row) => handleQuoteStatusChange(row.id, 'accept')}
+        onReject={(row) => handleQuoteStatusChange(row.id, 'reject')}
+        onDummy={(row) => handleQuoteStatusChange(row.id, 'dummy')}
+        onEdit={(row) => navigate(`/quotes/${row.id}/edit`)}
+        onDuplicate={(row) => {
+          const duplicateData = { ...row }
+          delete duplicateData.id
+          localStorage.setItem('duplicateQuoteData', JSON.stringify(duplicateData))
+          navigate('/quotes/new?duplicate=1')
+        }}
+        onPreview={(row) => {
+          onPreview('QUOTATION', row.id)
+        }}
+        onDelete={async (row) => {
+          if (confirm('Are you sure you want to delete this quote?')) {
+            try {
+              const response = await quotesAPI.delete(row.id)
+              if (response.success) {
+                alert('Quote deleted successfully!')
+                // Refresh the quote list
+                fetchQuotes()
+              } else {
+                alert(response.error || 'Failed to delete quote. Please try again.')
+              }
+            } catch (error) {
+              console.error('Error deleting quote:', error)
+              alert('An error occurred while deleting quote. Please try again.')
+            }
+          }
+        }}
+        hideActionsForStatus={['accepted', 'rejected', 'dummy']}
+      />
+    </PageWrapper>
+  )
+}
+
+export default Quote

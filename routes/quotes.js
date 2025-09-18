@@ -1,0 +1,398 @@
+const express = require('express');
+const { body, param } = require('express-validator');
+const router = express.Router();
+const prisma = require('../utils/prisma');
+const { success, error, notFound, badRequest } = require('../utils/response');
+const { handleValidationErrors } = require('../middleware/validation');
+const { generateQuoteNumber, generateInvoiceNumber } = require('../utils/numberGenerator');
+
+// Validation rules
+const createQuoteValidation = [
+  body('companyId').notEmpty().withMessage('ID syarikat diperlukan'),
+  body('userId').notEmpty().withMessage('ID pengguna diperlukan'),
+  body('customerId').notEmpty().withMessage('ID pelanggan diperlukan'),
+  body('date').isISO8601().withMessage('Format tarikh tidak sah'),
+  body('validUntil').isISO8601().withMessage('Format tarikh sah hingga tidak sah'),
+  body('subject').optional().isString().withMessage('Subjek mestilah teks'),
+  body('items').isArray({ min: 1 }).withMessage('Butiran sebut harga diperlukan'),
+  body('items.*.description').notEmpty().withMessage('Penerangan item diperlukan'),
+  body('items.*.quantity').isNumeric().withMessage('Kuantiti mestilah nombor'),
+  body('items.*.unitPrice').isNumeric().withMessage('Harga unit mestilah nombor'),
+  handleValidationErrors
+];
+
+const updateQuoteValidation = [
+  param('id').isString().withMessage('ID tidak sah'),
+  body('companyId').optional().notEmpty().withMessage('ID syarikat tidak boleh kosong'),
+  body('userId').optional().notEmpty().withMessage('ID pengguna tidak boleh kosong'),
+  body('customerId').optional().notEmpty().withMessage('ID pelanggan tidak boleh kosong'),
+  body('date').optional().isISO8601().withMessage('Format tarikh tidak sah'),
+  body('validUntil').optional().isISO8601().withMessage('Format tarikh sah hingga tidak sah'),
+  body('subject').optional().isString().withMessage('Subjek mestilah teks'),
+  body('status').optional().isIn(['DRAFT', 'SENT', 'ACCEPTED', 'REJECTED', 'EXPIRED', 'DUMMY']).withMessage('Status tidak sah'),
+  body('items').optional().isArray({ min: 1 }).withMessage('Butiran sebut harga mesti dalam array'),
+  body('items.*.description').optional().notEmpty().withMessage('Penerangan item diperlukan'),
+  body('items.*.quantity').optional().isNumeric().withMessage('Kuantiti mestilah nombor'),
+  body('items.*.unitPrice').optional().isNumeric().withMessage('Harga unit mestilah nombor'),
+  handleValidationErrors
+];
+
+// Helper function to generate quote number (legacy - now using numberGenerator)
+const generateQuoteNumberLegacy = async () => {
+  const currentYear = new Date().getFullYear();
+  const prefix = `QT${currentYear}`;
+  
+  const lastQuote = await prisma.quote.findFirst({
+    where: {
+      quoteNumber: {
+        startsWith: prefix
+      }
+    },
+    orderBy: {
+      quoteNumber: 'desc'
+    }
+  });
+
+  let nextNumber = 1;
+  if (lastQuote) {
+    const lastNumber = parseInt(lastQuote.quoteNumber.slice(prefix.length));
+    nextNumber = lastNumber + 1;
+  }
+
+  return `${prefix}${nextNumber.toString().padStart(4, '0')}`;
+};
+
+// Helper function to calculate totals
+const calculateTotals = (items, taxRate = 0) => {
+  const subtotal = items.reduce((sum, item) => {
+    return sum + (parseFloat(item.quantity) * parseFloat(item.unitPrice));
+  }, 0);
+  
+  const taxAmount = subtotal * taxRate;
+  const total = subtotal + taxAmount;
+  
+  return {
+    subtotal: subtotal.toFixed(2),
+    taxAmount: taxAmount.toFixed(2),
+    total: total.toFixed(2)
+  };
+};
+
+// GET /api/v1/quotes - Dapatkan semua sebut harga
+router.get('/', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search, status, companyId, customerId } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const where = {};
+    
+    if (search) {
+      where.OR = [
+        { quoteNumber: { contains: search, mode: 'insensitive' } },
+        { notes: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+    
+    if (status) where.status = status;
+    if (companyId) where.companyId = companyId;
+    if (customerId) where.customerId = customerId;
+
+    const [quotes, total] = await Promise.all([
+      prisma.quote.findMany({
+        where,
+        skip,
+        // take: parseInt(limit),
+        orderBy: { createdAt: 'desc' },
+        include: {
+          company: { select: { id: true, name: true } },
+          user: { select: { id: true, name: true } },
+          customer: { select: { id: true, name: true } }
+        }
+      }),
+      prisma.quote.count({ where })
+    ]);
+
+    const totalPages = Math.ceil(total / parseInt(limit));
+
+    success(res, {
+      quotes,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems: total,
+        itemsPerPage: parseInt(limit)
+      }
+    }, 'Senarai sebut harga berjaya diambil');
+  } catch (err) {
+    console.error('Error fetching quotes:', err);
+    error(res, 'Ralat mengambil senarai sebut harga');
+  }
+});
+
+// GET /api/v1/quotes/:id - Dapatkan sebut harga mengikut ID
+router.get('/:id', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const quote = await prisma.quote.findUnique({
+      where: { id },
+      include: {
+        company: true,
+        user: { select: { id: true, name: true, email: true } },
+        customer: true,
+        invoices: true
+      }
+    });
+
+    if (!quote) {
+      return notFound(res, 'Sebut harga tidak ditemui');
+    }
+
+    success(res, quote, 'Sebut harga berjaya diambil');
+  } catch (err) {
+    console.error('Error fetching quote:', err);
+    error(res, 'Ralat mengambil sebut harga');
+  }
+});
+
+// POST /api/v1/quotes - Cipta sebut harga baru
+router.post('/', createQuoteValidation, async (req, res) => {
+  try {
+    const { companyId, userId, customerId, date, validUntil, subject, items, notes } = req.body;
+
+    // Verify related records exist
+    const [company, user, customer] = await Promise.all([
+      prisma.company.findUnique({ where: { id: companyId } }),
+      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.customer.findUnique({ where: { id: customerId } })
+    ]);
+
+    if (!company) return badRequest(res, 'Syarikat tidak ditemui');
+    if (!user) return badRequest(res, 'Pengguna tidak ditemui');
+    if (!customer) return badRequest(res, 'Pelanggan tidak ditemui');
+
+    // Generate quote number using company sequence
+    const quoteNumber = await generateQuoteNumber(companyId);
+
+    // Calculate totals (respect client taxRate if provided; else default 0)
+  const inputTaxRate = typeof req.body.taxRate === 'number' ? (req.body.taxRate / 100) : 0;
+    const { subtotal, taxAmount, total } = calculateTotals(items, inputTaxRate);
+
+    // Prepare items data with calculated amounts
+  const itemsWithAmounts = items.map(item => ({
+    description: item.description,
+    quantity: parseFloat(item.quantity),
+    unitPrice: parseFloat(item.unitPrice),
+    amount: parseFloat(item.quantity) * parseFloat(item.unitPrice),
+    ...(item.variant && { variant: item.variant }),
+    ...(item.listType && { listType: item.listType }),
+    ...(item.spacing && { spacing: item.spacing })
+  }));
+
+    // Create quote with items
+    const quote = await prisma.quote.create({
+      data: {
+        quoteNumber,
+        date: new Date(date),
+        validUntil: new Date(validUntil),
+        subject,
+        subtotal: parseFloat(subtotal),
+        taxAmount: parseFloat(taxAmount),
+        total: parseFloat(total),
+        notes,
+        items: itemsWithAmounts,
+        companyId,
+        userId,
+        customerId
+      },
+      include: {
+        company: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true } },
+        customer: { select: { id: true, name: true } }
+      }
+    });
+
+    success(res, quote, 'Sebut harga berjaya dicipta', 201);
+  } catch (err) {
+    console.error('Error creating quote:', err);
+    error(res, 'Ralat mencipta sebut harga');
+  }
+});
+
+// PUT /api/v1/quotes/:id - Kemaskini sebut harga
+router.put('/:id', updateQuoteValidation, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Check if quote exists
+    const existingQuote = await prisma.quote.findUnique({
+      where: { id }
+    });
+
+    if (!existingQuote) {
+      return notFound(res, 'Sebut harga tidak ditemui');
+    }
+
+    // Verify related records if provided
+    if (updateData.companyId) {
+      const company = await prisma.company.findUnique({ where: { id: updateData.companyId } });
+      if (!company) return badRequest(res, 'Syarikat tidak ditemui');
+    }
+
+    if (updateData.userId) {
+      const user = await prisma.user.findUnique({ where: { id: updateData.userId } });
+      if (!user) return badRequest(res, 'Pengguna tidak ditemui');
+    }
+
+    if (updateData.customerId) {
+      const customer = await prisma.customer.findUnique({ where: { id: updateData.customerId } });
+      if (!customer) return badRequest(res, 'Pelanggan tidak ditemui');
+    }
+
+    // If items provided, recalc totals and map amounts
+    let recalculatedFields = {};
+    if (Array.isArray(updateData.items) && updateData.items.length > 0) {
+      const itemsWithAmounts = updateData.items.map((item) => ({
+        description: item.description,
+        quantity: parseFloat(item.quantity),
+        unitPrice: parseFloat(item.unitPrice),
+        amount: parseFloat(item.quantity) * parseFloat(item.unitPrice),
+        ...(item.variant && { variant: item.variant }),
+        ...(item.listType && { listType: item.listType }),
+        ...(item.spacing && { spacing: item.spacing })
+      }));
+      const updateTaxRate = typeof updateData.taxRate === 'number' ? (updateData.taxRate / 100) : 0;
+      const { subtotal, taxAmount, total } = calculateTotals(itemsWithAmounts, updateTaxRate);
+      recalculatedFields = {
+        items: itemsWithAmounts,
+        subtotal: parseFloat(subtotal),
+        taxAmount: parseFloat(taxAmount),
+        total: parseFloat(total)
+      };
+    }
+
+    const quote = await prisma.quote.update({
+      where: { id },
+      data: {
+        ...(updateData.date && { date: new Date(updateData.date) }),
+        ...(updateData.validUntil && { validUntil: new Date(updateData.validUntil) }),
+        ...(updateData.subject !== undefined && { subject: updateData.subject }),
+        ...(updateData.status && { status: updateData.status }),
+        ...(updateData.notes !== undefined && { notes: updateData.notes }),
+        ...(updateData.companyId && { companyId: updateData.companyId }),
+        ...(updateData.userId && { userId: updateData.userId }),
+        ...(updateData.customerId && { customerId: updateData.customerId }),
+        ...recalculatedFields
+      },
+      include: {
+        company: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true } },
+        customer: { select: { id: true, name: true } }
+      }
+    });
+
+    success(res, quote, 'Sebut harga berjaya dikemaskini');
+  } catch (err) {
+    console.error('Error updating quote:', err);
+    error(res, 'Ralat mengemaskini sebut harga');
+  }
+});
+
+// POST /api/v1/quotes/:id/convert-to-invoice - Tukar sebut harga kepada invois
+router.post('/:id/convert-to-invoice', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { dueDate } = req.body;
+
+    // Get quote
+    const quote = await prisma.quote.findUnique({
+      where: { id }
+    });
+
+    if (!quote) {
+      return notFound(res, 'Sebut harga tidak ditemui');
+    }
+
+    if (quote.status !== 'ACCEPTED') {
+      return badRequest(res, 'Hanya sebut harga yang diterima boleh ditukar kepada invois');
+    }
+
+    // Generate invoice number using company sequence
+    const invoiceNumber = await generateInvoiceNumber(quote.companyId);
+
+    // Create invoice from quote
+    const invoice = await prisma.invoice.create({
+      data: {
+        invoiceNumber,
+        date: new Date(),
+        dueDate: new Date(dueDate || Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days
+        subtotal: quote.subtotal,
+        taxAmount: quote.taxAmount,
+        total: quote.total,
+        notes: quote.notes,
+        items: quote.items, // Copy items from quote
+        companyId: quote.companyId,
+        userId: quote.userId,
+        customerId: quote.customerId,
+        quoteId: quote.id
+      },
+      include: {
+        company: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true } },
+        customer: { select: { id: true, name: true } },
+        quote: { select: { id: true, quoteNumber: true } }
+      }
+    });
+
+    success(res, invoice, 'Sebut harga berjaya ditukar kepada invois', 201);
+  } catch (err) {
+    console.error('Error converting quote to invoice:', err);
+    error(res, 'Ralat menukar sebut harga kepada invois');
+  }
+});
+
+// DELETE /api/v1/quotes/:id - Padam sebut harga
+router.delete('/:id', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if quote exists
+    const existingQuote = await prisma.quote.findUnique({
+      where: { id },
+      include: {
+        invoices: true
+      }
+    });
+
+    if (!existingQuote) {
+      return notFound(res, 'Sebut harga tidak ditemui');
+    }
+
+    // Check if quote has been converted to invoice
+    if (existingQuote.invoices.length > 0) {
+      return badRequest(res, 'Sebut harga tidak boleh dipadam kerana telah ditukar kepada invois');
+    }
+
+    // Delete quote (details will be deleted automatically due to cascade)
+    await prisma.quote.delete({
+      where: { id }
+    });
+
+    success(res, null, 'Sebut harga berjaya dipadam');
+  } catch (err) {
+    console.error('Error deleting quote:', err);
+    error(res, 'Ralat memadam sebut harga');
+  }
+});
+
+module.exports = router;

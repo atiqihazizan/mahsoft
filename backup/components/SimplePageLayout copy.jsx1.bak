@@ -1,0 +1,60 @@
+import React from 'react'
+
+const SimplePageLayout = ({ 
+  title = "INVOICE",
+  newButtonText = "+ NEW",
+  onNewClick,
+  filterOptions = ["ALL", "ACTIVE", "DONE"],
+  activeFilter = "ALL",
+  onFilterChange,
+  children
+}) => {
+  return (
+    // <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen">
+      {/* <div className="bg-white rounded-lg shadow-sm"> */}
+      <div className="">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          {/* New Button */}
+          <button
+            onClick={onNewClick}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+          >
+            {newButtonText}
+          </button>
+
+          {/* Title */}
+          <h1 className="text-2xl font-bold text-gray-800 uppercase">
+            {title}
+          </h1>
+
+          {/* Filter Options */}
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            {filterOptions.map((option) => (
+              <button
+                key={option}
+                onClick={() => onFilterChange && onFilterChange(option)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeFilter === option
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        {/* <div className="p-6"> */}
+        <div className="">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default SimplePageLayout

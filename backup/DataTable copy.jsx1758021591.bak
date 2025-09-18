@@ -1,0 +1,166 @@
+import React from 'react'
+
+const DataTable = ({ 
+  data = [], 
+  columns = [], 
+  onView = null,
+  onEdit = null,
+  onDelete = null,
+  onDuplicate = null,
+  onPreview = null,
+  loading = false,
+  getButtonState = null, // Function to determine button state
+  hideActionsForStatus = [], // Array of statuses to hide action buttons for
+  headerClassName = '', // Custom class for table header
+  bodyClassName = '', // Custom class for table body
+  rowClassName = '' // Custom class for table rows
+}) => {
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="mt-4 text-gray-600 text-sm">Loading data...</p>
+      </div>
+    )
+  }
+  
+  if (!data || data.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        No data to display
+      </div>
+    )
+  }
+
+  // Function to check if actions should be hidden for a row
+  const shouldHideActions = (row) => {
+    if (!hideActionsForStatus || hideActionsForStatus.length === 0) return false
+    return hideActionsForStatus.includes(row.status)
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead className={headerClassName || 'bg-gray-50'}>
+          <tr className="bg-gray-50">
+            {columns.map((column, index) => (
+              <th
+                key={index}
+                className={`text-left py-2 pl-6 font-semibold text-gray-900 text-sm uppercase tracking-wide border-b border-gray-200 ${column.headerClassName || ''}`}
+              >
+                {column.header}
+              </th>
+            ))}
+            {/* Action Header */}
+            <th className="text-center py-2 pl-6 font-semibold text-gray-900 text-sm uppercase tracking-wide border-b border-gray-200">
+              Action
+            </th>
+          </tr>
+        </thead>
+        <tbody className={bodyClassName || 'bg-white divide-y divide-gray-200'}>
+          {data.map((row, rowIndex) => (
+            <tr key={rowIndex} className={`hover:bg-gray-50 transition-colors duration-150 ${rowClassName}`}>
+              {columns.map((column, colIndex) => (
+                <td key={colIndex} className={`py-4 pl-6 text-sm text-gray-900 whitespace-nowrap ${column.cellClassName || ''}`}>
+                  {column.render ? column.render(row[column.key], row) : row[column.key]}
+                </td>
+              ))}
+              {/* Action Column */}
+              <td className="py-4 pl-6 text-sm text-gray-900 whitespace-nowrap text-center">
+                {!shouldHideActions(row) && (
+                  <div className="flex space-x-2 justify-center">
+                    {onView && (
+                      <button type="button"
+                        onClick={() => onView(row)}
+                        disabled={getButtonState ? !getButtonState(row, 'view') : false}
+                        className={`p-2 rounded-md transition-colors ${
+                          getButtonState && !getButtonState(row, 'view')
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-blue-600 hover:text-blue-900 hover:bg-blue-50'
+                        }`}
+                        title={getButtonState && !getButtonState(row, 'view') ? 'Tidak boleh lihat' : 'View'}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                    )}
+                    {onEdit && (
+                      <button type="button"
+                        onClick={() => onEdit(row)}
+                        disabled={getButtonState ? !getButtonState(row, 'edit') : false}
+                        className={`p-2 rounded-md transition-colors ${
+                          getButtonState && !getButtonState(row, 'edit')
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-green-600 hover:text-green-900 hover:bg-green-50'
+                        }`}
+                        title={getButtonState && !getButtonState(row, 'edit') ? 'Tidak boleh edit' : 'Edit'}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    )}
+                    {onPreview && (
+                      <button type="button"
+                        onClick={() => onPreview(row)}
+                        disabled={getButtonState ? !getButtonState(row, 'preview') : false}
+                        className={`p-2 rounded-md transition-colors ${
+                          getButtonState && !getButtonState(row, 'preview')
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-orange-600 hover:text-orange-900 hover:bg-orange-50'
+                        }`}
+                        title={getButtonState && !getButtonState(row, 'preview') ? 'Tidak boleh preview' : 'Preview'}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                    )}
+                    {onDuplicate && (
+                      <button type="button"
+                        onClick={() => onDuplicate(row)}
+                        disabled={getButtonState ? !getButtonState(row, 'duplicate') : false}
+                        className={`p-2 rounded-md transition-colors ${
+                          getButtonState && !getButtonState(row, 'duplicate')
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-purple-600 hover:text-purple-900 hover:bg-purple-50'
+                        }`}
+                        title={getButtonState && !getButtonState(row, 'duplicate') ? 'Tidak boleh salin' : 'Duplicate'}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button type="button"
+                        onClick={() => onDelete(row)}
+                        disabled={getButtonState ? !getButtonState(row, 'delete') : false}
+                        className={`p-2 rounded-md transition-colors ${
+                          getButtonState && !getButtonState(row, 'delete')
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-red-600 hover:text-red-900 hover:bg-red-50'
+                        }`}
+                        title={getButtonState && !getButtonState(row, 'delete') ? 'Tidak boleh padam' : 'Delete'}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+export default DataTable

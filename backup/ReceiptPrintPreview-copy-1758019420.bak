@@ -1,0 +1,299 @@
+import React, { useState } from 'react'
+import { CurrencyFormat, DateFormat } from '../components/index'
+import '../styles/print.css'
+import logoImage from '../assets/logo/logo.png'
+
+const ReceiptPrintPreview = () => {
+  const [receiptData, setReceiptData] = useState({
+    receiptNumber: 'REC-2024-001',
+    date: '2024-12-19',
+    paymentDate: '2024-12-19',
+    company: {
+      name: 'MAHSOFT Engineering',
+      registration: '(003198940-K)',
+      address: 'No 3436 Mukim 9, Kampung Tok Elong, Tanah Liat,\n14000 Bukit Mertajam, Pulau Pinang',
+      email: 'aqi852000@gmail.com',
+      phone: '018 766 9492'
+    },
+    customer: {
+      name: 'CL SOLUTION SDN BHD',
+      address: '2-4-37, Wisma Rampai\nJalan 34/26. Taman Sri Rampai\n53300 Kuala Lumpur',
+      phone: '0341492414',
+      mobile: '011588975586',
+      attention: 'Mohd Nasir Mohamed Yunus'
+    },
+    payment: {
+      method: 'Bank Transfer',
+      reference: 'TXN123456789',
+      amount: 26500.00,
+      invoiceNumber: 'INV-2024-001'
+    },
+    items: [
+      {
+        id: 1,
+        description: 'Payment for Invoice INV-2024-001',
+        unitPrice: 26500.00,
+        quantity: 1,
+        amount: 26500.00
+      }
+    ],
+    subtotal: 25000.00,
+    tax: 1500.00,
+    total: 26500.00,
+    bank: {
+      accountNumber: '557344079235',
+      bankName: 'Maybank Berhad',
+      accountHolder: 'Mahsoft Engineering Enterprise'
+    },
+    issuedBy: 'Muhammad Atiqi Hazizan',
+    notes: 'Payment telah diterima dan diproses. Receipt ini adalah bukti pembayaran yang sah.'
+  })
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Print Controls */}
+      <div className="bg-white shadow-sm border-b p-4 print:hidden">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <h1 className="text-xl font-bold text-gray-800">Receipt Print Preview</h1>
+          <div className="flex space-x-2">
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+            >
+              🖨️ Print Receipt
+            </button>
+            <button
+              onClick={() => window.history.back()}
+              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+            >
+              ← Kembali
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Print Content */}
+      <div className="paper A4">
+        <div className="sheet" style={{margin: 'auto', padding: '10mm', height: 'auto', minHeight: '148mm'}}>
+          {/* Letter Head */}
+          <div className="letter-head">
+            <table>
+              <tbody>
+                <tr>
+                  <td>
+                    <img src={logoImage} alt="Mahsoft Logo" style={{height: '72px'}} />
+                  </td>
+                  <td>
+                    <div>
+                      <h4 className="font-audiowide display-inline" style={{marginRight: '0.2rem'}}>
+                        {receiptData.company.name}
+                      </h4>
+                      <small>({receiptData.company.registration})</small>
+                    </div>
+                    <div>
+                      <p style={{fontSize: '0.7rem'}} className="pre">
+                        {receiptData.company.address}
+                      </p>
+                      <p style={{fontSize: '0.7rem', display: 'flex', marginTop: '3px'}}>
+                        <span style={{marginRight: '1rem'}}>
+                          Email&nbsp;:&nbsp;{receiptData.company.email}
+                        </span>
+                        <span>H/P&nbsp;:&nbsp;{receiptData.company.phone}</span>
+                      </p>
+                    </div>
+                  </td>
+                  <td>
+                    <h4 className="weight-600 font-audiowide text-end">RECEIPT</h4>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Client Info */}
+          <div className="clientinfo" style={{marginTop: '1.5rem', marginBottom: '1.5rem'}}>
+            <table>
+              <tbody>
+                <tr>
+                  <td>
+                    <p className="weight-600" style={{marginBottom: '.3rem'}}>
+                      {receiptData.customer.name}
+                    </p>
+                    <p className="pre" style={{margin: '0', minHeight: '1rem'}}>
+                      {receiptData.customer.address}
+                      <br /><br />
+                      Tel : {receiptData.customer.phone}
+                      <br />
+                      H/p : {receiptData.customer.mobile}
+                    </p>
+                    <p className="weight-600 mt-2 mb-0">
+                      Attn: {receiptData.customer.attention}
+                    </p>
+                  </td>
+                  <td style={{width: '20%'}}>
+                    <table>
+                      <tbody>
+                        <tr>
+                          <td>Receipt No</td>
+                          <td>:</td>
+                          <td className="weight-600 text-end">{receiptData.receiptNumber}</td>
+                        </tr>
+                        <tr>
+                          <td>Date</td>
+                          <td>:</td>
+                          <td className="text-end">
+                            <DateFormat date={receiptData.date} />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Payment Date</td>
+                          <td>:</td>
+                          <td className="text-end">
+                            <DateFormat date={receiptData.paymentDate} />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <hr style={{borderBottom: '1px solid black'}} />
+
+          {/* Payment Info */}
+          <div className="print-section" style={{marginBottom: '1rem'}}>
+            <h3 style={{fontSize: '1rem', fontWeight: '600', marginBottom: '0.5rem'}}>Payment Information</h3>
+            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '1rem'}}>
+              <div>
+                <p><strong>Payment Method:</strong> {receiptData.payment.method}</p>
+                <p><strong>Reference:</strong> {receiptData.payment.reference}</p>
+                <p><strong>Invoice No:</strong> {receiptData.payment.invoiceNumber}</p>
+              </div>
+              <div style={{textAlign: 'right'}}>
+                <p><strong>Amount Received:</strong></p>
+                <p style={{fontSize: '1.2rem', fontWeight: 'bold'}}>
+                  <CurrencyFormat amount={receiptData.payment.amount} />
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <hr style={{borderBottom: '1px solid black'}} />
+
+          {/* Items Section */}
+          <div className="issuance" style={{minHeight: '100px'}}>
+            <table className="header" style={{marginBottom: '1.2rem'}}>
+              <tbody>
+                <tr>
+                  <th>Description</th>
+                  <th>UPrice</th>
+                  <th>Qty</th>
+                  <th>Amount</th>
+                </tr>
+              </tbody>
+            </table>
+
+            <table className="rowbody">
+              <tbody>
+                {receiptData.items.map((item, index) => (
+                  <React.Fragment key={item.id}>
+                    <tr className="fwb">
+                      <td>{item.description}</td>
+                      <td className="text-end">
+                        <CurrencyFormat amount={item.unitPrice} />
+                      </td>
+                      <td className="text-center">{item.quantity}</td>
+                      <td className="text-end">
+                        <CurrencyFormat amount={item.amount} />
+                      </td>
+                    </tr>
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <hr style={{borderBottom: '1px solid black'}} />
+
+          {/* Footer */}
+          <div className="footer-bottom">
+            <table className="table-signature">
+              <tbody>
+                <tr style={{display: 'flex'}}>
+                  <td style={{alignSelf: 'center'}}>
+                    <table className="bank-info">
+                      <tbody>
+                        <tr>
+                          <td>Acc No.</td>
+                          <td>:</td>
+                          <td>{receiptData.bank.accountNumber}</td>
+                        </tr>
+                        <tr>
+                          <td>Acc Name</td>
+                          <td>:</td>
+                          <td>{receiptData.bank.bankName}</td>
+                        </tr>
+                        <tr>
+                          <td>Acc Holder</td>
+                          <td>:</td>
+                          <td>{receiptData.bank.accountHolder}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                  <td style={{alignSelf: 'center', flex: 1}}>
+                    <div style={{margin: 'auto', width: '150px', textAlign: 'center'}}>
+                      <i>{receiptData.issuedBy}</i>
+                      <hr style={{margin: '.5rem 0', borderBottom: '1px solid black'}} />
+                      Issued By
+                    </div>
+                  </td>
+                  <td style={{width: '25.33%'}}>
+                    <table className="inv-amt" style={{width: 'auto', marginLeft: 'auto'}}>
+                      <tbody>
+                        <tr>
+                          <td>Subtotal</td>
+                          <td className="text-end">
+                            <CurrencyFormat amount={receiptData.subtotal} />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Tax (6%)</td>
+                          <td className="text-end">
+                            <CurrencyFormat amount={receiptData.tax} />
+                          </td>
+                        </tr>
+                        <tr className="font-big">
+                          <th>Total</th>
+                          <th className="text-end" style={{width: '100px'}}>
+                            <CurrencyFormat amount={receiptData.total} />
+                          </th>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Notes */}
+          <div className="print-notes">
+            <h3>Payment Confirmation</h3>
+            <div className="remark">
+              <p>{receiptData.notes}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default ReceiptPrintPreview

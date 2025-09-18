@@ -1,0 +1,378 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  label       String?  // Label untuk membezakan syarikat dengan nama sama
+  address     String?
+  phone       String?
+  email       String?
+  taxNumber   String?  @map("tax_number")
+  
+  // Bank details
+  bankholder  String?  // Bank account holder name
+  bankname    String?  // Bank name
+  bankacc     String?  // Bank account number
+  bankbranch  String?  // Bank branch
+  
+  // Company details
+  ssm         String?  // SSM registration number
+  manager     String?  // Manager name
+  assist      String?  // Assistant name
+  accountant  String?  // Accountant name
+  technical   String?  // Technical person name
+  
+  // Sequence numbers
+  invoiceSeq  Int      @default(0) @map("invoice_seq")
+  quoteSeq    Int      @default(0) @map("quote_seq")
+  receiptSeq  Int      @default(0) @map("receipt_seq")
+  deliveryOrderSeq Int @default(0) @map("delivery_order_seq")
+  
+  // Prefixes
+  invoicePrefix String? @map("invoice_prefix")
+  quotePrefix   String? @map("quote_prefix")
+  receiptPrefix String? @map("receipt_prefix")
+  deliveryOrderPrefix String? @map("delivery_order_prefix")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tempId     Int
+  is_default Boolean @default(false)
+
+  // Relations
+  invoices    Invoice[]
+  receipts    Receipt[]
+  quotes      Quote[]
+  deliveryOrders DeliveryOrder[]
+
+  @@map("companies")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  username  String   @unique
+  email     String   @unique
+  password  String
+  role      UserRole @default(USER)
+  isActive  Boolean  @default(true) @map("is_active")
+  lastLogin DateTime? @map("last_login")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  invoices  Invoice[]
+  receipts  Receipt[]
+  quotes    Quote[]
+  deliveryOrders DeliveryOrder[]
+
+  @@map("users")
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  tempId    Int
+  short     String?
+  name      String
+  email     String?
+  phone     String?
+  mobile    String?
+  address   String?
+  attn      String?
+  taxNumber String?  @map("tax_number")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  invoices  Invoice[]
+  receipts  Receipt[]
+  quotes    Quote[]
+  payments  Payment[]
+  debtors   Debtor[]
+  deliveryOrders DeliveryOrder[]
+
+  @@map("customers")
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  taxNumber String?  @map("tax_number")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  debtors   Debtor[]
+
+  @@map("suppliers")
+}
+
+model Quote {
+  id          String      @id @default(cuid())
+  quoteNumber String      @unique @map("quote_number")
+  date        DateTime
+  validUntil  DateTime    @map("valid_until")
+  status      QuoteStatus @default(DRAFT)
+  subject     String?     // Subject/title untuk quote
+  subtotal    Decimal     @default(0) @db.Decimal(10, 2)
+  taxAmount   Decimal     @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  total       Decimal     @default(0) @db.Decimal(10, 2)
+  notes       String?
+  
+  // Detail fields - JSON untuk menyimpan array of items
+  items       Json?       // Array of {description, quantity, unitPrice, amount}
+  
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // Foreign Keys
+  companyId   String      @map("company_id")
+  userId      String      @map("user_id")
+  customerId  String      @map("customer_id")
+
+  // Relations
+  company     Company     @relation(fields: [companyId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+  customer    Customer    @relation(fields: [customerId], references: [id])
+  invoices    Invoice[]   // Invoice yang di-generate dari quote ini
+
+  @@map("quotes")
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique @map("invoice_number")
+  date          DateTime
+  dueDate       DateTime      @map("due_date")
+  status        InvoiceStatus @default(DRAFT)
+  subject       String?       // Subject/title untuk invoice
+  subtotal      Decimal       @default(0) @db.Decimal(10, 2)
+  taxAmount     Decimal       @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  total         Decimal       @default(0) @db.Decimal(10, 2)
+  paidAmount    Decimal       @default(0) @map("paid_amount") @db.Decimal(10, 2)
+  notes         String?
+  
+  // Detail fields - JSON untuk menyimpan array of items
+  items         Json?         // Array of {description, quantity, unitPrice, amount}
+  
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // Foreign Keys
+  companyId     String        @map("company_id")
+  userId        String        @map("user_id")
+  customerId    String        @map("customer_id")
+  quoteId       String?       @map("quote_id") // Optional: jika invoice dibuat dari quote
+
+  // Relations
+  company       Company       @relation(fields: [companyId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  quote         Quote?        @relation(fields: [quoteId], references: [id])
+  payments      Payment[]
+  debtors       Debtor[]
+  deliveryOrders DeliveryOrder[]
+
+  @@map("invoices")
+}
+
+model Receipt {
+  id            String        @id @default(cuid())
+  receiptNumber String        @unique @map("receipt_number")
+  date          DateTime
+  status        ReceiptStatus @default(DRAFT)
+  subject       String?       // Subject/title untuk receipt
+  subtotal      Decimal       @default(0) @db.Decimal(10, 2)
+  taxAmount     Decimal       @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  total         Decimal       @default(0) @db.Decimal(10, 2)
+  notes         String?
+  
+  // Detail fields - JSON untuk menyimpan array of items
+  items         Json?         // Array of {description, quantity, unitPrice, amount}
+  
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // Foreign Keys
+  companyId     String        @map("company_id")
+  userId        String        @map("user_id")
+  customerId    String        @map("customer_id")
+
+  // Relations
+  company       Company       @relation(fields: [companyId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  payments      Payment[]
+  debtors       Debtor[]
+
+  @@map("receipts")
+}
+
+
+model Payment {
+  id          String        @id @default(cuid())
+  amount      Decimal       @db.Decimal(10, 2)
+  method      PaymentMethod @default(CASH)
+  reference   String?       // Reference number untuk bank transfer, cheque, dll
+  date        DateTime
+  notes       String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  // Foreign Keys
+  customerId  String        @map("customer_id")
+  invoiceId   String?       @map("invoice_id")
+  receiptId   String?       @map("receipt_id")
+
+  // Relations
+  customer    Customer      @relation(fields: [customerId], references: [id])
+  invoice     Invoice?      @relation(fields: [invoiceId], references: [id])
+  receipt     Receipt?      @relation(fields: [receiptId], references: [id])
+
+  @@map("payments")
+}
+
+model Debtor {
+  id          String      @id @default(cuid())
+  amount      Decimal     @db.Decimal(10, 2)
+  dueDate     DateTime    @map("due_date")
+  status      DebtorStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // Foreign Keys
+  customerId  String?     @map("customer_id")
+  supplierId  String?     @map("supplier_id")
+  invoiceId   String?     @map("invoice_id")
+  receiptId   String?     @map("receipt_id")
+
+  // Relations
+  customer    Customer?   @relation(fields: [customerId], references: [id])
+  supplier    Supplier?   @relation(fields: [supplierId], references: [id])
+  invoice     Invoice?    @relation(fields: [invoiceId], references: [id])
+  receipt     Receipt?    @relation(fields: [receiptId], references: [id])
+
+  @@map("debtors")
+}
+
+model DeliveryOrder {
+  id              String              @id @default(cuid())
+  doNumber        String              @unique @map("do_number")
+  date            DateTime
+  deliveryDate    DateTime            @map("delivery_date")
+  status          DeliveryOrderStatus @default(DRAFT)
+  subtotal        Decimal             @default(0) @db.Decimal(10, 2)
+  taxAmount       Decimal             @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  total           Decimal             @default(0) @db.Decimal(10, 2)
+  deliveryAddress String?             @map("delivery_address")
+  contactPerson   String?             @map("contact_person")
+  contactPhone    String?             @map("contact_phone")
+  notes           String?
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  // Foreign Keys
+  companyId       String              @map("company_id")
+  userId          String              @map("user_id")
+  customerId      String              @map("customer_id")
+  invoiceId       String?             @map("invoice_id") // Optional: jika DO dibuat dari invoice
+
+  // Relations
+  company         Company             @relation(fields: [companyId], references: [id])
+  user            User                @relation(fields: [userId], references: [id])
+  customer        Customer            @relation(fields: [customerId], references: [id])
+  invoice         Invoice?            @relation(fields: [invoiceId], references: [id])
+  details         DeliveryDetail[]
+
+  @@map("delivery_orders")
+}
+
+model DeliveryDetail {
+  id              String        @id @default(cuid())
+  description     String
+  quantity        Decimal       @default(1) @db.Decimal(10, 2)
+  unitPrice       Decimal       @map("unit_price") @db.Decimal(10, 2)
+  amount          Decimal       @db.Decimal(10, 2)
+  deliveredQty    Decimal       @default(0) @map("delivered_qty") @db.Decimal(10, 2)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // Foreign Keys
+  deliveryOrderId String        @map("delivery_order_id")
+
+  // Relations
+  deliveryOrder   DeliveryOrder @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_details")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  USER
+  VIEWER
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  DUMMY
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+  DUMMY
+}
+
+enum ReceiptStatus {
+  DRAFT
+  ISSUED
+  CANCELLED
+  UNPAID
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CHEQUE
+  CREDIT_CARD
+  DEBIT_CARD
+  EWALLET
+}
+
+enum DebtorStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum DeliveryOrderStatus {
+  DRAFT
+  CONFIRMED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}

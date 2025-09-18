@@ -1,0 +1,115 @@
+import React, { useState } from 'react'
+import StandardForm from './StandardForm'
+
+const StandardFormDemo = () => {
+  const [showDemo, setShowDemo] = useState(false)
+
+  // Mock data
+  const customers = [
+    { id: 1, name: 'Syarikat ABC Sdn Bhd' },
+    { id: 2, name: 'XYZ Enterprise' },
+    { id: 3, name: 'Tech Solutions Sdn Bhd' }
+  ]
+
+  const companies = [
+    { id: 1, name: 'Mahsoft Sdn Bhd' },
+    { id: 2, name: 'Digital Solutions' }
+  ]
+
+  const handleSubmit = (formData) => {
+    console.log('Form submitted:', formData)
+    alert('Form berjaya disimpan! Lihat console untuk data yang dihantar.')
+  }
+
+  const handleCancel = () => {
+    setShowDemo(false)
+  }
+
+  if (!showDemo) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">
+          Demo StandardForm dengan DescriptionField
+        </h1>
+
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">
+            Ciri-ciri DescriptionField dalam StandardForm:
+          </h2>
+          <ul className="list-disc list-inside space-y-2 text-gray-600">
+            <li><strong>Field Notes:</strong> Menggunakan variant "simple" untuk catatan tambahan</li>
+            <li><strong>Item Description:</strong> Menggunakan variant "structured" untuk penerangan item yang terstruktur</li>
+            <li><strong>Preview Mode:</strong> Boleh preview hasil sebelum simpan</li>
+            <li><strong>Bold Text:</strong> Menyokong format **text** untuk bold</li>
+            <li><strong>Structured Layout:</strong> Tajuk dan item di bawahnya dengan bullet point</li>
+          </ul>
+        </div>
+
+        <div className="bg-blue-50 p-6 rounded-lg mb-6">
+          <h3 className="font-semibold text-blue-800 mb-2">Contoh Input untuk Item Description:</h3>
+          <pre className="text-sm text-blue-700 whitespace-pre-wrap">
+{`**Spesifikasi Laptop**
+Processor: Intel Core i7-12700H
+RAM: 16GB DDR4
+Storage: 512GB NVMe SSD
+Graphics: NVIDIA RTX 3060
+
+**Aksesori Termasuk**
+Charger 90W
+Mouse wireless
+Laptop bag
+Warranty card`}
+          </pre>
+        </div>
+
+        <div className="bg-green-50 p-6 rounded-lg mb-6">
+          <h3 className="font-semibold text-green-800 mb-2">Contoh Input untuk Notes:</h3>
+          <pre className="text-sm text-green-700 whitespace-pre-wrap">
+{`**Terma & Syarat**
+- Pembayaran dalam tempoh 30 hari
+- Warranty 1 tahun
+- Support teknikal 24/7
+
+**Nota Penting**
+Sila pastikan alamat penghantaran adalah betul sebelum proses pembayaran.`}
+          </pre>
+        </div>
+
+        <button
+          onClick={() => setShowDemo(true)}
+          className="w-full bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 transition-colors font-semibold"
+        >
+          Buka Demo StandardForm
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-7xl mx-auto py-6">
+        <div className="mb-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-800">
+            Demo StandardForm dengan DescriptionField
+          </h1>
+          <button
+            onClick={() => setShowDemo(false)}
+            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+          >
+            Tutup Demo
+          </button>
+        </div>
+        
+        <StandardForm
+          type="invoice"
+          customers={customers}
+          companies={companies}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
+      </div>
+    </div>
+  )
+}
+
+export default StandardFormDemo

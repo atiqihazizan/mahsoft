@@ -1,0 +1,377 @@
+import React, { useState } from 'react'
+import { CurrencyFormat, DateFormat } from './index'
+
+const InvoicePreviewDemo = () => {
+  const [showPreview, setShowPreview] = useState(false)
+
+  // Mock data untuk invoice
+  const invoiceData = {
+    invoiceNumber: 'INV-2024-001',
+    date: '2024-01-15',
+    dueDate: '2024-02-15',
+    customer: {
+      name: 'ISMAWADEE Sdn Bhd',
+      address: 'No. 123, Jalan Teknologi, 47810 Petaling Jaya, Selangor',
+      phone: '+60 3-1234 5678',
+      email: 'info@ismawadee.com'
+    },
+    company: {
+      name: 'Mahsoft Sdn Bhd',
+      address: 'No. 456, Jalan Digital, 50000 Kuala Lumpur',
+      phone: '+60 3-8765 4321',
+      email: 'info@mahsoft.com'
+    },
+    items: [
+      {
+        id: 1,
+        description: `**Membangunkan sistem untuk pengurusan ISMAWADEE secara online**
+• Menghasilkan Audit Working Paper
+• Menghasilkan Balance Sheet
+• Memudahkan untuk membuat semakan, pengesahan dan kelulusan bagi pihak atasan secaran online tanpa dimuaturun dokumen tersebut
+• Menyimpan rekod yang sudah diluluskan
+• Memudahkan untuk membuat pencarian rekod yang selesai atau belum selesai mengikut tarikh atau nama pelanggan
+• Membuat cetakan secara online`,
+        quantity: 1,
+        unitPrice: 13000.00,
+        amount: 13000.00
+      },
+      {
+        id: 2,
+        description: `**Perkhidmatan dan selenggara selama 12 bulan**
+• Sewaan domain dan hosting untuk tahunan bertujuan bagi menjalankan sistem tersebut secara online
+• Membuat latihan kepada penggunaan
+• Membantu pengguna keyin rekod
+• Membuat pemantauan untuk memastikan proses work flow berjalan mengikut keperluan pengguna
+• Membuat backup database sebulan sekali atau mengikut keperluan pengguna
+• Menyediakan khidmat perunding untuk menaiktaraf cara kerja yang lebih cekap`,
+        quantity: 1,
+        unitPrice: 12000.00,
+        amount: 12000.00
+      }
+    ],
+    subtotal: 25000.00,
+    taxRate: 6,
+    taxAmount: 1500.00,
+    total: 26500.00,
+    notes: `**Terma & Syarat Pembayaran**
+• Pembayaran dalam tempoh 30 hari dari tarikh invoice
+• Bayaran melalui bank transfer atau cek
+• _Nota:_ Sila pastikan nombor rujukan invoice disertakan dalam pembayaran
+
+**Warranty & Support**
+• `Warranty` 1 tahun penuh untuk sistem
+• Support teknikal 24/7 melalui email dan telefon
+• ~Latihan tambahan~ *Latihan percuma* untuk 5 pengguna pertama`
+  }
+
+  // Function to render structured description
+  const renderStructuredDescription = (text) => {
+    if (!text) return ''
+    
+    const lines = text.split('\n').filter(line => line.trim())
+    const parsed = []
+    let currentTitle = null
+    
+    lines.forEach((line, index) => {
+      const trimmedLine = line.trim()
+      
+      // Check if line is a title (bold text)
+      if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
+        // This is a title
+        currentTitle = {
+          title: trimmedLine.slice(2, -2),
+          items: []
+        }
+        parsed.push(currentTitle)
+      } else if (currentTitle) {
+        // This is an item under current title
+        currentTitle.items.push(trimmedLine)
+      } else {
+        // This is a standalone item
+        parsed.push({
+          title: null,
+          items: [trimmedLine]
+        })
+      }
+    })
+    
+    return parsed
+  }
+
+  // Function to render WhatsApp formatted text
+  const renderWhatsAppText = (text) => {
+    if (!text) return ''
+    
+    return text.split('\n').map((line, lineIndex) => {
+      // Process each line for formatting
+      const patterns = [
+        { regex: /\*\*([^*]+)\*\*/g, type: 'bold' },
+        { regex: /\*([^*]+)\*/g, type: 'italic' },
+        { regex: /~~([^~]+)~~/g, type: 'strikethrough' },
+        { regex: /`([^`]+)`/g, type: 'monospace' }
+      ]
+      
+      const matches = []
+      patterns.forEach(pattern => {
+        let match
+        while ((match = pattern.regex.exec(line)) !== null) {
+          matches.push({
+            start: match.index,
+            end: match.index + match[0].length,
+            text: match[1],
+            type: pattern.type
+          })
+        }
+      })
+      
+      // Sort matches by start position
+      matches.sort((a, b) => a.start - b.start)
+      
+      // Remove overlapping matches
+      const filteredMatches = []
+      let lastEnd = 0
+      matches.forEach(match => {
+        if (match.start >= lastEnd) {
+          filteredMatches.push(match)
+          lastEnd = match.end
+        }
+      })
+      
+      // Build the line with formatting
+      const parts = []
+      let currentIndex = 0
+      
+      filteredMatches.forEach(match => {
+        // Add text before the match
+        if (match.start > currentIndex) {
+          parts.push(line.substring(currentIndex, match.start))
+        }
+        
+        // Add the formatted text
+        const className = {
+          bold: 'font-bold',
+          italic: 'italic',
+          strikethrough: 'line-through',
+          monospace: 'font-mono bg-gray-100 px-1 rounded text-xs'
+        }[match.type] || ''
+        
+        parts.push(
+          <span key={`${lineIndex}-${match.start}`} className={className}>
+            {match.text}
+          </span>
+        )
+        
+        currentIndex = match.end
+      })
+      
+      // Add remaining text
+      if (currentIndex < line.length) {
+        parts.push(line.substring(currentIndex))
+      }
+      
+      return (
+        <div key={lineIndex} className="mb-1">
+          {parts.length > 0 ? parts : line}
+        </div>
+      )
+    })
+  }
+
+  if (!showPreview) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">
+          Preview Invoice dengan DescriptionField
+        </h1>
+
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">
+            Contoh Invoice dengan Format Structured Description
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Invoice ini menunjukkan penggunaan DescriptionField variant "structured" untuk item description
+            dan variant "whatsapp" untuk notes, menghasilkan format yang profesional dan mudah dibaca.
+          </p>
+          
+          <div className="bg-blue-50 p-4 rounded-md mb-4">
+            <h3 className="font-semibold text-blue-800 mb-2">Format yang Digunakan:</h3>
+            <ul className="text-sm text-blue-700 space-y-1">
+              <li>• <strong>Item Description:</strong> Variant "structured" dengan **Tajuk** dan bullet points</li>
+              <li>• <strong>Notes:</strong> Variant "whatsapp" dengan *bold*, _italic_, ~strikethrough~, `monospace`</li>
+            </ul>
+          </div>
+
+          <button
+            onClick={() => setShowPreview(true)}
+            className="w-full bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 transition-colors font-semibold"
+          >
+            Lihat Preview Invoice
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 py-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-800">
+            Preview Invoice dengan DescriptionField
+          </h1>
+          <button
+            onClick={() => setShowPreview(false)}
+            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+          >
+            Kembali
+          </button>
+        </div>
+
+        {/* Invoice Preview */}
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          {/* Header */}
+          <div className="bg-blue-600 text-white p-8">
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold">INVOICE</h1>
+                <p className="text-blue-100 mt-2">Invoice Number: {invoiceData.invoiceNumber}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-blue-100">Date: <DateFormat date={invoiceData.date} /></p>
+                <p className="text-blue-100">Due Date: <DateFormat date={invoiceData.dueDate} /></p>
+              </div>
+            </div>
+          </div>
+
+          {/* Company & Customer Info */}
+          <div className="p-8 border-b">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-2">Bill To:</h3>
+                <div className="text-gray-600">
+                  <p className="font-medium">{invoiceData.customer.name}</p>
+                  <p>{invoiceData.customer.address}</p>
+                  <p>Tel: {invoiceData.customer.phone}</p>
+                  <p>Email: {invoiceData.customer.email}</p>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-2">From:</h3>
+                <div className="text-gray-600">
+                  <p className="font-medium">{invoiceData.company.name}</p>
+                  <p>{invoiceData.company.address}</p>
+                  <p>Tel: {invoiceData.company.phone}</p>
+                  <p>Email: {invoiceData.company.email}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Items Table */}
+          <div className="p-8">
+            <h3 className="font-semibold text-gray-700 mb-4">Items & Services</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Description</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700 w-24">Qty</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-700 w-32">Unit Price</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-700 w-32">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoiceData.items.map((item, index) => {
+                    const parsedDescription = renderStructuredDescription(item.description)
+                    return (
+                      <tr key={item.id} className="border-b">
+                        <td className="py-4 px-4">
+                          <div className="space-y-2">
+                            {parsedDescription.map((section, sectionIndex) => (
+                              <div key={sectionIndex}>
+                                {section.title && (
+                                  <p className="font-bold text-gray-800 mb-1">{section.title}</p>
+                                )}
+                                {section.items.map((itemText, itemIndex) => (
+                                  <p key={itemIndex} className="text-gray-700 ml-2 text-sm">
+                                    • {itemText}
+                                  </p>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="text-center py-4 px-4">{item.quantity}</td>
+                        <td className="text-right py-4 px-4">
+                          <CurrencyFormat amount={item.unitPrice} />
+                        </td>
+                        <td className="text-right py-4 px-4 font-medium">
+                          <CurrencyFormat amount={item.amount} />
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Totals */}
+          <div className="p-8 bg-gray-50">
+            <div className="max-w-md ml-auto">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Subtotal:</span>
+                  <span><CurrencyFormat amount={invoiceData.subtotal} /></span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Tax ({invoiceData.taxRate}%):</span>
+                  <span><CurrencyFormat amount={invoiceData.taxAmount} /></span>
+                </div>
+                <div className="flex justify-between text-lg font-bold border-t pt-2">
+                  <span>Total:</span>
+                  <span><CurrencyFormat amount={invoiceData.total} /></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div className="p-8 border-t">
+            <h3 className="font-semibold text-gray-700 mb-4">Notes & Terms</h3>
+            <div className="text-gray-700">
+              {renderWhatsAppText(invoiceData.notes)}
+            </div>
+          </div>
+        </div>
+
+        {/* Format Info */}
+        <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
+          <h3 className="font-semibold text-gray-700 mb-4">Format yang Digunakan dalam Invoice Ini:</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-medium text-gray-600 mb-2">Item Description (Structured):</h4>
+              <pre className="text-xs bg-gray-100 p-3 rounded whitespace-pre-wrap">
+{`**Tajuk Perkhidmatan**
+• Ciri-ciri 1
+• Ciri-ciri 2
+• Ciri-ciri 3`}
+              </pre>
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-600 mb-2">Notes (WhatsApp):</h4>
+              <pre className="text-xs bg-gray-100 p-3 rounded whitespace-pre-wrap">
+{`*Bold text*
+_Italic text_
+~Strikethrough~
+`Monospace`}
+              </pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default InvoicePreviewDemo

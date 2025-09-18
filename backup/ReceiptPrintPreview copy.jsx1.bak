@@ -1,0 +1,117 @@
+import React, { useEffect, useRef, useState } from 'react'
+import { PrintPreview } from '../components'
+import { useParams } from 'react-router-dom'
+import { receiptsAPI } from '../utils/apiClient'
+
+const ReceiptPrintPreview = () => {
+  const { id } = useParams()
+  const [receiptData, setReceiptData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const hasFetchedRef = useRef(false)
+
+  useEffect(() => {
+    const fetchReceipt = async () => {
+      setLoading(true)
+      if (!id) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const res = await receiptsAPI.getById(id)
+        if (!res?.success || !res?.data) {
+          setReceiptData(null)
+          setLoading(false)
+          return
+        }
+
+        const rec = res.data
+        setReceiptData({
+          receiptNumber: rec.receiptNumber || '',
+          status: (rec.status || '').toLowerCase(),
+          date: rec.date ? new Date(rec.date).toISOString().slice(0, 10) : '',
+          company: {
+            name: rec.company?.name || '',
+            registration: rec.company?.registration || '',
+            address: rec.company?.address || '',
+            email: rec.company?.email || '',
+            phone: rec.company?.phone || '',
+            manager: rec.company?.manager || ''
+          },
+          customer: {
+            name: rec.customer?.name || '',
+            address: rec.customer?.address || '',
+            phone: rec.customer?.phone || '',
+            mobile: rec.customer?.mobile || '',
+            attention: rec.customer?.attn || ''
+          },
+          items: Array.isArray(rec.items) && rec.items.length > 0
+            ? rec.items.map((item, index) => ({
+              id: item.id || index + 1,
+              description: item.description || '',
+              unitPrice: parseFloat(item.unitPrice ?? item.price ?? 0),
+              quantity: parseFloat(item.quantity ?? 0),
+              amount: parseFloat(
+                item.amount ?? (
+                  (parseFloat(item.quantity ?? 0) * parseFloat(item.unitPrice ?? item.price ?? 0))
+                )
+              )
+            }))
+            : [],
+          subtotal: rec.subtotal != null ? parseFloat(rec.subtotal) : 0,
+          tax: rec.taxAmount != null ? parseFloat(rec.taxAmount) : 0,
+          total: rec.total != null ? parseFloat(rec.total) : 0,
+          bank: {
+            accountNumber: rec.company?.bankacc || '',
+            bankName: rec.company?.bankname || '',
+            accountHolder: rec.company?.bankholder || ''
+          },
+          issuedBy: rec.company?.manager || '',
+          notes: rec.notes || ''
+        })
+      } catch (error) {
+        setReceiptData(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (hasFetchedRef.current) return
+    hasFetchedRef.current = true
+    fetchReceipt()
+  }, [id])
+
+  const isActive = ['draft', 'issued'].includes(receiptData?.status)
+
+  return (
+    <PrintPreview
+      documentType="RECEIPT"
+      customer={{
+        name: receiptData?.customer?.name || '',
+        address: receiptData?.customer?.address || '',
+        phone: receiptData?.customer?.phone || '',
+        mobile: receiptData?.customer?.mobile || '',
+        attn: receiptData?.customer?.attention || ''
+      }}
+      documentNumber={receiptData?.receiptNumber || ''}
+      date={receiptData?.date || ''}
+      validUntil=""
+      items={receiptData?.items || []}
+      subtotal={receiptData?.subtotal || 0}
+      tax={receiptData?.tax || 0}
+      total={receiptData?.total || 0}
+      company={receiptData?.company || {}}
+      bank={receiptData?.bank || {}}
+      issuedBy={receiptData?.issuedBy || receiptData?.company?.manager || ''}
+      notes={receiptData?.notes || ''}
+      onEdit={() => window.location.href = `/receipts/${id}/edit`}
+      showEditButton={isActive}
+      loading={loading}
+      error={!loading && !receiptData ? 'Receipt not found' : null}
+    />
+  )
+}
+
+export default ReceiptPrintPreview
+
+

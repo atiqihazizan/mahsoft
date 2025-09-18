@@ -1,0 +1,49 @@
+const { PrismaClient } = require('@prisma/client');
+const receipts = require('../data/receipts');
+
+const prisma = new PrismaClient();
+
+async function seedReceipts() {
+  console.log('🧾 Seeding receipts...');
+  
+  // Get first company, user, and customer for receipts
+  const company = await prisma.company.findFirst();
+  const user = await prisma.user.findFirst();
+  const customer = await prisma.customer.findFirst();
+  
+  if (!company || !user || !customer) {
+    console.log('❌ Company, user, or customer not found. Please seed them first.');
+    return;
+  }
+  
+  for (const receiptData of receipts) {
+    const { details, ...receiptInfo } = receiptData;
+    
+    await prisma.receipt.upsert({
+      where: { receiptNumber: receiptInfo.receiptNumber },
+      update: {
+        ...receiptInfo,
+        companyId: company.id,
+        userId: user.id,
+        customerId: customer.id,
+        details: {
+          deleteMany: {},
+          create: details
+        }
+      },
+      create: {
+        ...receiptInfo,
+        companyId: company.id,
+        userId: user.id,
+        customerId: customer.id,
+        details: {
+          create: details
+        }
+      }
+    });
+  }
+  
+  console.log(`✅ ${receipts.length} receipts seeded`);
+}
+
+module.exports = seedReceipts;

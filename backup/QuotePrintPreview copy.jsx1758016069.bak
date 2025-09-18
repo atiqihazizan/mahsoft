@@ -1,0 +1,280 @@
+import React, { useState } from 'react'
+import { CurrencyFormat, DateFormat } from '../components/index'
+import '../styles/print.css'
+import logoImage from '../assets/logo/logo.png'
+
+const QuotePrintPreview = () => {
+  const [quoteData, setQuoteData] = useState({
+    quoteNumber: 'QUO-2024-001',
+    date: '2024-12-19',
+    validUntil: '2025-01-19',
+    company: {
+      name: 'MAHSOFT Engineering',
+      registration: '(003198940-K)',
+      address: 'No 3436 Mukim 9, Kampung Tok Elong, Tanah Liat,\n14000 Bukit Mertajam, Pulau Pinang',
+      email: 'aqi852000@gmail.com',
+      phone: '018 766 9492'
+    },
+    customer: {
+      name: 'CL SOLUTION SDN BHD',
+      address: '2-4-37, Wisma Rampai\nJalan 34/26. Taman Sri Rampai\n53300 Kuala Lumpur',
+      phone: '0341492414',
+      mobile: '011588975586',
+      attention: 'Mohd Nasir Mohamed Yunus'
+    },
+    items: [
+      {
+        id: 1,
+        description: 'Website Development Package',
+        unitPrice: 15000.00,
+        quantity: 1,
+        amount: 15000.00
+      },
+      {
+        id: 2,
+        description: 'E-commerce Integration',
+        unitPrice: 8000.00,
+        quantity: 1,
+        amount: 8000.00
+      }
+    ],
+    subtotal: 23000.00,
+    tax: 1380.00,
+    total: 24380.00,
+    bank: {
+      accountNumber: '557344079235',
+      bankName: 'Maybank Berhad',
+      accountHolder: 'Mahsoft Engineering Enterprise'
+    },
+    issuedBy: 'Muhammad Atiqi Hazizan',
+    notes: 'Quote ini sah selama 30 hari dari tarikh dikeluarkan. Harga termasuk GST 6%.'
+  })
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Print Controls */}
+      <div className="bg-white shadow-sm border-b p-4 print:hidden">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <h1 className="text-xl font-bold text-gray-800">Quote Print Preview</h1>
+          <div className="flex space-x-2">
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+            >
+              🖨️ Print Quote
+            </button>
+            <button
+              onClick={() => window.history.back()}
+              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+            >
+              ← Kembali
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Print Content */}
+      <div className="paper A4">
+        <div className="sheet" style={{margin: 'auto', padding: '10mm', height: 'auto', minHeight: '148mm'}}>
+          {/* Letter Head */}
+          <div className="letter-head">
+            <table>
+              <tbody>
+                <tr>
+                  <td>
+                    <img src={logoImage} alt="Mahsoft Logo" style={{height: '72px'}} />
+                  </td>
+                  <td>
+                    <div>
+                      <h4 className="font-audiowide display-inline" style={{marginRight: '0.2rem'}}>
+                        {quoteData.company.name}
+                      </h4>
+                      <small>({quoteData.company.registration})</small>
+                    </div>
+                    <div>
+                      <p style={{fontSize: '0.7rem'}} className="pre">
+                        {quoteData.company.address}
+                      </p>
+                      <p style={{fontSize: '0.7rem', display: 'flex', marginTop: '3px'}}>
+                        <span style={{marginRight: '1rem'}}>
+                          Email&nbsp;:&nbsp;{quoteData.company.email}
+                        </span>
+                        <span>H/P&nbsp;:&nbsp;{quoteData.company.phone}</span>
+                      </p>
+                    </div>
+                  </td>
+                  <td>
+                    <h4 className="weight-600 font-audiowide text-end">QUOTATION</h4>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Client Info */}
+          <div className="clientinfo" style={{marginTop: '1.5rem', marginBottom: '1.5rem'}}>
+            <table>
+              <tbody>
+                <tr>
+                  <td>
+                    <p className="weight-600" style={{marginBottom: '.3rem'}}>
+                      {quoteData.customer.name}
+                    </p>
+                    <p className="pre" style={{margin: '0', minHeight: '1rem'}}>
+                      {quoteData.customer.address}
+                      <br /><br />
+                      Tel : {quoteData.customer.phone}
+                      <br />
+                      H/p : {quoteData.customer.mobile}
+                    </p>
+                    <p className="weight-600 mt-2 mb-0">
+                      Attn: {quoteData.customer.attention}
+                    </p>
+                  </td>
+                  <td style={{width: '20%'}}>
+                    <table>
+                      <tbody>
+                        <tr>
+                          <td>Quote No</td>
+                          <td>:</td>
+                          <td className="weight-600 text-end">{quoteData.quoteNumber}</td>
+                        </tr>
+                        <tr>
+                          <td>Date</td>
+                          <td>:</td>
+                          <td className="text-end">
+                            <DateFormat date={quoteData.date} />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Valid Until</td>
+                          <td>:</td>
+                          <td className="text-end">
+                            <DateFormat date={quoteData.validUntil} />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <hr style={{borderBottom: '1px solid black'}} />
+
+          {/* Items Section */}
+          <div className="issuance" style={{minHeight: '100px'}}>
+            <table className="header" style={{marginBottom: '1.2rem'}}>
+              <tbody>
+                <tr>
+                  <th>Service Description</th>
+                  <th>UPrice</th>
+                  <th>Qty</th>
+                  <th>Amount</th>
+                </tr>
+              </tbody>
+            </table>
+
+            <table className="rowbody">
+              <tbody>
+                {quoteData.items.map((item, index) => (
+                  <React.Fragment key={item.id}>
+                    <tr className="fwb">
+                      <td>{item.description}</td>
+                      <td className="text-end">
+                        <CurrencyFormat amount={item.unitPrice} />
+                      </td>
+                      <td className="text-center">{item.quantity}</td>
+                      <td className="text-end">
+                        <CurrencyFormat amount={item.amount} />
+                      </td>
+                    </tr>
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <hr style={{borderBottom: '1px solid black'}} />
+
+          {/* Footer */}
+          <div className="footer-bottom">
+            <table className="table-signature">
+              <tbody>
+                <tr style={{display: 'flex'}}>
+                  <td style={{alignSelf: 'center'}}>
+                    <table className="bank-info">
+                      <tbody>
+                        <tr>
+                          <td>Acc No.</td>
+                          <td>:</td>
+                          <td>{quoteData.bank.accountNumber}</td>
+                        </tr>
+                        <tr>
+                          <td>Acc Name</td>
+                          <td>:</td>
+                          <td>{quoteData.bank.bankName}</td>
+                        </tr>
+                        <tr>
+                          <td>Acc Holder</td>
+                          <td>:</td>
+                          <td>{quoteData.bank.accountHolder}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                  <td style={{alignSelf: 'center', flex: 1}}>
+                    <div style={{margin: 'auto', width: '150px', textAlign: 'center'}}>
+                      <i>{quoteData.issuedBy}</i>
+                      <hr style={{margin: '.5rem 0', borderBottom: '1px solid black'}} />
+                      Issued By
+                    </div>
+                  </td>
+                  <td style={{width: '25.33%'}}>
+                    <table className="inv-amt" style={{width: 'auto', marginLeft: 'auto'}}>
+                      <tbody>
+                        <tr>
+                          <td>Subtotal</td>
+                          <td className="text-end">
+                            <CurrencyFormat amount={quoteData.subtotal} />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>GST (6%)</td>
+                          <td className="text-end">
+                            <CurrencyFormat amount={quoteData.tax} />
+                          </td>
+                        </tr>
+                        <tr className="font-big">
+                          <th>Total</th>
+                          <th className="text-end" style={{width: '100px'}}>
+                            <CurrencyFormat amount={quoteData.total} />
+                          </th>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Notes */}
+          <div className="print-notes">
+            <h3>Terms & Conditions</h3>
+            <div className="remark">
+              <p>{quoteData.notes}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default QuotePrintPreview

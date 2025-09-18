@@ -1,0 +1,230 @@
+import React, { useState, useEffect } from 'react'
+import { Card } from '../components'
+import { authAPI, dashboardAPI } from '../utils/apiClient'
+import { Link } from 'react-router-dom'
+
+const Dashboard = () => {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    totalInvoices: 0,
+    totalQuotes: 0,
+    totalReceipts: 0,
+    totalCustomers: 0
+  })
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (token) {
+          // Fetch user data from API
+          const userResponse = await authAPI.getCurrentUser()
+          if (userResponse.success) {
+            setUser({
+              name: userResponse.data.name || 'Admin User',
+              role: userResponse.data.role || 'Administrator',
+              lastLogin: userResponse.data.lastLogin || new Date().toLocaleDateString('ms-MY')
+            })
+          } else {
+            // Fallback jika API gagal
+            setUser({
+              name: 'Admin User',
+              role: 'Administrator',
+              lastLogin: new Date().toLocaleDateString('ms-MY')
+            })
+          }
+          
+          // Fetch dashboard stats
+          const statsResponse = await dashboardAPI.getStats()
+          if (statsResponse.success) {
+            setStats({
+              totalInvoices: statsResponse.data.totalInvoices || 156,
+              totalQuotes: statsResponse.data.totalQuotes || 89,
+              totalReceipts: statsResponse.data.totalReceipts || 134,
+              totalCustomers: statsResponse.data.totalCustomers || 45
+            })
+          } else {
+            // Fallback stats jika API gagal
+            setStats({
+              totalInvoices: 156,
+              totalQuotes: 89,
+              totalReceipts: 134,
+              totalCustomers: 45
+            })
+          }
+        } else {
+          setUser(null)
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error)
+        // Fallback data jika ada error
+        setUser({
+          name: 'Admin User',
+          role: 'Administrator',
+          lastLogin: new Date().toLocaleDateString('ms-MY')
+        })
+        setStats({
+          totalInvoices: 156,
+          totalQuotes: 89,
+          totalReceipts: 134,
+          totalCustomers: 45
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadUserData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Memuatkan dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+            <p className="text-blue-100">
+              Selamat datang kembali, {user?.name || 'User'}! 👋
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-blue-100">Last Login</div>
+            <div className="font-semibold">{user?.lastLogin || 'N/A'}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-blue-500 text-white border-0 hover:shadow-lg transition-all duration-200 transform hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-sm font-medium">Total Invois</p>
+              <p className="text-3xl font-bold">{stats.totalInvoices}</p>
+              <p className="text-white text-opacity-80 text-xs">+12% dari bulan lepas</p>
+            </div>
+            <div className="text-4xl opacity-80">📄</div>
+          </div>
+        </Card>
+
+        <Card className="bg-green-500 text-white border-0 hover:shadow-lg transition-all duration-200 transform hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-sm font-medium">Sebut Harga</p>
+              <p className="text-3xl font-bold">{stats.totalQuotes}</p>
+              <p className="text-white text-opacity-80 text-xs">+8% dari bulan lepas</p>
+            </div>
+            <div className="text-4xl opacity-80">💰</div>
+          </div>
+        </Card>
+
+        <Card className="bg-purple-500 text-white border-0 hover:shadow-lg transition-all duration-200 transform hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-sm font-medium">Resit</p>
+              <p className="text-3xl font-bold">{stats.totalReceipts}</p>
+              <p className="text-white text-opacity-80 text-xs">+15% dari bulan lepas</p>
+            </div>
+            <div className="text-4xl opacity-80">🧾</div>
+          </div>
+        </Card>
+
+        <Card className="bg-orange-500 text-white border-0 hover:shadow-lg transition-all duration-200 transform hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-sm font-medium">Pelanggan</p>
+              <p className="text-3xl font-bold">{stats.totalCustomers}</p>
+              <p className="text-white text-opacity-80 text-xs">+5% dari bulan lepas</p>
+            </div>
+            <div className="text-4xl opacity-80">👥</div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card title="Tindakan Pantas" className="hover:shadow-lg transition-shadow">
+          <div className="grid grid-cols-2 gap-4">
+            <Link to="/invoices" className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg text-center transition-colors block">
+              <div className="text-2xl mb-2">📄</div>
+              <div className="font-medium text-blue-800">Invois</div>
+            </Link>
+            <Link to="/quotes" className="p-4 bg-green-50 hover:bg-green-100 rounded-lg text-center transition-colors block">
+              <div className="text-2xl mb-2">💰</div>
+              <div className="font-medium text-green-800">Sebut Harga</div>
+            </Link>
+            <Link to="/receipts" className="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg text-center transition-colors block">
+              <div className="text-2xl mb-2">🧾</div>
+              <div className="font-medium text-purple-800">Resit</div>
+            </Link>
+            <button className="p-4 bg-orange-50 hover:bg-orange-100 rounded-lg text-center transition-colors">
+              <div className="text-2xl mb-2">👥</div>
+              <div className="font-medium text-orange-800">Tambah Pelanggan</div>
+            </button>
+          </div>
+        </Card>
+
+        <Card title="Aktiviti Terkini" className="hover:shadow-lg transition-shadow">
+          <div className="space-y-3">
+            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Invois INV-2024-001 dibayar</p>
+                <p className="text-xs text-gray-500">2 minit yang lalu</p>
+              </div>
+            </div>
+            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Sebut harga QT-2024-045 dicipta</p>
+                <p className="text-xs text-gray-500">15 minit yang lalu</p>
+              </div>
+            </div>
+            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+              <div className="w-2 h-2 bg-purple-500 rounded-full mr-3"></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Pelanggan baru ditambah</p>
+                <p className="text-xs text-gray-500">1 jam yang lalu</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* User Info */}
+      <Card title="Maklumat Akaun" className="bg-gray-50">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <p className="text-sm text-gray-600">Nama</p>
+            <p className="font-semibold">{user?.name || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Peranan</p>
+            <p className="font-semibold">{user?.role || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Status</p>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              Aktif
+            </span>
+          </div>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+export default Dashboard

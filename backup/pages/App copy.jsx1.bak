@@ -1,0 +1,105 @@
+import React, { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Button, Card } from './components'
+import { useAuth } from './contexts/AuthContext'
+
+function App() {
+  const navigate = useNavigate()
+  const { isLoggedIn } = useAuth()
+
+  // Redirect to login if not logged in
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate('/login', { replace: true })
+    }
+  }, [isLoggedIn, navigate])
+
+  // Show loading or redirect if not logged in
+  if (!isLoggedIn) {
+    return null
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <div className="text-center py-12 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg">
+        <h1 className="text-5xl font-bold mb-4">Mahsoft</h1>
+        <p className="text-xl mb-8 opacity-90">
+          Sistem Pengurusan Invois, Resit & Sebut Harga
+        </p>
+        <div className="flex gap-4 justify-center">
+          <Link to="/login">
+            <Button variant="outline" className="bg-white text-blue-600 hover:bg-gray-100">
+              Log Masuk
+            </Button>
+          </Link>
+          <Link to="/dashboard">
+            <Button variant="outline" className="bg-white text-blue-600 hover:bg-gray-100">
+              Dashboard
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <Card 
+          title="Invois" 
+          subtitle="Kelola invois dengan mudah"
+          className="text-center hover:shadow-lg transition-shadow"
+        >
+          <div className="text-4xl mb-4">📄</div>
+          <p className="text-gray-600">
+            Buat, edit, dan kelola invois dengan sistem yang terintegrasi
+          </p>
+        </Card>
+
+        <Card 
+          title="Resit" 
+          subtitle="Tracking pembayaran"
+          className="text-center hover:shadow-lg transition-shadow"
+        >
+          <div className="text-4xl mb-4">🧾</div>
+          <p className="text-gray-600">
+            Kelola resit pembayaran dan tracking status pembayaran
+          </p>
+        </Card>
+
+        <Card 
+          title="Sebut Harga" 
+          subtitle="Quote management"
+          className="text-center hover:shadow-lg transition-shadow"
+        >
+          <div className="text-4xl mb-4">💰</div>
+          <p className="text-gray-600">
+            Buat sebut harga dan tukar kepada invois dengan mudah
+          </p>
+        </Card>
+      </div>
+
+      {/* Tech Stack */}
+      <Card title="Teknologi" className="bg-gray-50">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div className="p-4 bg-white rounded-lg">
+            <div className="text-2xl mb-2">⚛️</div>
+            <div className="font-semibold">React 19</div>
+          </div>
+          <div className="p-4 bg-white rounded-lg">
+            <div className="text-2xl mb-2">⚡</div>
+            <div className="font-semibold">Vite</div>
+          </div>
+          <div className="p-4 bg-white rounded-lg">
+            <div className="text-2xl mb-2">🎨</div>
+            <div className="font-semibold">Tailwind</div>
+          </div>
+          <div className="p-4 bg-white rounded-lg">
+            <div className="text-2xl mb-2">🔗</div>
+            <div className="font-semibold">Router</div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+export default App

@@ -1,0 +1,356 @@
+import React, { useState } from 'react'
+import { CurrencyFormat, DateFormat } from '../components/index'
+import '../styles/print.css'
+import logoImage from '../assets/logo/logo.png'
+
+const InvoicePrintPreview = () => {
+  const [invoiceData, setInvoiceData] = useState({
+    invoiceNumber: 'INV-2024-002',
+    date: '2024-12-19',
+    dueDate: '2025-01-19',
+    company: {
+      name: 'MAHSOFT Engineering',
+      registration: '(003198940-K)',
+      address: 'No 3436 Mukim 9, Kampung Tok Elong, Tanah Liat,\n14000 Bukit Mertajam, Pulau Pinang',
+      email: 'aqi852000@gmail.com',
+      phone: '018 766 9492'
+    },
+    customer: {
+      name: 'CL SOLUTION SDN BHD',
+      address: '2-4-37, Wisma Rampai\nJalan 34/26. Taman Sri Rampai\n53300 Kuala Lumpur',
+      phone: '0341492414',
+      mobile: '011588975586',
+      attention: 'Mohd Nasir Mohamed Yunus'
+    },
+    items: [
+      {
+        id: 1,
+        description: 'Website Development & Maintenance',
+        details: [
+          '- Custom website design and development',
+          '- Responsive design for all devices',
+          '- Content Management System (CMS)',
+          '- SEO optimization and setup',
+          '- 12 months hosting and maintenance',
+          '- 24/7 technical support'
+        ],
+        unitPrice: 25000.00,
+        quantity: 1,
+        amount: 25000.00
+      },
+      {
+        id: 2,
+        description: 'E-commerce Integration',
+        details: [
+          '- Payment gateway integration',
+          '- Product catalog management',
+          '- Order processing system',
+          '- Customer account management',
+          '- Analytics and reporting'
+        ],
+        unitPrice: 15000.00,
+        quantity: 1,
+        amount: 15000.00
+      },
+      {
+        id: 3,
+        description: 'Mobile App Development',
+        details: [
+          '- iOS and Android app development',
+          '- User interface design',
+          '- Backend API integration',
+          '- Push notification system',
+          '- App store submission'
+        ],
+        unitPrice: 30000.00,
+        quantity: 1,
+        amount: 30000.00
+      }
+    ],
+    subtotal: 70000.00,
+    tax: 4200.00,
+    total: 74200.00,
+    bank: {
+      accountNumber: '557344079235',
+      bankName: 'Maybank Berhad',
+      accountHolder: 'Mahsoft Engineering Enterprise'
+    },
+    issuedBy: 'Muhammad Atiqi Hazizan',
+    notes: 'Payment terms: Net 30 days. Late payment charges may apply. All prices include GST 6%.'
+  })
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  return (
+    <>
+      {/* Print Content - Modern Layout */}
+      <div className="paper A4">
+        <div className="sheet" style={{ margin: 'auto', padding: '15mm', height: 'auto', minHeight: '148mm', width: '210mm' }}>
+          {/* Header */}
+          <table style={{ width: '100%', marginBottom: '2rem' }}>
+            <tbody>
+              <tr>
+                <td style={{ textAlign: 'left', width: '80px' }}>
+                  <img src={logoImage} alt="Mahsoft Logo" style={{ height: '72px' }} />
+                </td>
+                <td style={{ textAlign: 'left', verticalAlign: 'top', }}>
+                  <div>
+                    <h1 className="font-audiowide" style={{ fontSize: '1.5rem', margin: '0', color: '#333' }}>
+                      {invoiceData.company.name}
+                      <span style={{ fontSize: '0.7rem', paddingLeft: '.5rem', color: '#666' }}>
+                        {invoiceData.company.registration}
+                      </span>
+                    </h1>
+                  </div>
+                  <div style={{ fontSize: '0.7rem' }}>
+                    <p style={{ color: '#666' }}>
+                      {invoiceData.company.address}
+                    </p>
+                    <p style={{ color: '#666', display: 'flex', gap: '1rem' }}>
+                      <span>
+                        Email: {invoiceData.company.email}
+                      </span>
+                      <span>
+                        Phone: {invoiceData.company.phone}
+                      </span>
+                    </p>
+                  </div>
+                </td>
+                <td style={{ textAlign: 'right', verticalAlign: 'top', }}>
+                  <h1 className="font-audiowide" style={{ fontSize: '1.5rem', margin: '0', color: '#333' }}>INVOICE</h1>
+                  <p style={{ fontSize: '0.9rem',fontWeight: '900', margin: '0', color: '#666' }}>
+                    # {invoiceData.invoiceNumber}
+                  </p>
+                  <p style={{ fontSize: '0.7rem', margin: '0', color: '#666' }}>
+                    Date: <DateFormat date={invoiceData.date} />
+                  </p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table style={{ width: '100%', marginBottom: '2rem' }}>
+            <tbody>
+              <tr>
+                <td valign="top" style={{ fontSize: '0.8rem', fontWeight: '600' }}>
+                    To
+                </td>
+                <td valign="top" style={{ fontSize: '0.8rem', fontWeight: '600' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: '600', display: 'block' }}>
+                    {invoiceData.customer.name}
+                  </span>
+                  <span style={{ color: '#666', fontSize: '0.7rem', display: 'block' }}>
+                    {invoiceData.customer.address}
+                  </span>
+                  <span style={{ color: '#666', display: 'flex', gap: '1rem', fontSize: '0.7rem' }}>
+                    <span>Tel: {invoiceData.customer.phone}</span>
+                    <span>Mobile: {invoiceData.customer.mobile}</span>
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td valign="top" style={{ fontSize: '0.8rem', fontWeight: '600' }}>
+                    Attn
+                </td>
+                <td style={{ fontSize: '0.8rem', fontWeight: '600' }}>
+                    {invoiceData.customer.attention}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Items Table */}
+          <div className='issuence' style={{ marginBottom: '2rem' }}>
+            <table className='header' style={{ marginBottom: '1.2rem' }}>
+              <tbody>
+                <tr >
+                  <th>Description</th>
+                  <th>Qty</th>
+                  <th>Unit Price</th>
+                  <th>Amount</th>
+                </tr>
+              </tbody>
+            </table>
+            <table className='rowbody'>
+              <tbody>
+                {invoiceData.items.map((item, index) => (
+                  <React.Fragment key={item.id}>
+                    <tr>
+                      <td>
+                        <div>
+                          <p style={{ fontWeight: '600', margin: '0 0 0.1rem 0', fontSize: '0.8rem' }}>
+                            {item.description}
+                          </p>
+                          {item.details && item.details.length > 0 && (
+                            <ul style={{ margin: '0', paddingLeft: '0rem', color: '#666', fontSize: '0.8rem' }}>
+                              {item.details.map((detail, detailIndex) => (
+                                <li key={detailIndex} style={{}}>
+                                  {detail}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        {item.quantity}
+                      </td>
+                      <td>
+                        <CurrencyFormat amount={item.unitPrice} />
+                      </td>
+                      <td>
+                        <CurrencyFormat amount={item.amount} />
+                      </td>
+                    </tr>
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <hr style={{borderBottom: '1px solid black'}} />
+          {/* Footer */}
+          <div className='footer-bottom'>
+            <table className='table-signature'>
+              <tbody>
+                <tr style={{display: 'flex'}}>
+                  <td style={{alignSelf: 'center'}}>
+                    <table className='bank-info'>
+                      <tbody>
+                        <tr>
+                          <td>Acc No.</td>
+                          <td>:</td>
+                          <td>{invoiceData.bank.accountNumber}</td>
+                        </tr>
+                        <tr>
+                          <td>Acc Name</td>
+                          <td>:</td>
+                          <td>{invoiceData.bank.bankName}</td>
+                        </tr>
+                        <tr>
+                          <td>Acc Holder</td>
+                          <td>:</td>
+                          <td>{invoiceData.bank.accountHolder}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                  <td style={{alignSelf: 'center', flex: 1}}>
+                    <div style={{margin: 'auto', width: '150px', textAlign: 'center'}}>
+                      <i>{invoiceData.issuedBy}</i>
+                      <hr style={{margin: '.5rem 0', borderBottom: '1px solid black'}} />
+                      Issued By
+                    </div>
+                  </td>
+                  <td style={{alignSelf: 'center'}}>
+                    <table className='inv-amt'>
+                      <tbody>
+                        <tr>
+                          <td>Subtotal</td>
+                          <td>{<CurrencyFormat amount={invoiceData.subtotal} />}</td>
+                        </tr>
+                        <tr>
+                          <td>Tax</td>
+                          <td>{<CurrencyFormat amount={invoiceData.tax} />}</td>
+                        </tr>
+                        <tr className='font-big'>
+                          <td style={{fontWeight: '800'}}>Total</td>
+                          <td style={{fontWeight: '800'}}>{<CurrencyFormat amount={invoiceData.total} />}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Notes */}
+          <div className='print-notes'>
+            <h3 style={{fontWeight: 'bold',fontSize: '.8rem'}}>Terms & Conditions</h3>
+            <div className='remark'>
+              <p style={{fontSize: '0.8rem'}}>{invoiceData.notes}</p>
+            </div>
+          </div>
+
+          {/* Totals */}
+          {/* <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem' }}>
+            <div style={{ width: '250px' }}>
+              <div style={{
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals */}
+          {/* <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem' }}>
+            <div style={{ width: '250px' }}>
+              <div style={{
+                background: '#fff',
+                padding: '1rem',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                  <span>Subtotal:</span>
+                  <span><CurrencyFormat amount={invoiceData.subtotal} /></span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                  <span>TAX (6%):</span>
+                  <span><CurrencyFormat amount={invoiceData.tax} /></span>
+                </div>
+                <hr style={{ border: 'none', borderTop: '2px solid #333', margin: '1rem 0' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: 'bold' }}>
+                  <span>Total:</span>
+                  <span><CurrencyFormat amount={invoiceData.total} /></span>
+                </div>
+              </div>
+            </div>
+          </div> */}
+
+          {/* Footer */}
+          {/* <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginTop: '2rem',
+            paddingTop: '2rem',
+            borderTop: '2px solid #eee'
+          }}>
+            <div style={{ background: '#fff', padding: '1rem' }}>
+              <p style={{ margin: '0.25rem 0', fontSize:'0.9rem' }}><strong>Account No:</strong> {invoiceData.bank.accountNumber}</p>
+              <p style={{ margin: '0.25rem 0', fontSize:'0.9rem' }}><strong>Bank:</strong> {invoiceData.bank.bankName}</p>
+              <p style={{ margin: '0.25rem 0', fontSize:'0.9rem' }}><strong>Account Holder:</strong> {invoiceData.bank.accountHolder}</p>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ marginBottom: '2rem' }}>
+                <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#666' }}>
+                  Thank you for your business!
+                </p>
+                <div style={{  }}>
+                  <p style={{ margin: '0', fontWeight: 'bold', fontStyle: 'italic', fontSize: '0.8rem' }}>{invoiceData.issuedBy}</p>
+                  <hr style={{ border: 'none', borderTop: '2px solid #333', margin: '.3rem 0' }} />
+                  <p style={{ margin: '0', fontSize: '0.9rem', color: '#666' }}>Issued By</p>
+                </div>
+              </div>
+            </div>
+          </div> */}
+
+          {/* Notes */}
+          {/* <div style={{
+            background: '#fff',
+            padding: '1.5rem',
+            border: '1px solid #ddd',
+            marginTop: '2rem'
+          }}>
+            <h4 style={{ color: '#333', marginBottom: '1rem', fontWeight: 'bold' }}>Terms & Conditions</h4>
+            <p style={{ margin: '0', color: '#666', lineHeight: '1.6' }}>
+              {invoiceData.notes}
+            </p>
+          </div> */}
+        </div>
+      </div>
+    </>
+  )
+}
+
+export default InvoicePrintPreview

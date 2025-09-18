@@ -1,0 +1,175 @@
+import React, { useState } from 'react'
+import { 
+  CustomerField, 
+  CompanyField, 
+  DateField, 
+  TextField, 
+  NumberField, 
+  DescriptionField 
+} from './FormFields'
+
+const InvoiceFormExample = () => {
+  const [formData, setFormData] = useState({
+    customerId: '',
+    companyId: '',
+    invoiceDate: '',
+    dueDate: '',
+    invoiceNumber: '',
+    description: '',
+    structuredDescription: '',
+    amount: '',
+    taxRate: ''
+  })
+
+  const [errors, setErrors] = useState({})
+
+  // Mock data
+  const customers = [
+    { id: 1, name: 'Syarikat ABC Sdn Bhd' },
+    { id: 2, name: 'XYZ Enterprise' },
+    { id: 3, name: 'Tech Solutions Sdn Bhd' }
+  ]
+
+  const companies = [
+    { id: 1, name: 'Mahsoft Sdn Bhd' },
+    { id: 2, name: 'Digital Solutions' }
+  ]
+
+  const handleInputChange = (field) => (e) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }))
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }))
+    }
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    
+    // Basic validation
+    const newErrors = {}
+    if (!formData.customerId) newErrors.customerId = 'Sila pilih pelanggan'
+    if (!formData.companyId) newErrors.companyId = 'Sila pilih syarikat'
+    if (!formData.invoiceDate) newErrors.invoiceDate = 'Sila pilih tarikh invoice'
+    if (!formData.dueDate) newErrors.dueDate = 'Sila pilih tarikh tamat tempoh'
+    if (!formData.invoiceNumber) newErrors.invoiceNumber = 'Sila masukkan nombor invoice'
+    if (!formData.amount) newErrors.amount = 'Sila masukkan jumlah'
+
+    setErrors(newErrors)
+
+    if (Object.keys(newErrors).length === 0) {
+      console.log('Form submitted:', formData)
+      alert('Invoice berjaya disimpan!')
+    }
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">
+        Contoh Form Invoice dengan DescriptionField
+      </h1>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CustomerField
+            value={formData.customerId}
+            onChange={handleInputChange('customerId')}
+            customers={customers}
+            error={errors.customerId}
+          />
+
+          <CompanyField
+            value={formData.companyId}
+            onChange={handleInputChange('companyId')}
+            companies={companies}
+            error={errors.companyId}
+          />
+
+          <DateField
+            value={formData.invoiceDate}
+            onChange={handleInputChange('invoiceDate')}
+            label="Tarikh Invoice"
+            error={errors.invoiceDate}
+          />
+
+          <DateField
+            value={formData.dueDate}
+            onChange={handleInputChange('dueDate')}
+            label="Tarikh Tamat Tempoh"
+            error={errors.dueDate}
+          />
+
+          <TextField
+            value={formData.invoiceNumber}
+            onChange={handleInputChange('invoiceNumber')}
+            label="Nombor Invoice"
+            placeholder="INV-2024-001"
+            error={errors.invoiceNumber}
+            required
+          />
+
+          <NumberField
+            value={formData.amount}
+            onChange={handleInputChange('amount')}
+            label="Jumlah (RM)"
+            placeholder="0.00"
+            error={errors.amount}
+            required
+          />
+        </div>
+
+        {/* DescriptionField - Variant Simple */}
+        <DescriptionField
+          value={formData.description}
+          onChange={handleInputChange('description')}
+          label="Penerangan Ringkas"
+          placeholder="Masukkan penerangan ringkas untuk invoice ini..."
+          variant="simple"
+          rows={3}
+        />
+
+        {/* DescriptionField - Variant Structured */}
+        <DescriptionField
+          value={formData.structuredDescription}
+          onChange={handleInputChange('structuredDescription')}
+          label="Spesifikasi Terperinci"
+          placeholder="Masukkan spesifikasi terperinci..."
+          variant="structured"
+          rows={6}
+        />
+
+        <div className="flex justify-end space-x-4">
+          <button
+            type="button"
+            className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Simpan Invoice
+          </button>
+        </div>
+      </form>
+
+      {/* Debug Section */}
+      <div className="mt-8 p-4 bg-gray-100 rounded-md">
+        <h3 className="font-semibold text-gray-700 mb-2">Debug - Form Data:</h3>
+        <pre className="text-sm text-gray-600 whitespace-pre-wrap">
+          {JSON.stringify(formData, null, 2)}
+        </pre>
+      </div>
+    </div>
+  )
+}
+
+export default InvoiceFormExample

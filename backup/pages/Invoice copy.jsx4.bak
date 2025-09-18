@@ -1,0 +1,233 @@
+import React, { useState, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { SimplePageLayout, SimpleTable, StatusBadge, CurrencyFormat, DateFormat } from '../components'
+import { invoicesAPI } from '../utils/apiClient'
+import { getDebugData } from '../data/debugData'
+
+const Invoice = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [invoices, setInvoices] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all') // Default kepada all
+  const [showHistory, setShowHistory] = useState(false) // Toggle untuk sejarah
+
+  // Function to calculate overdue days
+  const calculateOverdueDays = (dueDate) => {
+    if (!dueDate) return 0
+    const today = new Date()
+    const due = new Date(dueDate)
+    const diffTime = today - due
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays > 0 ? diffDays : 0
+  }
+
+  // Function to get payment method icon
+  const getPaymentMethodIcon = (method) => {
+    const icons = {
+      'Bank Transfer': '🏦',
+      'Cash': '💵',
+      'Cheque': '📝',
+      'Credit Card': '💳'
+    }
+    return icons[method] || '💰'
+  }
+
+  // Function to fetch invoices
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true)
+      // Langsung gunakan mock data untuk demonstrasi
+      // throw new Error('Using mock data for demonstration')
+      
+      const response = await invoicesAPI.getAll()
+      if (response && response.success) {
+        // Transform data untuk frontend
+        const transformedInvoices = response.data.invoices.map(invoice => ({
+          id: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          customerName: invoice.customer?.name || 'N/A',
+          amount: parseFloat(invoice.total),
+          status: invoice.status.toLowerCase(),
+          date: invoice.createdAt,
+          dueDate: invoice.dueDate
+        }))
+        // Jika tidak ada data dari API, gunakan mock data
+        if (transformedInvoices.length === 0) {
+          throw new Error('No data from API')
+        }
+        
+        setInvoices(transformedInvoices)
+      } else {
+        throw new Error('API response not successful')
+      }
+    } catch (error) {
+      // Fallback ke debug data jika API gagal
+      setInvoices(getDebugData.invoices())
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch invoices from API
+  useEffect(() => {
+    fetchInvoices()
+  }, [])
+
+  // Refresh data when location changes (e.g., after edit)
+  useEffect(() => {
+    // Check if we're coming back from an edit page
+    if (location.state?.refresh) {
+      fetchInvoices()
+    }
+  }, [location])
+
+  const filteredInvoices = invoices.filter(invoice => {
+    const matchesSearch = invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // Filter berdasarkan status yang dipilih
+    if (filterStatus === 'all') {
+      return matchesSearch
+    } else if (filterStatus === 'active') {
+      // Tunjukkan invoice yang aktif (DRAFT, SENT, OVERDUE) - tidak termasuk PAID dan CANCELLED
+      const isActive = invoice.status === 'DRAFT' || invoice.status === 'SENT' || invoice.status === 'OVERDUE'
+      return matchesSearch && isActive
+    } else if (filterStatus === 'done') {
+      // Tunjukkan invoice yang selesai (PAID)
+      const isDone = invoice.status === 'PAID'
+      return matchesSearch && isDone
+    } else if (filterStatus === 'cancelled') {
+      // Tunjukkan invoice yang dibatalkan (CANCELLED)
+      const isCancelled = invoice.status === 'CANCELLED'
+      return matchesSearch && isCancelled
+    }
+    
+    return matchesSearch
+  })
+
+  // Debug logging removed for production
+
+  // Table columns configuration
+  const columns = [
+    {
+      key: 'invoiceNumber',
+      header: 'Invoice No.',
+      render: (value) => <span className="font-medium text-gray-900">{value}</span>
+    },
+    {
+      key: 'customerName',
+      header: 'Customer'
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      render: (value) => <CurrencyFormat amount={value} />
+    },
+    {
+      key: 'paymentMethod',
+      header: 'Method',
+      render: (value) => (
+        <div className="flex items-center">
+          <span className="mr-2">{getPaymentMethodIcon(value)}</span>
+          {value}
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (value) => <StatusBadge status={value} />
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      render: (value) => <DateFormat date={value} />
+    },
+    {
+      key: 'dueDate',
+      header: 'Overdue',
+      render: (value, row) => {
+        // Jangan kira overdue jika status sudah PAID atau CANCELLED
+        if (row.status === 'PAID' || row.status === 'CANCELLED') {
+          return (
+            <span className="text-gray-500">
+              -
+            </span>
+          )
+        }
+        
+        const overdueDays = calculateOverdueDays(value)
+        if (overdueDays > 0) {
+          return (
+            <span className="text-red-600 font-medium">
+              {overdueDays} days
+            </span>
+          )
+        } else {
+          return (
+            <span className="text-green-600">
+              No overdue
+            </span>
+          )
+        }
+      }
+    }
+  ]
+  // Table actions configuration
+  return (
+    <SimplePageLayout
+      title="INVOICE MANAGEMENT"
+      newButtonText="+ CREATE NEW INVOICE"
+      onNewClick={() => navigate('/invoices/new')}
+      buttonColor="blue"
+      filterOptions={["ALL", "ACTIVE", "COMPLETED", "CANCELLED"]}
+      activeFilter={
+        filterStatus === 'all' ? 'ALL' : 
+        filterStatus === 'active' ? 'ACTIVE' : 
+        filterStatus === 'done' ? 'COMPLETED' : 
+        filterStatus === 'cancelled' ? 'CANCELLED' : 'ALL'
+      }
+      onFilterChange={(filter) => {
+        if (filter === 'ALL') setFilterStatus('all')
+        else if (filter === 'ACTIVE') setFilterStatus('active')
+        else if (filter === 'COMPLETED') setFilterStatus('done')
+        else if (filter === 'CANCELLED') setFilterStatus('cancelled')
+      }}
+      additionalActions={[
+        {
+          label: 'Refresh',
+          onClick: fetchInvoices,
+          className: 'bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm'
+        }
+      ]}
+    >
+      <SimpleTable
+        data={filteredInvoices}
+        columns={columns}
+        loading={loading}
+        onEdit={(row) => {
+          // Menggunakan React Router navigation
+          navigate(`/invoices/${row.id}/edit`)
+        }}
+        onDuplicate={async (row) => {
+          // Duplicate invoice functionality
+          // Buka invoice form baru dengan data asal, tetapi tanpa id
+          const duplicateData = { ...row }
+          delete duplicateData.id
+          // Simpan data ke localStorage untuk prefill
+          localStorage.setItem('duplicateInvoiceData', JSON.stringify(duplicateData))
+          // Menggunakan React Router navigation
+          navigate('/invoices/new?duplicate=1')
+        }}
+        onDelete={(row) => {
+          // TODO: Implement delete invoice functionality
+        }}
+      />
+    </SimplePageLayout>
+  )
+}
+
+export default Invoice
+

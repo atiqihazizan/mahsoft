@@ -1,0 +1,251 @@
+import React, { useState, useEffect } from 'react'
+import { SimplePageLayout, SimpleTable, StatusBadge, CurrencyFormat, DateFormat } from '../components'
+import { invoicesAPI } from '../utils/apiClient'
+
+const Invoice = () => {
+  const [invoices, setInvoices] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all') // Default kepada all
+  const [showHistory, setShowHistory] = useState(false) // Toggle untuk sejarah
+
+  // Fetch invoices from API
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        setLoading(true)
+        // Langsung gunakan mock data untuk demonstrasi
+        throw new Error('Using mock data for demonstration')
+        
+        const response = await invoicesAPI.getAll()
+        
+        if (response && response.success) {
+          // Transform data untuk frontend
+          const transformedInvoices = response.data.invoices.map(invoice => ({
+            id: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            customerName: invoice.customer?.name || 'N/A',
+            amount: parseFloat(invoice.total),
+            status: invoice.status.toLowerCase(),
+            date: invoice.createdAt,
+            dueDate: invoice.dueDate
+          }))
+          // Jika tidak ada data dari API, gunakan mock data
+          if (transformedInvoices.length === 0) {
+            throw new Error('No data from API')
+          }
+          
+          setInvoices(transformedInvoices)
+        } else {
+          throw new Error('API response not successful')
+        }
+      } catch (error) {
+        console.error('Error fetching invoices:', error)
+        // Fallback ke mock data jika API gagal
+        const mockInvoices = [
+          {
+            id: 1,
+            invoiceNumber: 'MSV1018',
+            customerName: 'MBI',
+            amount: 7500.00,
+            outstanding: 0.00,
+            status: 'draft',
+            date: '2025-08-26',
+            subject: 'mbi bayaran 3 2025'
+          },
+          {
+            id: 2,
+            invoiceNumber: 'MSV1019',
+            customerName: 'ABC Corp',
+            amount: 2500.00,
+            outstanding: 2500.00,
+            status: 'pending',
+            date: '2025-08-25',
+            subject: 'Perkhidmatan IT'
+          },
+          {
+            id: 3,
+            invoiceNumber: 'MSV1020',
+            customerName: 'XYZ Ltd',
+            amount: 5000.00,
+            outstanding: 0.00,
+            status: 'paid',
+            date: '2025-08-24',
+            subject: 'Konsultasi perniagaan'
+          }
+        ]
+        setInvoices(mockInvoices)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchInvoices()
+  }, [])
+
+  const filteredInvoices = invoices.filter(invoice => {
+    const matchesSearch = invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // Filter berdasarkan status yang dipilih
+    if (filterStatus === 'all') {
+      return matchesSearch
+    } else if (filterStatus === 'active') {
+      // Tunjukkan invoice yang aktif (draft, pending)
+      const isActive = invoice.status === 'draft' || invoice.status === 'pending'
+      return matchesSearch && isActive
+    } else if (filterStatus === 'done') {
+      // Tunjukkan invoice yang selesai (paid)
+      const isDone = invoice.status === 'paid'
+      return matchesSearch && isDone
+    }
+    
+    return matchesSearch
+  })
+
+  // Debug logging (remove in production)
+  console.log('Invoices:', invoices)
+  console.log('Filtered invoices:', filteredInvoices)
+  console.log('Show history:', showHistory)
+  console.log('Filter status:', filterStatus)
+
+  // Table columns configuration
+  const columns = [
+    {
+      key: 'id',
+      header: '#',
+      render: (value) => <span className="font-medium text-gray-900">{value}</span>
+    },
+    {
+      key: 'invoiceNumber',
+      header: 'Inv No',
+      render: (value) => <span className="font-medium text-gray-900">{value}</span>
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      render: (value) => <DateFormat date={value} />
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      render: (value) => <CurrencyFormat amount={value} />
+    },
+    {
+      key: 'outstanding',
+      header: 'Outstanding',
+      render: (value) => <CurrencyFormat amount={value} />
+    },
+    {
+      key: 'customerName',
+      header: 'Cust'
+    },
+    {
+      key: 'subject',
+      header: 'Subject'
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (value) => (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          {value.charAt(0).toUpperCase() + value.slice(1)}
+        </span>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Action',
+      render: (value, row) => (
+        <button
+          onClick={() => console.log('Edit invoice:', row.id)}
+          className="text-blue-600 hover:text-blue-900 font-medium"
+        >
+          EDIT
+        </button>
+      )
+    }
+  ]
+
+  // Table actions configuration
+  const actions = [
+    {
+      label: 'Lihat',
+      className: 'text-blue-600 hover:text-blue-900',
+      onClick: (row) => console.log('View invoice:', row.id)
+    },
+    {
+      label: 'Edit',
+      className: 'text-green-600 hover:text-green-900',
+      onClick: (row) => window.location.href = `/invoices/${row.id}/edit`
+    },
+    {
+      label: 'Padam',
+      className: 'text-red-600 hover:text-red-900',
+      onClick: (row) => console.log('Delete invoice:', row.id)
+    }
+  ]
+
+  // Stats configuration
+  const stats = [
+    {
+      label: 'Total Invois',
+      value: invoices.length,
+      icon: '📄',
+      bgGradient: 'bg-blue-500',
+      textColor: 'text-white',
+      subtitle: '+12% dari bulan lepas'
+    },
+    {
+      label: 'Dibayar',
+      value: invoices.filter(inv => inv.status === 'paid').length,
+      icon: '✅',
+      bgGradient: 'bg-green-500',
+      textColor: 'text-white',
+      subtitle: 'Pembayaran selesai'
+    },
+    {
+      label: 'Menunggu',
+      value: invoices.filter(inv => inv.status === 'pending').length,
+      icon: '⏳',
+      bgGradient: 'bg-yellow-500',
+      textColor: 'text-white',
+      subtitle: 'Menunggu pembayaran'
+    },
+    {
+      label: 'Tertunggak',
+      value: invoices.filter(inv => inv.status === 'overdue').length,
+      icon: '⚠️',
+      bgGradient: 'bg-red-500',
+      textColor: 'text-white',
+      subtitle: 'Perlu tindakan segera'
+    }
+  ]
+
+  // Filter options for history mode
+  const filterOptions = [
+    { value: 'all', label: 'Semua Status' },
+    { value: 'paid', label: 'Dibayar' },
+    { value: 'pending', label: 'Menunggu' },
+    { value: 'overdue', label: 'Tertunggak' }
+  ]
+
+  return (
+    <SimplePageLayout
+      title="INVOICE"
+      newButtonText="+ NEW"
+      onNewClick={() => console.log('Create new invoice')}
+      filterOptions={["ALL", "ACTIVE", "DONE"]}
+      activeFilter={filterStatus.toUpperCase()}
+      onFilterChange={(filter) => setFilterStatus(filter.toLowerCase())}
+    >
+      <SimpleTable
+        data={filteredInvoices}
+        columns={columns}
+      />
+    </SimplePageLayout>
+  )
+}
+
+export default Invoice
+

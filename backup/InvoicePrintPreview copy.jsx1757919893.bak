@@ -1,0 +1,191 @@
+import React, { useState } from 'react'
+import { CurrencyFormat, DateFormat } from '../components/index'
+import { parseStructuredDescription, renderWhatsAppText } from '../components/TextFormatting.jsx'
+import '../styles/print.css'
+
+const InvoicePrintPreview = () => {
+  const [invoiceData, setInvoiceData] = useState({
+    invoiceNumber: '',
+    date: '',
+    dueDate: '',
+    customer: {
+      name: '',
+      address: '',
+      phone: '',
+      email: ''
+    },
+    company: {
+      name: '',
+      address: '',
+      phone: '',
+      email: ''
+    },
+    items: [],
+    subtotal: 0.00,
+    taxRate: 0,
+    taxAmount: 0.00,
+    total: 0.00,
+    notes: ''
+  })
+
+  // Function to render structured description for print
+  const renderStructuredDescription = (text) => {
+    return parseStructuredDescription(text)
+  }
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Print Controls */}
+      <div className="bg-white shadow-sm border-b p-4 print:hidden">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <h1 className="text-xl font-bold text-gray-800">Invoice Print Preview</h1>
+          <div className="flex space-x-2">
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              🖨️ Print Invoice
+            </button>
+            <button
+              onClick={() => window.history.back()}
+              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+            >
+              ← Kembali
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Invoice Content - Print Optimized */}
+      <div className="paper A4 sheet padding-15mm">
+        {/* Header */}
+        <div className="print-header">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="font-audiowide uppertext">INVOICE</h1>
+              <p className="invoice-number">Invoice Number: {invoiceData.invoiceNumber || 'N/A'}</p>
+            </div>
+            <div className="print-dates">
+              <p>Date: <DateFormat date={invoiceData.date} /></p>
+              <p>Due Date: <DateFormat date={invoiceData.dueDate} /></p>
+            </div>
+          </div>
+        </div>
+
+        {/* Company & Customer Info */}
+        <div className="print-content">
+          <div className="print-section">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="clientinfo">
+                <h3 className="print-section h3">Bill To:</h3>
+                <div>
+                  <p className="text-bold">{invoiceData.customer.name || 'N/A'}</p>
+                  <p>{invoiceData.customer.address || 'N/A'}</p>
+                  <p>Tel: {invoiceData.customer.phone || 'N/A'}</p>
+                  <p>Email: {invoiceData.customer.email || 'N/A'}</p>
+                </div>
+              </div>
+              <div className="clientinfo">
+                <h3 className="print-section h3">From:</h3>
+                <div>
+                  <p className="text-bold">{invoiceData.company.name || 'N/A'}</p>
+                  <p>{invoiceData.company.address || 'N/A'}</p>
+                  <p>Tel: {invoiceData.company.phone || 'N/A'}</p>
+                  <p>Email: {invoiceData.company.email || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Items Table */}
+          <div className="print-section">
+            <h3 className="print-section h3">Items & Services</h3>
+            {invoiceData.items.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>Tiada item untuk dipaparkan. Sila pilih invoice yang sah.</p>
+              </div>
+            ) : (
+              <div className="issuance">
+                <table className="print-table vtable">
+                  <thead className="header">
+                    <tr className="line">
+                      <th className="text-start">Description</th>
+                      <th className="text-center">Qty</th>
+                      <th className="text-end">Unit Price</th>
+                      <th className="text-end">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="body">
+                    {invoiceData.items.map((item, index) => {
+                      const parsedDescription = renderStructuredDescription(item.description)
+                      return (
+                        <tr key={item.id} className="rowbody">
+                          <td>
+                            <div className="space-y-2">
+                              {parsedDescription.map((section, sectionIndex) => (
+                                <div key={sectionIndex}>
+                                  {section.title && (
+                                    <p className="text-bold mb-1">{section.title}</p>
+                                  )}
+                                  {section.items.map((itemText, itemIndex) => (
+                                    <p key={itemIndex} className="ml-2 small">
+                                      • {itemText}
+                                    </p>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="text-center">{item.quantity}</td>
+                          <td className="text-end">
+                            <CurrencyFormat amount={item.unitPrice} />
+                          </td>
+                          <td className="text-end text-bold">
+                            <CurrencyFormat amount={item.amount} />
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Totals */}
+          <div className="print-section">
+            <div className="print-totals">
+              <div className="total-row">
+                <span>Subtotal:</span>
+                <span><CurrencyFormat amount={invoiceData.subtotal} /></span>
+              </div>
+              <div className="total-row">
+                <span>Tax ({invoiceData.taxRate}%):</span>
+                <span><CurrencyFormat amount={invoiceData.taxAmount} /></span>
+              </div>
+              <div className="total-row final">
+                <span>Total:</span>
+                <span><CurrencyFormat amount={invoiceData.total} /></span>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div className="print-notes">
+            <h3>Notes & Terms</h3>
+            <div className="remark">
+              {renderWhatsAppText(invoiceData.notes)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  )
+}
+
+export default InvoicePrintPreview

@@ -1,0 +1,60 @@
+import React from 'react'
+
+const SimplePageLayout = ({ 
+  title = "INVOICE",
+  newButtonText = "+ NEW",
+  onNewClick,
+  filterOptions = ["ALL", "ACTIVE", "DONE"],
+  activeFilter = "ALL",
+  onFilterChange,
+  children
+}) => {
+  return (
+    // <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-full">
+      {/* <div className="bg-white rounded-lg shadow-sm"> */}
+      <div className="">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          {/* New Button */}
+          <button
+            onClick={onNewClick}
+            className="relative overflow-hidden inline-block text-center no-underline align-bottom cursor-pointer select-none bg-[#3b71ca] text-white border-2 border-[#3b71ca] rounded uppercase font-medium transition-all duration-150 ease-in-out focus:outline-none shadow-[0_2px_5px_0_rgba(0,0,0,0.2),0_2px_10px_0_rgba(0,0,0,0.1)] hover:bg-[#326abc] hover:shadow-[0_4px_9px_-4px_rgba(0,0,0,0.35)] active:bg-[#2d5ba3] active:shadow-[0_2px_5px_0_rgba(0,0,0,0.2)] focus:ring-2 focus:ring-[#3b71ca] focus:ring-opacity-50 px-4 py-2 text-sm"
+          >
+            {newButtonText}
+          </button>
+
+          {/* Title */}
+          <h1 className="text-xl font-semibold text-gray-900">
+            {title}
+          </h1>
+
+          {/* Filter Options */}
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            {filterOptions.map((option) => (
+              <button
+                key={option}
+                onClick={() => onFilterChange && onFilterChange(option)}
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  activeFilter === option
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        {/* <div className="p-6"> */}
+        <div className="">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default SimplePageLayout

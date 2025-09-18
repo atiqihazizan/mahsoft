@@ -1,0 +1,279 @@
+import React, { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+import { SimplePageLayout } from '../layouts'
+import { SimpleTable, StatusBadge, CurrencyFormat, DateFormat, ExpiryStatus, ActionButtonGroup, ActionButtonPresets } from '../components'
+import { quotesAPI } from '../utils/apiClient'
+
+const Quote = () => {
+  const location = useLocation()
+  const [quotes, setQuotes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('active') // Default kepada active
+  const [showHistory, setShowHistory] = useState(false) // Toggle untuk sejarah
+  const [actionLoading, setActionLoading] = useState({})
+
+  // Function to calculate days until expiry
+  const calculateDaysUntilExpiry = (validUntil) => {
+    if (!validUntil) return 0
+    const today = new Date()
+    const validDate = new Date(validUntil)
+    const diffTime = validDate - today
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  }
+
+  // Function to handle quote status change
+  const handleQuoteStatusChange = async (quoteId, action) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [quoteId]: true }))
+
+      let response
+      if (action === 'accept') {
+        response = await quotesAPI.updateStatus(quoteId, 'ACCEPTED')
+      } else if (action === 'reject') {
+        response = await quotesAPI.updateStatus(quoteId, 'REJECTED')
+      } else if (action === 'dummy') {
+        response = await quotesAPI.updateStatus(quoteId, 'DUMMY')
+      } else {
+        response = await quotesAPI.updateStatus(quoteId, action.toUpperCase())
+      }
+
+      if (response && response.success) {
+        // Determine new status based on action (use lowercase for frontend display)
+        const newStatus = action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : action.toLowerCase()
+        
+        // Update the quote in the local state
+        setQuotes(prev => prev.map(quote =>
+          quote.id === quoteId
+            ? { ...quote, status: newStatus }
+            : quote
+        ))
+
+        // Show success message
+        alert(`Quote ${action}ed successfully!`)
+      } else {
+        const errorMessage = response?.message || response?.error || 'Unknown error'
+        
+        // Handle specific error cases
+        if (response?.status === 400) {
+          alert(`Invalid request: ${errorMessage}`)
+        } else if (response?.status === 404) {
+          alert(`Quote not found`)
+        } else if (response?.status === 500) {
+          alert(`Server error: ${errorMessage}`)
+        } else {
+          alert(`Failed to ${action} quote: ${errorMessage}`)
+        }
+      }
+    } catch (error) {
+      alert(`Error ${action}ing quote: ${error.message}`)
+    } finally {
+      setActionLoading(prev => ({ ...prev, [quoteId]: false }))
+    }
+  }
+
+  // Function to fetch quotes
+  const fetchQuotes = async () => {
+    try {
+      setLoading(true)
+
+      const response = await quotesAPI.getAll()
+
+      if (response && response.success) {
+        // Transform data untuk frontend
+        const transformedQuotes = response.data.quotes.map(quote => ({
+          id: quote.id,
+          quoteNumber: quote.quoteNumber,
+          customerName: quote.customer?.name || 'N/A',
+          amount: parseFloat(quote.total),
+          status: quote.status.toLowerCase(),
+          date: quote.date,
+          validUntil: quote.validUntil,
+          subject: quote.subject || 'N/A'
+        }))
+
+        setQuotes(transformedQuotes)
+      } else {
+        throw new Error('API response not successful')
+      }
+    } catch (error) {
+      // Set empty array on error
+      setQuotes([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch quotes from API
+  useEffect(() => {
+    fetchQuotes()
+  }, [])
+
+  // Refresh data when location changes (e.g., after edit)
+  useEffect(() => {
+    // Check if we're coming back from an edit page
+    if (location.state?.refresh) {
+      fetchQuotes()
+    }
+  }, [location])
+
+  const filteredQuotes = quotes.filter(quote => {
+    const matchesSearch = quote.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.subject.toLowerCase().includes(searchTerm.toLowerCase())
+
+
+    // Filter berdasarkan status yang dipilih
+    if (filterStatus === 'all') {
+      return matchesSearch
+    } else if (filterStatus === 'active') {
+      // Tunjukkan quote yang aktif (draft, sent) - tidak termasuk accepted dan rejected
+      const isActive = quote.status.toLowerCase() === 'draft' || quote.status.toLowerCase() === 'sent'
+      return matchesSearch && isActive
+    } else if (filterStatus === 'accepted') {
+      // Tunjukkan quote yang diterima (accepted)
+      const isAccepted = quote.status.toLowerCase() === 'accepted'
+      return matchesSearch && isAccepted
+    } else if (filterStatus === 'rejected') {
+      // Tunjukkan quote yang ditolak (rejected)
+      const isRejected = quote.status.toLowerCase() === 'rejected'
+      return matchesSearch && isRejected
+    } else if (filterStatus === 'dummy') {
+      // Tunjukkan quote yang dummy (dummy)
+      const isDummy = quote.status.toLowerCase() === 'dummy'
+      return matchesSearch && isDummy
+    }
+
+    return matchesSearch
+  })
+  // Table columns configuration
+  const columns = [
+      {
+        key: 'quoteNumber',
+        header: 'Quote No.',
+        headerClassName: 'text-center',
+        cellClassName: 'text-center text-sm',
+        render: (value) => <span className="font-medium text-gray-900">{value}</span>
+      },
+      {
+        key: 'customerName',
+        header: 'Customer',
+        render: (value) => (
+          <span 
+            className="text-sm text-gray-900" 
+            title={value} // Show full name on hover
+          >
+            {value}
+          </span>
+        )
+      },
+      {
+        key: 'subject',
+        header: 'Subject',
+        render: (value) => (
+          <span 
+            className="text-sm text-gray-600" 
+            title={value} // Show full name on hover
+          >
+            {value}
+          </span>
+        )
+      },
+      {
+        key: 'amount',
+        header: 'Amount',
+        headerClassName: 'text-right',
+        cellClassName: 'text-right font-semibold',
+        render: (value) => <CurrencyFormat amount={value} />
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        headerClassName: 'text-center',
+        cellClassName: 'text-center',
+        render: (value) => <StatusBadge status={value} />
+      },
+      {
+        key: 'date',
+        header: 'Date',
+        headerClassName: 'text-center',
+        cellClassName: 'text-center text-sm',
+        render: (value) => <DateFormat date={value} />
+      },
+    {
+      key: 'validUntil',
+      header: 'Validity',
+      headerClassName: 'text-center',
+      cellClassName: 'text-center text-sm font-medium',
+      render: (value, row) => (
+        <ExpiryStatus 
+          validUntil={value} 
+          status={row.status} 
+          calculateDaysUntilExpiry={calculateDaysUntilExpiry} 
+        />
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Quick Actions',
+      headerClassName: 'text-center',
+      cellClassName: 'text-center',
+      render: (value, row) => (
+        <div className="flex items-center justify-center">
+          {/* Action buttons - Only show for draft and sent quotes */}
+          {(row.status === 'draft' || row.status === 'sent') && (
+            <ActionButtonGroup
+              data={row}
+              {...ActionButtonPresets.quote}
+              loading={{
+                approve: actionLoading[row.id],
+                reject: actionLoading[row.id],
+                dummy: actionLoading[row.id]
+              }}
+              onApprove={() => handleQuoteStatusChange(row.id, 'accept')}
+              onReject={() => handleQuoteStatusChange(row.id, 'reject')}
+              onDummy={() => handleQuoteStatusChange(row.id, 'dummy')}
+              size="sm"
+            />
+          )}
+        </div>
+      )
+    }
+  ]
+  return (
+    <SimplePageLayout
+      title="QUOTE MANAGEMENT"
+      newButtonText="+ CREATE NEW QUOTE"
+      onNewClick={() => window.location.href = '/quotes/new'}
+      buttonColor="green"
+      filterOptions={["ALL", "ACTIVE", "DUMMY", "ACCEPTED", "REJECTED"]}
+      activeFilter={filterStatus === 'all' ? 'ALL' : filterStatus === 'active' ? 'ACTIVE' : filterStatus === 'accepted' ? 'ACCEPTED' : 'REJECTED'}
+      onFilterChange={(filter) => {
+        if (filter === 'ALL') setFilterStatus('all')
+        else if (filter === 'ACTIVE') setFilterStatus('active')
+        else if (filter === 'DUMMY') setFilterStatus('dummy')
+        else if (filter === 'ACCEPTED') setFilterStatus('accepted')
+        else if (filter === 'REJECTED') setFilterStatus('rejected')
+      }}
+      onRefresh={fetchQuotes}
+    >
+      <SimpleTable
+        data={filteredQuotes}
+        columns={columns}
+        loading={loading}
+        onEdit={(row) => {
+          window.location.href = `/quotes/${row.id}/edit`
+        }}
+        onDuplicate={(row) => {
+          // TODO: Implement duplicate quote functionality
+        }}
+        onDelete={(row) => {
+          // TODO: Implement delete quote functionality
+        }}
+      />
+    </SimplePageLayout>
+  )
+}
+
+export default Quote

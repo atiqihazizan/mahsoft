@@ -1,0 +1,108 @@
+module.exports = [
+  {
+    "quoteNumber": "MAH0005",
+    "date": "2021-03-29T00:00:00.000Z",
+    "validUntil": "2021-04-07T00:00:00.000Z",
+    "status": "SENT",
+    "subject": "",
+    "subtotal": 7730,
+    "taxAmount": 0,
+    "total": 7730,
+    "notes": "",
+    "items": [
+      {
+        "description": "Windows 10",
+        "quantity": 5,
+        "unitPrice": 919,
+        "amount": 4595
+      },
+      {
+        "description": "MS Office 2019",
+        "quantity": 2,
+        "unitPrice": 529,
+        "amount": 1058
+      },
+      {
+        "description": "Surge Protector AVR + UPS 800",
+        "quantity": 1,
+        "unitPrice": 250,
+        "amount": 250
+      },
+      {
+        "description": "WD My Cloud Home Duo 4TB",
+        "quantity": 1,
+        "unitPrice": 1827,
+        "amount": 1827
+      }
+    ],
+    "companyId": "1",
+    "userId": "1",
+    "customerId": "4"
+  },
+  {
+    "quoteNumber": "MAH0006",
+    "date": "2021-03-31T00:00:00.000Z",
+    "validUntil": "2021-04-07T00:00:00.000Z",
+    "status": "SENT",
+    "subject": "",
+    "subtotal": 350,
+    "taxAmount": 0,
+    "total": 350,
+    "notes": "",
+    "items": [
+      {
+        "description": "Wall Rack Mount 12u",
+        "quantity": 1,
+        "unitPrice": 350,
+        "amount": 350
+      }
+    ],
+    "companyId": "1",
+    "userId": "1",
+    "customerId": "4"
+  },
+  {
+    "quoteNumber": "MAH0004",
+    "date": "2021-03-27T00:00:00.000Z",
+    "validUntil": "2021-03-30T00:00:00.000Z",
+    "status": "ACCEPTED",
+    "subject": "",
+    "subtotal": 1500,
+    "taxAmount": 0,
+    "total": 1500,
+    "notes": "",
+    "items": [
+      {
+        "description": "Installation Sistem POS di Mart Balik Pulau",
+        "quantity": 0,
+        "unitPrice": 0,
+        "amount": 0,
+        "textbold": 1
+      },
+      {
+        "description": "Setup local server and configuration",
+        "quantity": 1,
+        "unitPrice": 200,
+        "amount": 200
+      },
+      {
+        "description": "install pos sistem setting for cashier and supervisior",
+        "quantity": 1,
+        "unitPrice": 1200,
+        "amount": 1200
+      },
+      {
+        "description": "install driver and configuration printer receipt",
+        "quantity": 1,
+        "unitPrice": 100,
+        "amount": 100
+      }
+    ],
+    "companyId": "1",
+    "userId": "1",
+    "customerId": "3"
+  },
+  // ... existing code ...
+];
+
+

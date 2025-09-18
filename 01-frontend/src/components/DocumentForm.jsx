@@ -1,0 +1,614 @@
+import React, { useState, useEffect } from 'react'
+import { CurrencyFormat, DateFormat } from './index'
+import { DescriptionField } from './FormFields'
+
+const DocumentForm = ({ 
+  type = 'invoice', // 'invoice', 'quote', 'receipt'
+  initialData = null,
+  onSubmit,
+  onCancel,
+  onPreview,
+  loading = false,
+  customers = [],
+  companies = []
+}) => {
+  // State untuk form data
+  const [formData, setFormData] = useState({
+    // Header information
+    customerId: '',
+    companyId: '',
+    date: new Date().toISOString().split('T')[0],
+    dueDate: type === 'invoice' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '', // 30 hari untuk invoice
+    validUntil: type === 'quote' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '', // 30 hari untuk quote
+    subject: '',
+    notes: '',
+    
+    // Items
+    items: [
+      {
+        id: 1,
+        description: '',
+        quantity: 1,
+        unitPrice: 0,
+        amount: 0,
+        // DescriptionField properties
+        variant: 'structured',
+        listType: 'ul',
+        spacing: 'normal'
+      }
+    ],
+    
+    // Totals
+    subtotal: 0,
+    taxRate: 6, // Default 6% GST
+    taxAmount: 0,
+    total: 0
+  })
+
+  // State untuk UI
+  const [errors, setErrors] = useState({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Initialize form dengan data sedia ada
+  useEffect(() => {
+    if (initialData) {
+      // Ensure items have DescriptionField properties
+      const processedData = {
+        ...initialData,
+        items: initialData.items?.map(item => ({
+          ...item,
+          variant: item.variant || 'structured',
+          listType: item.listType || 'ul',
+          spacing: item.spacing || 'normal'
+        })) || []
+      }
+      setFormData(processedData)
+    }
+  }, [initialData])
+
+  // Auto-select company dengan is_default=1
+  useEffect(() => {
+    if (companies.length > 0 && !formData.companyId) {
+      const defaultCompany = companies.find(company => company.is_default === true)
+      if (defaultCompany) {
+        setFormData(prev => ({
+          ...prev,
+          companyId: defaultCompany.id
+        }))
+      }
+    }
+  }, [companies, formData.companyId])
+
+  // Calculate totals whenever items change
+  useEffect(() => {
+    calculateTotals()
+  }, [formData.items, formData.taxRate])
+
+  const calculateTotals = () => {
+    const subtotal = formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
+    const taxAmount = (subtotal * formData.taxRate) / 100
+    const total = subtotal + taxAmount
+
+    setFormData(prev => ({
+      ...prev,
+      subtotal,
+      taxAmount,
+      total
+    }))
+  }
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+    
+    // Clear error when user starts typing
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }))
+  }
+
+  const handleItemChange = (itemId, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.map(item => {
+        if (item.id === itemId) {
+          const updatedItem = { ...item, [field]: value }
+          
+          // Calculate amount for this item
+          if (field === 'quantity' || field === 'unitPrice') updatedItem.amount = updatedItem.quantity * updatedItem.unitPrice
+          
+          return updatedItem
+        }
+        return item
+      })
+    }))
+  }
+
+  // Handler khusus untuk DescriptionField properties
+  const handleItemDescriptionFieldChange = (itemId, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.map(item => {
+        if (item.id === itemId) {
+          return { ...item, [field]: value }
+        }
+        return item
+      })
+    }))
+  }
+
+  const addItem = () => {
+    const newId = Math.max(...formData.items.map(item => item.id), 0) + 1
+    setFormData(prev => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        {
+          id: newId,
+          description: '',
+          quantity: 1,
+          unitPrice: 0,
+          amount: 0,
+          // DescriptionField properties
+          variant: 'structured',
+          listType: 'ul',
+          spacing: 'normal'
+        }
+      ]
+    }))
+  }
+
+  const removeItem = (itemId) => {
+    if (formData.items.length > 1) setFormData(prev => ({ ...prev, items: prev.items.filter(item => item.id !== itemId) }))
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+
+    // Required fields validation
+    if (!formData.customerId) newErrors.customerId = 'Please select a customer'
+    if (!formData.companyId) newErrors.companyId = 'Please select a company'
+    if (!formData.date) newErrors.date = 'Please enter date'
+    if (type === 'invoice' && !formData.dueDate) newErrors.dueDate = 'Please enter due date'
+    if (type === 'quote' && !formData.validUntil) newErrors.validUntil = 'Please enter valid until date'
+
+    // Items validation
+    formData.items.forEach((item, index) => {
+      if (!item.description.trim()) newErrors[`item_${index}_description`] = 'Please enter item description'
+      if (item.quantity <= 0) newErrors[`item_${index}_quantity`] = 'Quantity must be greater than 0'
+      if (item.unitPrice < 0) newErrors[`item_${index}_unitPrice`] = 'Unit price cannot be negative'
+    })
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!validateForm()) return
+    setIsSubmitting(true)
+    try {
+      await onSubmit(formData)
+    } catch (error) {
+      // Handle error silently
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const getFormTitle = () => {
+    switch (type) {
+      case 'invoice': return 'Create New Invoice'
+      case 'quote': return 'Create New Quote'
+      case 'receipt': return 'Create New Receipt'
+      default: return 'Create New Document'
+    }
+  }
+
+  const getFormIcon = () => {
+    switch (type) {
+      case 'invoice': return '📄'
+      case 'quote': return '💰'
+      case 'receipt': return '🧾'
+      default: return '📝'
+    }
+  }
+
+  return (
+    <div className="">
+      <div className="bg-white rounded-lg shadow-lg">
+        {/* Header */}
+        <div className={`text-white p-6 rounded-t-lg ${
+          type === 'invoice' ? 'bg-blue-500' : 
+          type === 'quote' ? 'bg-green-500' : 
+          type === 'receipt' ? 'bg-purple-500' : 
+          'bg-blue-500'
+        }`}>
+          <div className="flex items-center">
+            <span className="text-3xl mr-3">{getFormIcon()}</span>
+            <div>
+              <h1 className="text-2xl font-bold">{getFormTitle()}</h1>
+              <p className="text-white text-opacity-90">
+                {type === 'invoice' && 'Create invoice for your customers'}
+                {type === 'quote' && 'Create quote for your customers'}
+                {type === 'receipt' && 'Create payment receipt for your customers'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6">
+          {/* Basic Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* Customer Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Customer <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.customerId}
+                onChange={(e) => handleInputChange('customerId', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.customerId ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select customer...</option>
+                {customers.map(customer => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </option>
+                ))}
+              </select>
+              {errors.customerId && (
+                <p className="text-red-500 text-sm mt-1">{errors.customerId}</p>
+              )}
+            </div>
+
+            {/* Company Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Company <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.companyId}
+                onChange={(e) => handleInputChange('companyId', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.companyId ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select company...</option>
+                {companies.map(company => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+              {errors.companyId && (
+                <p className="text-red-500 text-sm mt-1">{errors.companyId}</p>
+              )}
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => handleInputChange('date', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.date ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors.date && (
+                <p className="text-red-500 text-sm mt-1">{errors.date}</p>
+              )}
+            </div>
+
+            {/* Subject */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Subject
+              </label>
+              <input
+                type="text"
+                value={formData.subject ?? ''}
+                onChange={(e) => handleInputChange('subject', e.target.value)}
+                placeholder="Enter subject/title..."
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.subject ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors.subject && (
+                <p className="text-red-500 text-sm mt-1">{errors.subject}</p>
+              )}
+            </div>
+
+            {/* Due Date (Invoice only) */}
+            {type === 'invoice' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Due Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.dueDate ?? ''}
+                  onChange={(e) => handleInputChange('dueDate', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.dueDate ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.dueDate && (
+                  <p className="text-red-500 text-sm mt-1">{errors.dueDate}</p>
+                )}
+              </div>
+            )}
+
+            {/* Valid Until (Quote only) */}
+            {type === 'quote' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Valid Until <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.validUntil ?? ''}
+                  onChange={(e) => handleInputChange('validUntil', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.validUntil ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.validUntil && (
+                  <p className="text-red-500 text-sm mt-1">{errors.validUntil}</p>
+                )}
+              </div>
+            )}
+
+            {/* Tax Rate */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tax Rate (%)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={formData.taxRate ?? 0}
+                onChange={(e) => handleInputChange('taxRate', parseFloat(e.target.value) || 0)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Items Table */}
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Items & Services</h3>
+              <button
+                type="button"
+                onClick={addItem}
+                className="bg-green-400 text-white px-4 py-2 rounded-md hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-300"
+              >
+                + Add Item
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="pl-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="pl-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                      Quantity
+                    </th>
+                    <th className="pl-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                      Unit Price
+                    </th>
+                    <th className="pl-4 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                      Amount
+                    </th>
+                    <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-5">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {formData.items.map((item, index) => (
+                    <tr key={item.id}>
+                      <td className="pl-4 py-4 align-top">
+                        <div className="min-h-[80px]">
+                          <DescriptionField
+                            value={item.description ?? ''}
+                            onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
+                            label=""
+                            placeholder="Enter item description..."
+                            variant={item.variant || 'structured'}
+                            listType={item.listType || 'ul'}
+                            spacing={item.spacing || 'normal'}
+                            rows={4}
+                            error={errors[`item_${index}_description`]}
+                            showPreview={true}
+                          />
+                          
+                          {/* DescriptionField Controls */}
+                          <div className="mt-2 space-y-2">
+                            <div className="flex space-x-2">
+                              {/* Variant Control */}
+                              <select
+                                value={item.variant || 'structured'}
+                                onChange={(e) => handleItemDescriptionFieldChange(item.id, 'variant', e.target.value)}
+                                className="text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              >
+                                <option value="simple">Simple</option>
+                                <option value="structured">Structured</option>
+                                <option value="whatsapp">WhatsApp</option>
+                              </select>
+                              
+                              {/* List Type Control (only for structured) */}
+                              {(item.variant || 'structured') === 'structured' && (
+                                <select
+                                  value={item.listType || 'ul'}
+                                  onChange={(e) => handleItemDescriptionFieldChange(item.id, 'listType', e.target.value)}
+                                  className="text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                >
+                                  <option value="ul">Bullet List</option>
+                                  <option value="ol">Numbered List</option>
+                                </select>
+                              )}
+                              
+                              {/* Spacing Control */}
+                              <select
+                                value={item.spacing || 'normal'}
+                                onChange={(e) => handleItemDescriptionFieldChange(item.id, 'spacing', e.target.value)}
+                                className="text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              >
+                                <option value="normal">Normal</option>
+                                <option value="wide">Wide</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="pl-4 py-4 align-top">
+                        <div className="min-h-[80px] flex flex-col justify-start">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={item.quantity ?? 0}
+                            onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              errors[`item_${index}_quantity`] ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                          />
+                          {errors[`item_${index}_quantity`] && (
+                            <p className="text-red-500 text-xs mt-1">{errors[`item_${index}_quantity`]}</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="pl-4 py-4 align-top">
+                        <div className="min-h-[80px] flex flex-col justify-start">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={item.unitPrice ?? 0}
+                            onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              errors[`item_${index}_unitPrice`] ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                          />
+                          {errors[`item_${index}_unitPrice`] && (
+                            <p className="text-red-500 text-xs mt-1">{errors[`item_${index}_unitPrice`]}</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="pl-4 py-4 align-top">
+                        <div className="min-h-[80px] flex flex-col justify-start">
+                          <div className="text-right py-2">
+                            <CurrencyFormat amount={item.amount} />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <div className="min-h-[80px] flex flex-col justify-start">
+                          {formData.items.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeItem(item.id)}
+                              className="text-red-600 hover:text-red-800 focus:outline-none py-2"
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Totals */}
+          <div className="bg-gray-50 p-6 rounded-lg mb-8">
+            <div className="max-w-md ml-auto">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Subtotal:</span>
+                  <span className="font-medium">
+                    <CurrencyFormat amount={formData.subtotal} />
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Tax ({formData.taxRate}%):</span>
+                  <span className="font-medium">
+                    <CurrencyFormat amount={formData.taxAmount} />
+                  </span>
+                </div>
+                <div className="border-t pt-2">
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total Amount:</span>
+                    <span className="text-blue-600">
+                      <CurrencyFormat amount={formData.total} />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes - Using DescriptionField */}
+          <div className="mb-8">
+            <DescriptionField
+              value={formData.notes ?? ''}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              label="Additional Notes"
+              placeholder="Enter additional notes (optional)..."
+              variant="structured"
+              listType="ul"
+              spacing="normal"
+              rows={1}
+              autoResize={true}
+              showPreview={false}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-4">
+            {typeof onPreview === 'function' && (
+              <button
+                type="button"
+                onClick={() => onPreview(formData)}
+                className="px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300"
+              >
+                Preview
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || loading}
+              className="px-6 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting || loading ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+export default DocumentForm

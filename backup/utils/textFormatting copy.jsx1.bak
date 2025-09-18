@@ -1,0 +1,483 @@
+import React from 'react'
+
+// Text formatting utilities untuk DescriptionField
+// Mengandungi semua function untuk format text seperti WhatsApp, structured, dan simple
+
+/**
+ * Parse structured description text (variant structured)
+ * Format: **Tajuk** untuk bold, diikuti dengan bullet points
+ * @param {string} text - Text yang akan di-parse
+ * @returns {Array} Array of objects dengan title dan items
+ */
+export const parseStructuredDescription = (text) => {
+  if (!text) return []
+  
+  const lines = text.split('\n').filter(line => line.trim())
+  const parsed = []
+  let currentTitle = null
+  
+  lines.forEach((line, index) => {
+    const trimmedLine = line.trim()
+    
+    // Check if line is a title (bold text)
+    if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
+      // This is a title
+      currentTitle = {
+        title: trimmedLine.slice(2, -2),
+        items: []
+      }
+      parsed.push(currentTitle)
+    } else if (currentTitle) {
+      // This is an item under current title
+      currentTitle.items.push(trimmedLine)
+    } else {
+      // This is a standalone item
+      parsed.push({
+        title: null,
+        items: [trimmedLine]
+      })
+    }
+  })
+  
+  return parsed
+}
+
+/**
+ * Parse WhatsApp format text
+ * Format: *bold*, _italic_, ~strikethrough~, `monospace`
+ * @param {string} text - Text yang akan di-parse
+ * @returns {string} Parsed text dengan format yang betul
+ */
+export const parseWhatsAppText = (text) => {
+  if (!text) return ''
+  
+  // Parse different WhatsApp formats
+  let parsedText = text
+  
+  // Bold: *text* -> **text**
+  parsedText = parsedText.replace(/\*([^*]+)\*/g, '**$1**')
+  
+  // Italic: _text_ -> *text*
+  parsedText = parsedText.replace(/_([^_]+)_/g, '*$1*')
+  
+  // Strikethrough: ~text~ -> ~~text~~
+  parsedText = parsedText.replace(/~([^~]+)~/g, '~~$1~~')
+  
+  // Monospace: `text` -> `text` (keep as is)
+  // No change needed for monospace
+  
+  return parsedText
+}
+
+/**
+ * Render WhatsApp formatted text as React elements
+ * @param {string} text - Text yang akan di-render
+ * @returns {Array} Array of React elements
+ */
+export const renderWhatsAppText = (text) => {
+  if (!text) return ''
+  
+  return text.split('\n').map((line, lineIndex) => {
+    // Process each line for formatting
+    const patterns = [
+      { regex: /\*\*([^*]+)\*\*/g, type: 'bold' },
+      { regex: /\*([^*]+)\*/g, type: 'italic' },
+      { regex: /~~([^~]+)~~/g, type: 'strikethrough' },
+      { regex: /`([^`]+)`/g, type: 'monospace' }
+    ]
+    
+    const matches = []
+    patterns.forEach(pattern => {
+      let match
+      while ((match = pattern.regex.exec(line)) !== null) {
+        matches.push({
+          start: match.index,
+          end: match.index + match[0].length,
+          text: match[1],
+          type: pattern.type
+        })
+      }
+    })
+    
+    // Sort matches by start position
+    matches.sort((a, b) => a.start - b.start)
+    
+    // Remove overlapping matches (keep the first one)
+    const filteredMatches = []
+    let lastEnd = 0
+    matches.forEach(match => {
+      if (match.start >= lastEnd) {
+        filteredMatches.push(match)
+        lastEnd = match.end
+      }
+    })
+    
+    // Build the line with formatting
+    const parts = []
+    let currentIndex = 0
+    
+    filteredMatches.forEach(match => {
+      // Add text before the match
+      if (match.start > currentIndex) {
+        parts.push(line.substring(currentIndex, match.start))
+      }
+      
+      // Add the formatted text
+      const className = {
+        bold: 'font-bold',
+        italic: 'italic',
+        strikethrough: 'line-through',
+        monospace: 'font-mono bg-gray-100 px-1 rounded text-xs'
+      }[match.type] || ''
+      
+      parts.push(
+        <span key={`${lineIndex}-${match.start}`} className={className}>
+          {match.text}
+        </span>
+      )
+      
+      currentIndex = match.end
+    })
+    
+    // Add remaining text
+    if (currentIndex < line.length) {
+      parts.push(line.substring(currentIndex))
+    }
+    
+    return (
+      <div key={lineIndex} className="mb-1">
+        {parts.length > 0 ? parts : line}
+      </div>
+    )
+  })
+}
+
+/**
+ * Render simple formatted text (variant simple)
+ * Format: **text** untuk bold, *text* untuk italic, - untuk bullet points
+ * @param {string} text - Text yang akan di-render
+ * @returns {Array} Array of React elements
+ */
+export const renderSimpleText = (text) => {
+  if (!text) return ''
+  
+  return text.split('\n').map((line, index) => {
+    // Check if line starts with bullet point
+    if (line.trim().startsWith('- ')) {
+      return (
+        <div key={index} className="mb-1 ml-4">
+          <span className="text-gray-700">• {renderInlineFormatting(line.slice(2))}</span>
+        </div>
+      )
+    }
+    
+    // Regular line with inline formatting
+    return (
+      <div key={index} className="mb-1">
+        {renderInlineFormatting(line)}
+      </div>
+    )
+  })
+}
+
+/**
+ * Render inline formatting (bold, italic, etc.)
+ * @param {string} text - Text yang akan di-render
+ * @returns {Array} Array of React elements
+ */
+export const renderInlineFormatting = (text) => {
+  if (!text) return ''
+  
+  // Split text by formatting patterns
+  const parts = []
+  let currentIndex = 0
+  
+  // Find all bold patterns **text**
+  const boldRegex = /\*\*([^*]+)\*\*/g
+  let match
+  
+  while ((match = boldRegex.exec(text)) !== null) {
+    // Add text before bold
+    if (match.index > currentIndex) {
+      parts.push({
+        type: 'text',
+        content: text.substring(currentIndex, match.index)
+      })
+    }
+    
+    // Add bold text
+    parts.push({
+      type: 'bold',
+      content: match[1]
+    })
+    
+    currentIndex = match.index + match[0].length
+  }
+  
+  // Add remaining text
+  if (currentIndex < text.length) {
+    parts.push({
+      type: 'text',
+      content: text.substring(currentIndex)
+    })
+  }
+  
+  // If no formatting found, return original text
+  if (parts.length === 0) {
+    return text
+  }
+  
+  return parts.map((part, index) => {
+    if (part.type === 'bold') {
+      return <span key={index} className="font-bold">{part.content}</span>
+    }
+    return <span key={index}>{part.content}</span>
+  })
+}
+
+/**
+ * Render structured description as React elements
+ * @param {string} text - Text yang akan di-render
+ * @returns {Array} Array of React elements
+ */
+export const renderStructuredText = (text) => {
+  if (!text) return ''
+  
+  return text.split('\n').map((line, index) => {
+    const trimmedLine = line.trim()
+    
+    // Check if line is a title (bold text)
+    if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
+      return (
+        <div key={index} className="mb-2">
+          <p className="font-bold text-gray-800 mb-1">
+            {trimmedLine.slice(2, -2)}
+          </p>
+        </div>
+      )
+    }
+    // Check if line starts with bullet point
+    else if (trimmedLine.startsWith('- ')) {
+      return (
+        <div key={index} className="mb-1 ml-4">
+          <span className="text-gray-700">
+            • {renderInlineFormatting(trimmedLine.slice(2))}
+          </span>
+        </div>
+      )
+    }
+    // Regular line with inline formatting
+    else if (trimmedLine) {
+      return (
+        <div key={index} className="mb-1">
+          {renderInlineFormatting(trimmedLine)}
+        </div>
+      )
+    }
+    // Empty line
+    else {
+      return <div key={index} className="mb-1">&nbsp;</div>
+    }
+  })
+}
+
+/**
+ * Get format instructions for each variant
+ * @param {string} variant - Variant type ('simple', 'structured', 'whatsapp')
+ * @returns {Object} Object dengan instructions dan examples
+ */
+export const getFormatInstructions = (variant) => {
+  const instructions = {
+    simple: {
+      title: 'Format Simple',
+      description: 'Untuk penerangan ringkas dengan bold text dan bullet points',
+      format: '**text** untuk bold, - untuk bullet points',
+      example: '**Harga Khas** untuk pelanggan istimewa!\n- Item pertama\n- Item kedua dengan **bold text**',
+      preview: 'Bold text dan bullet points yang fleksibel'
+    },
+    structured: {
+      title: 'Format Structured',
+      description: 'Untuk penerangan terstruktur dengan tajuk dan item yang fleksibel',
+      format: '**Tajuk** untuk bold, - untuk bullet points, **bold** di mana-mana',
+      example: `**Spesifikasi Laptop**
+- Processor: Intel Core i7
+- RAM: 16GB DDR4 dengan **DDR4-3200**
+- Storage: 512GB SSD
+
+**Aksesori Termasuk**
+- Charger 90W
+- Mouse wireless **gaming**`,
+      preview: 'Tajuk bold dengan bullet points dan inline formatting'
+    },
+    whatsapp: {
+      title: 'Format WhatsApp',
+      description: 'Format text seperti dalam WhatsApp',
+      format: '*bold* _italic_ ~strikethrough~ `monospace`',
+      example: '*Harga Khas* _Nota:_ ~Harga lama~ `Warranty`',
+      preview: 'Bold, italic, strikethrough, dan monospace'
+    }
+  }
+  
+  return instructions[variant] || instructions.simple
+}
+
+/**
+ * Validate text format for specific variant
+ * @param {string} text - Text yang akan di-validate
+ * @param {string} variant - Variant type
+ * @returns {Object} Object dengan validation results
+ */
+export const validateTextFormat = (text, variant) => {
+  const errors = []
+  const warnings = []
+  
+  if (!text || text.trim() === '') {
+    return { isValid: true, errors, warnings }
+  }
+  
+  switch (variant) {
+    case 'simple':
+      // Check for unmatched **
+      const boldMatches = text.match(/\*\*/g)
+      if (boldMatches && boldMatches.length % 2 !== 0) {
+        errors.push('Unmatched ** found. Please ensure all ** are properly closed.')
+      }
+      break
+      
+    case 'structured':
+      // Check for proper structure
+      const lines = text.split('\n').filter(line => line.trim())
+      let hasTitle = false
+      let hasItems = false
+      
+      lines.forEach(line => {
+        if (line.trim().startsWith('**') && line.trim().endsWith('**')) {
+          hasTitle = true
+        } else if (line.trim().startsWith('•')) {
+          hasItems = true
+        }
+      })
+      
+      if (hasTitle && !hasItems) {
+        warnings.push('Title found but no items below it. Consider adding bullet points.')
+      }
+      break
+      
+    case 'whatsapp':
+      // Check for unmatched formatting
+      const patterns = [
+        { regex: /\*[^*]+\*/, name: 'bold' },
+        { regex: /_[^_]+_/, name: 'italic' },
+        { regex: /~[^~]+~/, name: 'strikethrough' },
+        { regex: /`[^`]+`/, name: 'monospace' }
+      ]
+      
+      patterns.forEach(pattern => {
+        const matches = text.match(new RegExp(pattern.regex.source, 'g'))
+        if (matches) {
+          matches.forEach(match => {
+            if (match.length < 3) {
+              warnings.push(`Very short ${pattern.name} formatting: "${match}"`)
+            }
+          })
+        }
+      })
+      break
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings
+  }
+}
+
+/**
+ * Convert text from one format to another
+ * @param {string} text - Text yang akan di-convert
+ * @param {string} fromVariant - Format asal
+ * @param {string} toVariant - Format target
+ * @returns {string} Converted text
+ */
+export const convertTextFormat = (text, fromVariant, toVariant) => {
+  if (!text || fromVariant === toVariant) return text
+  
+  let convertedText = text
+  
+  switch (fromVariant) {
+    case 'whatsapp':
+      if (toVariant === 'simple') {
+        // Convert WhatsApp to simple
+        convertedText = convertedText.replace(/\*([^*]+)\*/g, '**$1**')
+        convertedText = convertedText.replace(/_([^_]+)_/g, '$1')
+        convertedText = convertedText.replace(/~([^~]+)~/g, '$1')
+        convertedText = convertedText.replace(/`([^`]+)`/g, '$1')
+      } else if (toVariant === 'structured') {
+        // Convert WhatsApp to structured
+        convertedText = convertedText.replace(/\*([^*]+)\*/g, '**$1**')
+        convertedText = convertedText.replace(/_([^_]+)_/g, '$1')
+        convertedText = convertedText.replace(/~([^~]+)~/g, '$1')
+        convertedText = convertedText.replace(/`([^`]+)`/g, '$1')
+      }
+      break
+      
+    case 'simple':
+      if (toVariant === 'whatsapp') {
+        // Convert simple to WhatsApp
+        convertedText = convertedText.replace(/\*\*([^*]+)\*\*/g, '*$1*')
+      } else if (toVariant === 'structured') {
+        // Convert simple to structured (no change needed)
+        // Simple format is already compatible with structured
+      }
+      break
+      
+    case 'structured':
+      if (toVariant === 'simple') {
+        // Convert structured to simple (no change needed)
+        // Structured format is already compatible with simple
+      } else if (toVariant === 'whatsapp') {
+        // Convert structured to WhatsApp
+        convertedText = convertedText.replace(/\*\*([^*]+)\*\*/g, '*$1*')
+      }
+      break
+  }
+  
+  return convertedText
+}
+
+/**
+ * Get preview text for specific variant
+ * @param {string} text - Text yang akan di-preview
+ * @param {string} variant - Variant type
+ * @returns {string} Preview text
+ */
+export const getPreviewText = (text, variant) => {
+  if (!text) return 'Tiada penerangan'
+  
+  switch (variant) {
+    case 'simple':
+      return text.replace(/\*\*([^*]+)\*\*/g, '**$1**')
+    case 'structured':
+      return text.replace(/\*\*([^*]+)\*\*/g, '**$1**')
+    case 'whatsapp':
+      return text
+        .replace(/\*([^*]+)\*/g, '**$1**')
+        .replace(/_([^_]+)_/g, '*$1*')
+        .replace(/~([^~]+)~/g, '~~$1~~')
+    default:
+      return text
+  }
+}
+
+// Export default object dengan semua functions
+export default {
+  parseStructuredDescription,
+  parseWhatsAppText,
+  renderWhatsAppText,
+  renderSimpleText,
+  renderStructuredText,
+  getFormatInstructions,
+  validateTextFormat,
+  convertTextFormat,
+  getPreviewText
+}

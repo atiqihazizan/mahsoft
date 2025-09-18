@@ -1,0 +1,76 @@
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
+import { Button, Card } from './components'
+
+function App() {
+  const [count, setCount] = useState(0)
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+      <div className="flex gap-8 mb-8">
+        <a href="https://vite.dev" target="_blank" className="transition-transform hover:scale-110">
+          <img src={viteLogo} className="h-24 w-24" alt="Vite logo" />
+        </a>
+        <a href="https://react.dev" target="_blank" className="transition-transform hover:scale-110">
+          <img src={reactLogo} className="h-24 w-24 animate-spin" alt="React logo" />
+        </a>
+      </div>
+      
+      <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">
+        MahSoft Frontend
+      </h1>
+      <p className="text-xl text-gray-600 mb-8 text-center">
+        Vite + React + Tailwind CSS
+      </p>
+      
+      <Card 
+        title="Demo Components" 
+        subtitle="Contoh penggunaan Tailwind CSS dengan component library"
+        className="w-full max-w-md"
+      >
+        <div className="space-y-4">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-blue-600 mb-2">Count: {count}</p>
+            <p className="text-gray-600 mb-4">
+              Edit <code className="bg-gray-200 px-2 py-1 rounded text-sm">src/App.jsx</code> and save to test HMR
+            </p>
+          </div>
+          
+          <div className="flex gap-2 justify-center">
+            <Button 
+              onClick={() => setCount((count) => count + 1)}
+              variant="primary"
+            >
+              Increment
+            </Button>
+            <Button 
+              onClick={() => setCount(0)}
+              variant="secondary"
+            >
+              Reset
+            </Button>
+          </div>
+          
+          <div className="flex gap-2 justify-center">
+            <Button variant="success" size="sm">
+              Success
+            </Button>
+            <Button variant="danger" size="sm">
+              Danger
+            </Button>
+            <Button variant="outline" size="sm">
+              Outline
+            </Button>
+          </div>
+        </div>
+      </Card>
+      
+      <p className="text-gray-500 mt-8 text-center">
+        Click on the Vite and React logos to learn more
+      </p>
+    </div>
+  )
+}
+
+export default App

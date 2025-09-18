@@ -1,0 +1,20 @@
+import React, { useState, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { PageWrapper, DataTable, StatusBadge, CurrencyFormat, DateFormat, TableCell } from '../components'
+import { invoicesAPI } from '../utils/apiClient'
+import { formatText } from '../utils/textFormatting'
+
+const Invoice = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [invoices, setInvoices] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('active') // Default kepada active
+  const [actionLoading, setActionLoading] = useState({})
+  // ... existing code ...
+}
+
+export default Invoice
+
+

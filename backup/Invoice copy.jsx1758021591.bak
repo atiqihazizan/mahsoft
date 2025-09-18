@@ -1,0 +1,327 @@
+import React, { useState, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { PageWrapper, DataTable, StatusBadge, CurrencyFormat, DateFormat, TableCell, ActionButtonGroup, ActionButtonPresets } from '../components'
+import { invoicesAPI } from '../utils/apiClient'
+import { formatText } from '../utils/textFormatting'
+
+const Invoice = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [invoices, setInvoices] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('active') // Default kepada active
+  const [actionLoading, setActionLoading] = useState({})
+
+  // Function to calculate overdue days
+  const calculateOverdueDays = (dueDate) => {
+    if (!dueDate) return 0
+    const today = new Date()
+    const due = new Date(dueDate)
+    const diffTime = today - due
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays > 0 ? diffDays : 0
+  }
+
+  // Function to check and update overdue status
+  const checkAndUpdateOverdueStatus = async (invoices) => {
+    const today = new Date()
+    const overdueInvoices = []
+    
+    for (const invoice of invoices) {
+      // Hanya check invoice yang status SENT dan belum overdue
+      if (invoice.status === 'sent' && invoice.dueDate) {
+        const dueDate = new Date(invoice.dueDate)
+        if (today > dueDate) {
+          overdueInvoices.push(invoice.id)
+        }
+      }
+    }
+    
+    // Update status kepada OVERDUE untuk invoice yang lewat
+    if (overdueInvoices.length > 0) {
+      try {
+        await Promise.all(
+          overdueInvoices.map(id => 
+            invoicesAPI.update(id, { status: 'OVERDUE' })
+          )
+        )
+        console.log(`Updated ${overdueInvoices.length} invoices to OVERDUE status`)
+        
+        // Update local state untuk invoice yang telah diubah status
+        setInvoices(prevInvoices => 
+          prevInvoices.map(invoice => 
+            overdueInvoices.includes(invoice.id) 
+              ? { ...invoice, status: 'overdue' }
+              : invoice
+          )
+        )
+      } catch (error) {
+        console.error('Error updating overdue status:', error)
+      }
+    }
+  }
+
+  // Function to handle invoice status change
+  const handleInvoiceStatusChange = async (invoiceId, action) => {
+    // Confirmation dialog to prevent accidental clicks
+    const actionText = action === 'paid' ? 'mark as paid' : 'cancel'
+    const confirmMessage = `Are you sure you want to ${actionText} this invoice?`
+    
+    if (!window.confirm(confirmMessage)) {
+      return // User cancelled, exit function
+    }
+
+    try {
+      setActionLoading(prev => ({ ...prev, [invoiceId]: true }))
+      
+      let response
+      if (action === 'paid') {
+        // Find the invoice to get its total amount
+        const invoice = invoices.find(inv => inv.id === invoiceId)
+        if (!invoice) {
+          throw new Error('Invoice not found')
+        }
+        response = await invoicesAPI.markPaid(invoiceId, { paidAmount: invoice.amount })
+      } else if (action === 'cancel') {
+        response = await invoicesAPI.update(invoiceId, { status: 'CANCELLED' })
+      }
+
+      if (response?.success) {
+        const newStatus = action === 'paid' ? 'paid' : 'cancelled'
+        setInvoices(prev => prev.map(invoice => invoice.id === invoiceId ? { ...invoice, status: newStatus } : invoice))
+        // alert(`Invoice ${actionText} successfully!`)
+      } else {
+        const errorMessage = response?.message || response?.error || 'Unknown error'
+        const statusMessages = { 400: `Invalid request: ${errorMessage}`, 404: 'Invoice not found', 500: `Server error: ${errorMessage}` }
+        // alert(statusMessages[response?.status] || `Failed to ${action} invoice: ${errorMessage}`)
+      }
+    } catch (error) {
+      // alert(`Error ${action}ing invoice: ${error.message}`)
+      console.error(`Error ${action}ing invoice: ${error.message}`)
+    } finally {
+      setActionLoading(prev => ({ ...prev, [invoiceId]: false }))
+    }
+  }
+
+  // Function to fetch invoices
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true)
+      const response = await invoicesAPI.getAll()
+      
+      if (response?.success) {
+        const transformedInvoices = response.data.invoices.map(invoice => ({
+          id: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          customerName: invoice.customer?.name || 'N/A',
+          subject: invoice.subject || 'N/A',
+          amount: parseFloat(invoice.total),
+          status: invoice.status.toLowerCase(),
+          date: invoice.date,
+          dueDate: invoice.dueDate
+        }))
+        
+        if (transformedInvoices.length === 0) throw new Error('No data from API')
+        
+        // Set invoices first
+        setInvoices(transformedInvoices)
+        
+        // Check dan update overdue status selepas set state
+        await checkAndUpdateOverdueStatus(transformedInvoices)
+      } else {
+        throw new Error('API response not successful')
+      }
+    } catch (error) {
+      console.error('Error loading invoices:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch invoices from API (elak double-fetch di StrictMode)
+  useEffect(() => {
+    let mounted = true
+    if (mounted) fetchInvoices()
+    return () => { mounted = false }
+  }, [])
+
+  // Refresh data when location changes (e.g., after edit)
+  useEffect(() => {
+    if (location.state?.refresh) fetchInvoices()
+  }, [location])
+
+  const filteredInvoices = invoices.filter(invoice => {
+    const matchesSearch = invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         invoice.subject.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    if (filterStatus === 'all') return matchesSearch
+    if (filterStatus === 'active') return matchesSearch && (invoice.status === 'draft' || invoice.status === 'sent' || invoice.status === 'overdue')
+    if (filterStatus === 'done') return matchesSearch && (invoice.status === 'paid' || invoice.status === 'cancelled')
+    return matchesSearch
+  })
+
+  // Function to determine button state based on invoice status
+  const getButtonState = (row, action) => {
+    const isActive = row.status === 'draft' || row.status === 'sent' || row.status === 'overdue'
+    return action === 'edit' || action === 'delete' ? isActive : true
+  }
+
+  // Table columns configuration
+  const columns = [
+    {
+      key: 'invoiceNumber',
+      header: 'Invoice No.',
+      render: (value) => <TableCell value={value} className="font-medium text-gray-900" />
+    },
+    {
+      key: 'customerName',
+      header: 'Customer',
+      render: (value) => <TableCell value={value} className="text-sm text-gray-900" title={value} />
+    },
+    {
+      key: 'subject',
+      header: 'Subject',
+      render: (value) => <TableCell value={value} className="text-sm text-gray-600" title={value} />
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      headerClassName: 'text-right',
+      cellClassName: 'text-right font-bold',
+      render: (value) => <CurrencyFormat amount={value} />
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (value) => <StatusBadge status={value} />
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      render: (value) => <DateFormat date={value} />
+    },
+    {
+      key: 'dueDate',
+      header: 'Outstanding',
+      render: (value, row) => {
+        if (row.status === 'paid' || row.status === 'cancelled') {
+          return <TableCell value="-" className="text-gray-500" />
+        }
+        const overdueDays = calculateOverdueDays(value)
+        return overdueDays > 0 
+          ? <TableCell value={`${overdueDays} days`} className="text-red-600 font-medium" />
+          : <TableCell value="No overdue" className="text-green-600" />
+      }
+    },
+    {
+      key: 'actions',
+      header: 'Quick Actions',
+      headerClassName: 'text-center',
+      cellClassName: 'text-center',
+      render: (value, row) => {
+        const isActive = row.status === 'draft' || row.status === 'sent' || row.status === 'overdue'
+        
+        return (
+          <div className="flex items-center justify-center">
+            {isActive ? (
+              <ActionButtonGroup
+                data={row}
+                {...ActionButtonPresets.invoice}
+                loading={{ paid: actionLoading[row.id], cancel: actionLoading[row.id] }}
+                onPaid={() => handleInvoiceStatusChange(row.id, 'paid')}
+                onCancel={() => handleInvoiceStatusChange(row.id, 'cancel')}
+                size="sm"
+              />
+            ) : (
+              <ActionButtonGroup
+                data={row}
+                showView={true}
+                showDuplicate={true}
+                showEdit={false}
+                showDelete={false}
+                showPrint={false}
+                showPaid={false}
+                showCancel={false}
+                onView={() => {
+                  // TODO: Implement view invoice functionality
+                  console.log('View invoice:', row.id)
+                }}
+                onDuplicate={() => {
+                  // TODO: Implement duplicate invoice functionality
+                  console.log('Duplicate invoice:', row.id)
+                }}
+                size="sm"
+              />
+            )}
+          </div>
+        )
+      }
+    }
+  ]
+  // Table actions configuration
+  return (
+    <PageWrapper
+      title="INVOICE MANAGEMENT"
+      newButtonText="+ CREATE NEW INVOICE"
+      onNewClick={() => navigate('/invoices/new')}
+      buttonColor="blue"
+      filterOptions={["ALL", "ACTIVE", "DONE"]}
+      activeFilter={{ 'all': 'ALL', 'active': 'ACTIVE', 'done': 'DONE' }[filterStatus] || 'ACTIVE'}
+      onFilterChange={(filter) => {
+        const statusMap = { 'ALL': 'all', 'ACTIVE': 'active', 'DONE': 'done' }
+        setFilterStatus(statusMap[filter] || 'active')
+      }}
+      additionalActions={[
+        {
+          label: 'Refresh',
+          onClick: fetchInvoices,
+          className: 'bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm'
+        }
+      ]}
+    >
+      <DataTable
+        data={filteredInvoices}
+        columns={columns}
+        loading={loading}
+        getButtonState={getButtonState}
+        onEdit={(row) => {
+          const isActive = row.status === 'draft' || row.status === 'sent' || row.status === 'overdue'
+          isActive ? navigate(`/invoices/${row.id}/edit`) : alert('Hanya invoice yang aktif boleh diedit')
+        }}
+        onDuplicate={async (row) => {
+          const duplicateData = { ...row }
+          delete duplicateData.id
+          localStorage.setItem('duplicateInvoiceData', JSON.stringify(duplicateData))
+          navigate('/invoices/new?duplicate=1')
+        }}
+        onPreview={(row) => {
+          navigate(`/invoice-print/${row.id}`)
+        }}
+        onDelete={async (row) => {
+          const isActive = row.status === 'draft' || row.status === 'sent' || row.status === 'overdue'
+          if (isActive && confirm('Are you sure you want to delete this invoice?')) {
+            try {
+              const response = await invoicesAPI.delete(row.id)
+              if (response.success) {
+                fetchInvoices()
+              } else {
+                alert(response.error || 'Failed to delete invoice. Please try again.')
+              }
+            } catch (error) {
+              console.error('Error deleting invoice:', error)
+              alert('An error occurred while deleting invoice. Please try again.')
+            }
+          } else if (!isActive) {
+            alert('Only active invoices can be deleted')
+          }
+        }}
+        hideActionsForStatus={['paid', 'cancelled']}
+      />
+    </PageWrapper>
+  )
+}
+
+export default Invoice
+

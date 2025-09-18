@@ -1,0 +1,853 @@
+/* Print CSS untuk Invoice, Quote dan Receipt Preview */
+/* Berdasarkan template CSS yang disediakan */
+
+@font-face {
+  font-family: audiowide;
+  src: url(../assets/fonts/Audiowide-Regular.ttf);
+}
+
+@font-face {
+  font-family: roboto;
+  src: url(../assets/fonts/Roboto-Regular.ttf);
+}
+
+/* Base Styles */
+.paper .sheet table td {
+  font-size: 0.7rem;
+  font-weight: 300;
+}
+
+.paper .sheet {
+  font-size: .9rem;
+  background-color: #eee;
+  line-height: 1.65;
+  color: #212529;
+  text-align: left;
+}
+
+/* Utility Classes */
+.display-inline {
+  display: inline;
+}
+
+.text-bold {
+  font-weight: bold;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-start {
+  text-align: start;
+}
+
+.text-end {
+  text-align: end;
+}
+
+.font-audiowide {
+  font-family: audiowide;
+}
+
+.weight-400 {
+  font-weight: 400;
+}
+
+.weight-600 {
+  font-weight: 600;
+}
+
+.uppertext {
+  text-transform: uppercase;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.m0 {
+  margin: 0;
+}
+
+.pre {
+  white-space: pre-wrap;
+}
+
+/* Letter Head */
+.letter-head table p {
+  padding: 0;
+  margin: 0;
+  margin-bottom: 0;
+}
+
+.vtable {
+  border: 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.fwb td {
+  font-weight: 600;
+}
+
+.letter-head table tr th,
+.letter-head table tr td {
+  vertical-align: top;
+}
+
+.letter-head table,
+.clientinfo table,
+.issuence table,
+.footer-bottom table {
+  width: 100%;
+  border: 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.issuence {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.issuence .header {
+  margin-bottom: 0.5rem;
+  /* border-bottom: 1px solid #e5e7eb; */
+}
+
+/* Letter Head Layout */
+.letter-head table tr td:first-child {
+  width: 80px;
+  vertical-align: top;
+}
+
+.letter-head table tr td:nth-child(2) {
+  width: auto;
+  padding-left: 1rem;
+}
+
+.letter-head table tr td:last-child {
+  width: 120px;
+  text-align: right;
+  vertical-align: top;
+}
+
+/* Client Info Layout */
+.clientinfo table tr td:first-child {
+  width: auto;
+  vertical-align: top;
+}
+
+.clientinfo table tr td:last-child {
+  width: 20%;
+  vertical-align: top;
+}
+
+/* Issuance Section */
+.issuence .col-bold td {
+  font-weight: 600;
+}
+
+.issuence table tr th,
+.issuence table tr td {
+  padding: 0.1rem 0.3rem;
+}
+
+.issuence .header.line {
+  /* border-bottom: 1px solid black; */
+  margin-top: .5rem;
+}
+
+.issuence .linebottom {
+  /* border-bottom: 1px solid black; */
+  padding: 0;
+  width: 99.9%;
+}
+
+.issuence .header tr th:nth-child(1),
+.issuence .rowbody tr td:nth-child(1) {
+  width: auto;
+  text-align: left;
+}
+
+.issuence .header tr th:nth-child(2),
+.issuence .rowbody tr td:nth-child(2) {
+  width: 60px;
+  text-align: center;
+}
+
+.issuence .header tr th:nth-child(3),
+.issuence .rowbody tr td:nth-child(3) {
+  width: 75px;
+  text-align: right;
+}
+
+.issuence .rowbody td:nth-child(4),
+.issuence .header th:nth-child(4),
+.issuence .footer tr th:last-child {
+  width: 75px;
+  text-align: right;
+}
+
+.issuence .header th,
+.issuence .footer tr th {
+  font-weight: 500;
+  font-size: .85rem;
+}
+
+.issuence .footer tr th {
+  text-align: right !important;
+}
+
+/*.issuence { margin-top: 2rem}*/
+
+/* Issuance Header */
+.issuence .header th {
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 0.5rem 0.3rem;
+  /* border-bottom: 1px solid #000; */
+  text-align: left;
+}
+
+.issuence .header th:nth-child(2) {
+  text-align: center;
+  width: 80px;
+}
+
+.issuence .header th:nth-child(3) {
+  text-align: right;
+  width: 80px;
+}
+
+/* .issuence .header th:nth-child(4) {
+  text-align: right;
+  width: 100px;
+} */
+
+/* Issuance Row Body */
+.issuence .rowbody {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.issuence .rowbody td {
+  padding: 0.5rem 0.3rem;
+  vertical-align: top;
+  /* font-size: 0.8rem; */
+  /* border-bottom: 1px solid #eee; */
+}
+
+.issuence .rowbody td p,
+.issuence .rowbody td span {
+  font-size: 0.6rem;
+  /* border-bottom: 1px solid #eee; */
+}
+
+.issuence .rowbody tr.fwb td {
+  font-weight: 600;
+}
+
+.issuence .rowbody td:nth-child(2) {
+  text-align: center;
+  width: 80px;
+}
+
+.issuence .rowbody td:nth-child(3) {
+  text-align: right;
+  width: 80px;
+}
+
+.issuence .rowbody td:nth-child(4) {
+  /* text-align: right;
+  width: 100px; */
+  font-weight: 600;
+}
+
+.small,
+small {
+  font-size: 80%;
+  font-weight: 400;
+}
+
+.issuence .body td {
+  vertical-align: top;
+  padding-top: 1rem;
+}
+
+.issuence .body td,
+.footer-bottom {
+  margin-top: 1rem;
+}
+
+/* Footer */
+.footer-bottom {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.bankinfo {
+  float: right;
+  border: 1px solid black;
+  border-radius: 3px;
+  padding: .6rem;
+}
+
+.bankinfo p {
+  margin: 0;
+  padding: 0;
+  font-weight: bold;
+  font-size: 8pt;
+}
+
+/* Table Signature */
+.table-signature {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-signature tr {
+  /* display: flex; */
+  align-items: center;
+}
+
+.table-signature td:first-child {
+  align-self: center;
+}
+
+.table-signature td:nth-child(2) {
+  align-self: center;
+  /* flex: 1; */
+}
+
+.table-signature td:last-child {
+  width: 23.33%;
+}
+
+/* Bank Info */
+.bank-info td {
+  white-space: nowrap;
+  font-size: 9pt;
+  /* padding: 0.2rem 0; */
+}
+
+.bank-info td:first-child {
+  width: 65px;
+}
+
+.bank-info td:nth-child(2) {
+  width: 0px;
+  text-align: center;
+}
+
+.bank-info td:last-child {
+  width: auto;
+  padding-left: 0.5rem;
+  font-size: 0.7rem;
+}
+
+/* Invoice Amount */
+.inv-amt td {
+  padding: 0.2rem 0;
+  font-size: 9pt;
+}
+
+.inv-amt td:first-child {
+  width: 60px;
+}
+
+.inv-amt td:last-child {
+  width: 100px;
+  text-align: right;
+}
+
+.inv-amt tr.font-big th {
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.3rem 0;
+  border-top: 1px solid #000;
+}
+
+/* Body Content */
+.fra-body {
+  min-height: 500px;
+}
+
+.issuedby {
+  width: 13rem;
+  display: inline-block;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.issuedby p {
+  margin: 0
+}
+
+.separator-line {
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.table-signature tr.font-big th {
+  font-size: .9rem
+}
+
+.table-signature tr.font-big th {
+  padding: 2px 0
+}
+
+.issuedby p,
+.remark p {
+  font-size: 10pt;
+}
+
+.table-signature tr.font-big th {
+  font-size: .9rem;
+  padding: 2px 0;
+}
+
+.issuence .body td,
+.footer-bottom {
+  margin-top: 1rem;
+}
+
+.issuedby p,
+.remark p {
+  font-size: 10pt;
+}
+
+.clientinfo table tr p,
+.clientinfo table tr th,
+.clientinfo table tr td {
+  font-size: .8rem;
+}
+
+.clientinfo table tr th,
+.clientinfo table tr td,
+.table-signature th,
+.table-signature td {
+  vertical-align: top;
+}
+
+.bank-info td,
+.sign-info td {
+  white-space: nowrap;
+}
+
+.table-signature tr th,
+.table-signature tr td,
+.bank-info td,
+.sign-info td {
+  font-size: 9pt;
+}
+
+/* Print Layout */
+.sheet {
+  margin: 0;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+  background-color: white;
+}
+
+/* Paper Sizes */
+.paper.A3 .sheet {
+  width: 297mm;
+  height: 419mm;
+}
+
+.paper.A3.landscape .sheet {
+  width: 420mm;
+  height: 296mm;
+}
+
+.paper.A4 .sheet {
+  width: 210mm;
+  /* height: 296mm; */
+}
+
+.paper.A4.landscape .sheet {
+  width: 297mm;
+  height: 209mm;
+}
+
+.paper.A5 .sheet {
+  width: 148mm;
+  height: 209mm;
+}
+
+.paper.A5.landscape .sheet {
+  width: 210mm;
+  height: 147mm;
+}
+
+.paper.letter .sheet {
+  width: 216mm;
+  height: 279mm;
+}
+
+.paper.letter.landscape .sheet {
+  width: 280mm;
+  height: 215mm;
+}
+
+.paper.legal .sheet {
+  width: 216mm;
+  height: 356mm;
+}
+
+.paper.legal.landscape .sheet {
+  width: 357mm;
+  height: 215mm;
+}
+
+/* Padding Options */
+.sheet.padding-5mm {
+  padding: 5mm;
+}
+
+.sheet.padding-10mm {
+  padding: 10mm;
+}
+
+.sheet.padding-15mm {
+  padding: 15mm;
+}
+
+.sheet.padding-20mm {
+  padding: 20mm;
+}
+
+.sheet.padding-25mm {
+  padding: 25mm;
+}
+
+/* Print Controls */
+.btntop {
+  position: absolute;
+  display: flex;
+  width: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+/* Signature */
+.signiture {
+  position: absolute;
+  bottom: 50px;
+  width: 100%;
+  color: gray;
+  text-align: center;
+  font-style: italic;
+  font-size: .75rem;
+  color: #a9a9a9b5;
+}
+
+/* Print Media Queries */
+@page {
+  margin: 0;
+  padding: 0;
+}
+
+@media print {
+
+  .btntop,
+  #background {
+    display: none;
+  }
+
+  .paper.A3.landscape {
+    width: 420mm;
+  }
+
+  .paper.A3,
+  .paper.A4.landscape {
+    width: 297mm;
+  }
+
+  .paper.A4,
+  .paper.A5.landscape {
+    width: 210mm;
+  }
+
+  .paper.A5 {
+    width: 148mm;
+  }
+
+  .paper.letter,
+  .paper.legal {
+    width: 216mm;
+  }
+
+  .paper.letter.landscape {
+    width: 280mm;
+  }
+
+  .paper.legal.landscape {
+    width: 357mm;
+  }
+
+  /* body {
+    background-color: white;
+    color: black;
+  } */
+
+  .sheet {
+    box-shadow: none;
+    margin: 0;
+    background: white;
+  }
+
+  /* Remove all colors for print */
+  * {
+    color: black !important;
+    background: white !important;
+  }
+
+  /* Keep borders for structure */
+  table,
+  th,
+  td {
+    border-color: black !important;
+  }
+
+  /* Ensure text is readable */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: black !important;
+  }
+
+  /* Remove gradients and shadows */
+  .gradient,
+  .shadow {
+    background: white !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Custom Styles untuk Mahsoft */
+.print-header {
+  background-color: #3b82f6;
+  color: white;
+  padding: 1rem;
+  margin-bottom: 0;
+}
+
+.print-header h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.print-header .invoice-number {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-top: 0.5rem;
+}
+
+.print-dates {
+  text-align: right;
+  color: white;
+  opacity: 0.9;
+}
+
+.print-dates p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.print-content {
+  padding: 2rem;
+}
+
+.print-section {
+  margin-bottom: 2rem;
+}
+
+.print-section h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #374151;
+}
+
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.print-table th,
+.print-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.print-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.print-table .text-right {
+  text-align: right;
+}
+
+.print-table .text-center {
+  text-align: center;
+}
+
+.print-totals {
+  margin-top: 1rem;
+  margin-left: auto;
+  width: 300px;
+}
+
+.print-totals .total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.print-totals .total-row.final {
+  font-weight: bold;
+  font-size: 1.1rem;
+  border-top: 2px solid #374151;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+}
+
+.print-notes {
+  /* margin-top: 2rem; */
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.print-notes h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #374151;
+}
+
+.print-notes p {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #6b7280;
+  margin: 0;
+}
+
+.signiture {
+  /* position: fixed;
+  left: 0;
+  bottom: 0; */
+  position: absolute;
+  bottom: 50px;
+  width: 100%;
+  /* background-color: red; */
+  color: gray;
+  /* text-align: right; */
+  text-align: center;
+  font-style: italic;
+  font-size: .75rem;
+  color: #a9a9a9b5;
+}
+
+@media print {
+
+  /* .issuence .rowbody td {
+    vertical-align: top;
+    font-size: 7pt;
+  } */
+}
+
+
+.sheet {
+  margin: 0;
+  overflow: hidden;
+  position: relative;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  /* page-break-after: always; */
+}
+
+.btntop {
+  position: absolute;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  width: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.sheet {background-color: white;}
+.paper.A3 .sheet {width: 297mm;height: 419mm;}
+.paper.A3.landscape .sheet {width: 420mm;height: 296mm;}
+.paper.A4 .sheet {width: 210mm;height: 296mm;}
+.paper.A4.landscape .sheet {width: 297mm;height: 209mm;}
+.paper.A5 .sheet {width: 148mm;height: 209mm;}
+.paper.A5.landscape .sheet {width: 210mm;height: 147mm;}
+.paper.letter .sheet {width: 216mm;height: 279mm;}
+.paper.letter.landscape .sheet {width: 280mm;height: 215mm;}
+.paper.legal .sheet {width: 216mm;height: 356mm;}
+.paper.legal.landscape .sheet {width: 357mm;height: 215mm;}
+
+/** Padding area **/
+.sheet.padding-5mm {padding: 5mm;}
+.sheet.padding-10mm {padding: 10mm;}
+.sheet.padding-15mm {padding: 15mm;}
+.sheet.padding-20mm {padding: 20mm;}
+.sheet.padding-25mm {padding: 25mm;}
+
+/** For screen preview **/
+@page {  margin: 0;  padding: 0;  }
+@media print {
+  .btntop,
+  #background {display: none;}
+  .paper.A3.landscape {width: 420mm;}
+  .paper.A3,
+  .paper.A4.landscape {width: 297mm;}
+  .paper.A4,
+  .paper.A5.landscape {width: 210mm;}
+  .paper.A5 {width: 148mm;}
+  .paper.letter,
+  .paper.legal {width: 216mm;}
+  .paper.letter.landscape {width: 280mm;}
+  .paper.legal.landscape {width: 357mm;}
+}
+
+.signiture {
+  /* position: fixed;
+  left: 0;
+  bottom: 0; */
+  position: absolute;
+  bottom: 50px;
+  width: 100%;
+  /* background-color: red; */
+  color: gray;
+  /* text-align: right; */
+  text-align: center;
+  font-style: italic;
+  font-size: .75rem;
+  color: #a9a9a9b5;
+}
+/*# sourceMappingURL=pageview.css.map */

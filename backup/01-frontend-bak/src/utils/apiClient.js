@@ -1,0 +1,313 @@
+// API Client utility untuk Mahsoft Frontend
+class ApiClient {
+  constructor(baseURL = '') {
+    this.baseURL = baseURL
+    this.defaultHeaders = {
+      'Content-Type': 'application/json',
+    }
+  }
+
+  // Set token untuk authentication
+  setToken(token) {
+    if (token) {
+      this.defaultHeaders['Authorization'] = `Bearer ${token}`
+    } else {
+      delete this.defaultHeaders['Authorization']
+    }
+  }
+
+  // Get token dari localStorage
+  getToken() {
+    return localStorage.getItem('token')
+  }
+
+  // Update headers dengan token semasa
+  updateAuthHeader() {
+    const token = this.getToken()
+    this.setToken(token)
+  }
+
+  // Generic request method
+  async request(endpoint, options = {}) {
+    this.updateAuthHeader()
+    
+    const url = `${this.baseURL}${endpoint}`
+    const config = {
+      headers: { ...this.defaultHeaders, ...options.headers },
+      ...options
+    }
+
+
+    try {
+      const response = await fetch(url, config)
+      
+      // Parse JSON response
+      let data
+      try {
+        data = await response.json()
+      } catch (parseError) {
+        data = { message: 'Invalid JSON response' }
+      }
+
+      // Handle HTTP errors
+      if (!response.ok) {
+        // Only log 500 errors (server/database errors) and 401 errors for debugging
+        if (response.status === 500 || response.status === 401) {
+          console.error('API Request Error:', {
+            url,
+            status: response.status,
+            message: data.message
+          })
+        }
+        
+        return {
+          success: false,
+          error: data.message || `HTTP ${response.status}: ${response.statusText}`,
+          message: data.message || `HTTP ${response.status}: ${response.statusText}`,
+          status: response.status
+        }
+      }
+
+      return {
+        success: true,
+        data: data.data || data,
+        message: data.message || 'Success',
+        status: response.status
+      }
+    } catch (error) {
+      // Only log network errors that are not authentication related
+      if (!error.message.includes('401') && !error.message.includes('Unauthorized')) {
+        console.error('API Network Error:', error.message)
+      }
+      
+      return {
+        success: false,
+        error: error.message,
+        message: error.message || 'Network error occurred'
+      }
+    }
+  }
+
+  // GET request
+  async get(endpoint, options = {}) {
+    return this.request(endpoint, {
+      method: 'GET',
+      ...options
+    })
+  }
+
+  // POST request
+  async post(endpoint, data = null, options = {}) {
+    return this.request(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : null,
+      ...options
+    })
+  }
+
+  // PUT request
+  async put(endpoint, data = null, options = {}) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : null,
+      ...options
+    })
+  }
+
+  // DELETE request
+  async delete(endpoint, options = {}) {
+    return this.request(endpoint, {
+      method: 'DELETE',
+      ...options
+    })
+  }
+
+  // PATCH request
+  async patch(endpoint, data = null, options = {}) {
+    return this.request(endpoint, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : null,
+      ...options
+    })
+  }
+}
+
+// Create API client instance with base URL
+const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+const apiClient = new ApiClient(baseURL)
+
+// Auth API methods
+export const authAPI = {
+  // Login
+  login: async (credentials) => {
+    return apiClient.post('/api/v1/auth/login', credentials)
+  },
+
+  // Register
+  register: async (userData) => {
+    return apiClient.post('/api/v1/auth/register', userData)
+  },
+
+  // Get current user
+  getCurrentUser: async () => {
+    return apiClient.get('/api/v1/auth/me')
+  },
+
+  // Change password
+  changePassword: async (passwordData) => {
+    return apiClient.post('/api/v1/auth/change-password', passwordData)
+  },
+
+  // Logout (client-side)
+  logout: () => {
+    localStorage.removeItem('token')
+    apiClient.setToken(null)
+  },
+
+  // Refresh token
+  refreshToken: async () => {
+    return apiClient.post('/api/v1/auth/refresh')
+  }
+}
+
+// Companies API methods
+export const companiesAPI = {
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return apiClient.get(`/api/v1/companies${queryString ? `?${queryString}` : ''}`)
+  },
+
+  getById: async (id) => {
+    return apiClient.get(`/api/v1/companies/${id}`)
+  },
+
+  create: async (companyData) => {
+    return apiClient.post('/api/v1/companies', companyData)
+  },
+
+  update: async (id, companyData) => {
+    return apiClient.put(`/api/v1/companies/${id}`, companyData)
+  },
+
+  delete: async (id) => {
+    return apiClient.delete(`/api/v1/companies/${id}`)
+  }
+}
+
+// Customers API methods
+export const customersAPI = {
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return apiClient.get(`/api/v1/customers${queryString ? `?${queryString}` : ''}`)
+  },
+
+  getById: async (id) => {
+    return apiClient.get(`/api/v1/customers/${id}`)
+  },
+
+  create: async (customerData) => {
+    return apiClient.post('/api/v1/customers', customerData)
+  },
+
+  update: async (id, customerData) => {
+    return apiClient.put(`/api/v1/customers/${id}`, customerData)
+  },
+
+  delete: async (id) => {
+    return apiClient.delete(`/api/v1/customers/${id}`)
+  }
+}
+
+// Invoices API methods
+export const invoicesAPI = {
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return apiClient.get(`/api/v1/invoices${queryString ? `?${queryString}` : ''}`)
+  },
+
+  getById: async (id) => {
+    return apiClient.get(`/api/v1/invoices/${id}`)
+  },
+
+  create: async (invoiceData) => {
+    return apiClient.post('/api/v1/invoices', invoiceData)
+  },
+
+  update: async (id, invoiceData) => {
+    return apiClient.put(`/api/v1/invoices/${id}`, invoiceData)
+  },
+
+  delete: async (id) => {
+    return apiClient.delete(`/api/v1/invoices/${id}`)
+  },
+
+  markPaid: async (id) => {
+    return apiClient.post(`/api/v1/invoices/${id}/mark-paid`)
+  }
+}
+
+// Quotes API methods
+export const quotesAPI = {
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return apiClient.get(`/api/v1/quotes${queryString ? `?${queryString}` : ''}`)
+  },
+
+  getById: async (id) => {
+    return apiClient.get(`/api/v1/quotes/${id}`)
+  },
+
+  create: async (quoteData) => {
+    return apiClient.post('/api/v1/quotes', quoteData)
+  },
+
+  update: async (id, quoteData) => {
+    return apiClient.put(`/api/v1/quotes/${id}`, quoteData)
+  },
+
+  delete: async (id) => {
+    return apiClient.delete(`/api/v1/quotes/${id}`)
+  },
+
+  convertToInvoice: async (id, invoiceData) => {
+    return apiClient.post(`/api/v1/quotes/${id}/convert-to-invoice`, invoiceData)
+  }
+}
+
+// Receipts API methods
+export const receiptsAPI = {
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return apiClient.get(`/api/v1/receipts${queryString ? `?${queryString}` : ''}`)
+  },
+
+  getById: async (id) => {
+    return apiClient.get(`/api/v1/receipts/${id}`)
+  },
+
+  create: async (receiptData) => {
+    return apiClient.post('/api/v1/receipts', receiptData)
+  },
+
+  update: async (id, receiptData) => {
+    return apiClient.put(`/api/v1/receipts/${id}`, receiptData)
+  },
+
+  delete: async (id) => {
+    return apiClient.delete(`/api/v1/receipts/${id}`)
+  }
+}
+
+// Dashboard API methods
+export const dashboardAPI = {
+  getStats: async () => {
+    return apiClient.get('/api/v1/dashboard/stats')
+  },
+
+  getRecentActivity: async () => {
+    return apiClient.get('/api/v1/dashboard/recent-activity')
+  }
+}
+
+// Export default API client
+export default apiClient

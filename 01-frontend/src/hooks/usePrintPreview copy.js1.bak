@@ -1,0 +1,223 @@
+
+
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { invoicesAPI, quotesAPI, receiptsAPI } from '../utils/apiClient'
+
+// Hook generik untuk ambil data Print Preview bagi INVOICE/QUOTATION/RECEIPT
+export default function usePrintPreview(documentType, id) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const hasFetchedRef = useRef(false)
+
+  const normalizedType = useMemo(() => (documentType || '').toUpperCase(), [documentType])
+
+  useEffect(() => {
+    setError(null)
+    setData(null)
+    hasFetchedRef.current = false
+  }, [normalizedType, id])
+
+  useEffect(() => {
+    const fetcher = async () => {
+      setLoading(true)
+      if (!id) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        if (normalizedType === 'INVOICE') {
+          const res = await invoicesAPI.getById(id)
+          if (!res?.success || !res?.data) {
+            setData(null)
+            setLoading(false)
+            return
+          }
+
+          const inv = res.data
+          console.log(inv)
+          setData({
+            documentType: 'INVOICE',
+            documentNumber: inv.invoiceNumber || '',
+            status: (inv.status || '').toLowerCase(),
+            date: inv.date ? new Date(inv.date).toISOString().slice(0, 10) : '',
+            validUntil: inv.dueDate ? new Date(inv.dueDate).toISOString().slice(0, 10) : '',
+            company: {
+              name: inv.company?.name || '',
+              registration: inv.company?.registration || '',
+              address: inv.company?.address || '',
+              email: inv.company?.email || '',
+              phone: inv.company?.phone || ''
+            },
+            customer: {
+              name: inv.customer?.name || '',
+              address: inv.customer?.address || '',
+              phone: inv.customer?.phone || '',
+              mobile: inv.customer?.mobile || '',
+              attn: inv.customer?.attn || ''
+            },
+            items: Array.isArray(inv.items) && inv.items.length > 0
+              ? inv.items.map((item, index) => ({
+                  id: item.id || index + 1,
+                  description: item.description || '',
+                  details: [],
+                  unitPrice: parseFloat(item.unitPrice ?? 0),
+                  quantity: parseFloat(item.quantity ?? 0),
+                  amount: parseFloat(
+                    item.amount ?? (
+                      (parseFloat(item.quantity ?? 0) * parseFloat(item.unitPrice ?? 0))
+                    )
+                  ),
+                  variant: item.variant || 'structured',
+                  listType: item.listType || undefined,
+                  spacing: item.spacing || undefined
+                }))
+              : [],
+            subtotal: inv.subtotal != null ? parseFloat(inv.subtotal) : 0,
+            tax: inv.taxAmount != null ? parseFloat(inv.taxAmount) : 0,
+            total: inv.total != null ? parseFloat(inv.total) : 0,
+            bank: {
+              accountNumber: inv.company?.bankacc || '',
+              bankName: inv.company?.bankname || '',
+              accountHolder: inv.company?.bankholder || ''
+            },
+            issuedBy: inv.company?.manager || '',
+            notes: inv.notes || ''
+          })
+        } else if (normalizedType === 'QUOTATION' || normalizedType === 'QUOTE') {
+          const res = await quotesAPI.getById(id)
+          if (!res?.success || !res?.data) {
+            setData(null)
+            setLoading(false)
+            return
+          }
+
+          const q = res.data
+          setData({
+            documentType: 'QUOTATION',
+            documentNumber: q.quoteNumber || '',
+            status: (q.status || '').toLowerCase(),
+            date: q.date ? new Date(q.date).toISOString().slice(0, 10) : '',
+            validUntil: q.validUntil ? new Date(q.validUntil).toISOString().slice(0, 10) : '',
+            company: {
+              name: q.company?.name || '',
+              registration: q.company?.registration || '',
+              address: q.company?.address || '',
+              email: q.company?.email || '',
+              phone: q.company?.phone || '',
+              manager: q.company?.manager || ''
+            },
+            customer: {
+              name: q.customer?.name || '',
+              address: q.customer?.address || '',
+              phone: q.customer?.phone || '',
+              mobile: q.customer?.mobile || '',
+              attn: q.customer?.attn || q.customer?.attention || ''
+            },
+            items: Array.isArray(q.items) && q.items.length > 0
+              ? q.items.map((item, index) => ({
+                  id: item.id || index + 1,
+                  description: item.description || '',
+                  unitPrice: parseFloat(item.unitPrice ?? item.price ?? 0),
+                  quantity: parseFloat(item.quantity ?? 0),
+                  amount: parseFloat(
+                    item.amount ?? (
+                      (parseFloat(item.quantity ?? 0) * parseFloat(item.unitPrice ?? item.price ?? 0))
+                    )
+                  ),
+                  variant: item.variant || 'structured',
+                  listType: item.listType || undefined,
+                  spacing: item.spacing || undefined
+                }))
+              : [],
+            subtotal: q.subtotal != null ? parseFloat(q.subtotal) : 0,
+            tax: q.taxAmount != null ? parseFloat(q.taxAmount) : 0,
+            total: q.total != null ? parseFloat(q.total) : 0,
+            bank: {
+              accountNumber: q.company?.bankacc || '',
+              bankName: q.company?.bankname || '',
+              accountHolder: q.company?.bankholder || ''
+            },
+            issuedBy: q.company?.manager || '',
+            notes: q.notes || ''
+          })
+        } else if (normalizedType === 'RECEIPT') {
+          const res = await receiptsAPI.getById(id)
+          if (!res?.success || !res?.data) {
+            setData(null)
+            setLoading(false)
+            return
+          }
+
+          const rec = res.data
+          setData({
+            documentType: 'RECEIPT',
+            documentNumber: rec.receiptNumber || '',
+            status: (rec.status || '').toLowerCase(),
+            date: rec.date ? new Date(rec.date).toISOString().slice(0, 10) : '',
+            validUntil: '',
+            company: {
+              name: rec.company?.name || '',
+              registration: rec.company?.registration || '',
+              address: rec.company?.address || '',
+              email: rec.company?.email || '',
+              phone: rec.company?.phone || '',
+              manager: rec.company?.manager || ''
+            },
+            customer: {
+              name: rec.customer?.name || '',
+              address: rec.customer?.address || '',
+              phone: rec.customer?.phone || '',
+              mobile: rec.customer?.mobile || '',
+              attention: rec.customer?.attn || ''
+            },
+            items: Array.isArray(rec.items) && rec.items.length > 0
+              ? rec.items.map((item, index) => ({
+                  id: item.id || index + 1,
+                  description: item.description || '',
+                  unitPrice: parseFloat(item.unitPrice ?? item.price ?? 0),
+                  quantity: parseFloat(item.quantity ?? 0),
+                  amount: parseFloat(
+                    item.amount ?? (
+                      (parseFloat(item.quantity ?? 0) * parseFloat(item.unitPrice ?? item.price ?? 0))
+                    )
+                  ),
+                  variant: item.variant || 'structured',
+                  listType: item.listType || undefined,
+                  spacing: item.spacing || undefined
+                }))
+              : [],
+            subtotal: rec.subtotal != null ? parseFloat(rec.subtotal) : 0,
+            tax: rec.taxAmount != null ? parseFloat(rec.taxAmount) : 0,
+            total: rec.total != null ? parseFloat(rec.total) : 0,
+            bank: {
+              accountNumber: rec.company?.bankacc || '',
+              bankName: rec.company?.bankname || '',
+              accountHolder: rec.company?.bankholder || ''
+            },
+            issuedBy: rec.company?.manager || '',
+            notes: rec.notes || ''
+          })
+        } else {
+          setError('Dokumen tidak disokong')
+        }
+      } catch (err) {
+        setError(err?.message || 'Ralat semasa mengambil data')
+        setData(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (hasFetchedRef.current) return
+    hasFetchedRef.current = true
+    fetcher()
+  }, [normalizedType, id])
+
+  return { data, loading, error }
+}
+
+/*
+Kod lama dikekalkan (dikomen) untuk rujukan.
+*/

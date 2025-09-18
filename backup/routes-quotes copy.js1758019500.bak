@@ -1,0 +1,14 @@
+// Backup of routes/quotes.js before edits on 2025-09-16
+const express = require('express');
+const { body, param } = require('express-validator');
+const router = express.Router();
+const prisma = require('../utils/prisma');
+const { success, error, notFound, badRequest } = require('../utils/response');
+const { handleValidationErrors } = require('../middleware/validation');
+const { generateQuoteNumber, generateInvoiceNumber } = require('../utils/numberGenerator');
+
+// ... existing code ...
+
+module.exports = router;
+
+
