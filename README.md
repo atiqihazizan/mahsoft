@@ -8,6 +8,83 @@ API lengkap untuk menguruskan invois, resit, sebut harga, pembayaran, dan hutang
 - Node.js (v18 atau lebih tinggi)
 - PostgreSQL database
 - Git
+- VS Code (dengan extension yang disyorkan)
+
+### Setup VS Code Icons (Pilihan)
+
+Untuk pengalaman development yang lebih baik dengan icon yang menarik:
+
+#### 🌍 **Konfigurasi Global (Disyorkan)**
+
+Konfigurasi global telah dibuat untuk semua project anda:
+
+1. **Install Extension:**
+   - Buka VS Code
+   - Pergi ke Extensions (Ctrl+Shift+X)
+   - Cari dan install: **"Material Icon Theme"**
+   - Atau install: **"vscode-icons"**
+
+2. **Aktifkan Icon Theme:**
+   - Tekan `Ctrl+Shift+P` (atau `Cmd+Shift+P` di Mac)
+   - Taip "Preferences: File Icon Theme"
+   - Pilih "Material Icon Theme" atau "vscode-icons"
+
+3. **Konfigurasi Global Sudah Siap:**
+   - File global settings sudah dikonfigurasi di `~/Library/Application Support/Code/User/settings.json`
+   - Icon akan muncul secara automatik untuk SEMUA project anda
+   - Keybindings tambahan juga sudah dikonfigurasi
+
+#### 📁 **Icon yang Akan Muncul di Semua Project:**
+
+**Folder Icons:**
+- 📁 `frontend`, `client`, `web` - React icon
+- 📁 `prisma`, `database`, `db` - Database icon  
+- 📁 `backup`, `backups` - Backup icon
+- 📁 `node_modules` - Node.js icon
+- 📁 `controllers`, `controller` - Controller icon
+- 📁 `middleware` - Middleware icon
+- 📁 `routes`, `routing` - Routing icon
+- 📁 `utils`, `helpers` - Tools icon
+- 📁 `src`, `source` - Source icon
+- 📁 `components` - Components icon
+- 📁 `pages` - Pages icon
+- 📁 `hooks` - Hooks icon
+- 📁 `services` - Services icon
+- 📁 `api` - API icon
+- 📁 `config` - Config icon
+- 📁 `docs` - Documentation icon
+- 📁 `tests`, `__tests__` - Test icon
+- 📁 `scripts` - Scripts icon
+- 📁 `build`, `dist` - Build icon
+- 📁 `logs` - Logs icon
+
+**File Icons:**
+- 📄 `server.js`, `app.js`, `index.js` - Node.js icon
+- 📄 `schema.prisma` - Prisma schema icon
+- 📄 `package.json` - NPM icon
+- 📄 `vite.config.js` - Vite icon
+- 📄 `tailwind.config.js` - Tailwind icon
+- 📄 `eslint.config.js` - ESLint icon
+- 📄 `docker-compose.yml` - Docker icon
+- 📄 `README.md` - Readme icon
+- 📄 `*.env*` - Environment icon
+- 📄 `*.bak`, `*.backup` - Backup icon
+
+#### ⌨️ **Keybindings Tambahan:**
+
+- `Ctrl+Shift+I` - Tukar Icon Theme
+- `Ctrl+Shift+T` - Tukar Color Theme
+- `Ctrl+Shift+F` - Toggle Sidebar
+- `Ctrl+Shift+E` - Buka Explorer
+- `Ctrl+Shift+G` - Buka Git
+- `Ctrl+Shift+D` - Buka Debug
+- `Ctrl+Shift+X` - Buka Extensions
+- `Ctrl+`` - Toggle Terminal
+- `Ctrl+Shift+`` - New Terminal
+
+#### 🎯 **Konfigurasi Khusus Project:**
+
+File `.vscode/settings.json` dalam project ini juga dikonfigurasi untuk keperluan khusus project ini.
 
 ### 1. Setup Backend (Prisma + Express)
 
