@@ -220,6 +220,27 @@ npx prisma studio
 
 ## Kemaskini Item DescriptionField Properties (2024-12-19)
 
+### Fitur Baru: Dynamic Title untuk DocumentForm (Create/Update)
+
+#### 1. Title yang Menyesuaikan dengan Mode
+- **Lokasi**: `DocumentForm.jsx`
+- **Fungsi**: Title form akan berubah berdasarkan sama ada dalam mode create atau edit
+- **Ciri-ciri**:
+  - **Create Mode**: "Create New Invoice/Quote/Receipt" (tiada initialData)
+  - **Update Mode**: "Update Invoice/Quote/Receipt" (ada initialData dengan id)
+  - **Description**: Juga berubah mengikut mode
+  - **Button Text**: "Save" untuk create, "Update" untuk edit
+
+#### 2. Logic Detection
+```javascript
+const isEdit = initialData && initialData.id
+const action = isEdit ? 'Update' : 'Create'
+```
+
+#### 3. Contoh Title
+- Create: "Create New Invoice" → "Create invoice for your customers"
+- Update: "Update Invoice" → "Update invoice details"
+
 ### Fitur Baru: Setiap Item Boleh Menggunakan DescriptionField Properties Berbeza
 
 #### 1. Struktur Item Baru
@@ -923,6 +944,89 @@ useEffect(() => {
 - User boleh login tanpa error "Token expired"
 - Login flow berfungsi dengan normal
 - Token expiry check hanya untuk protected endpoints
+
+### Masalah DocumentForm Title (2024-12-19)
+- **Masalah**: DocumentForm sentiasa menunjukkan title "Create" walaupun dalam mode edit
+- **Punca**: Function transform data tidak mengekalkan `id` dari data asal
+- **Kesan**: User tidak dapat membezakan antara mode create dan edit
+
+### Perubahan Yang Dilakukan
+- **InvoiceForm**: Tambah `id: invoice.id` dalam `transformInvoiceData()`
+- **QuoteForm**: Tambah `id: quote.id` dalam `transformQuoteData()`
+- **ReceiptForm**: Tambah `id: receipt.id` dalam `transformReceiptData()`
+- **DocumentForm**: Function `getFormTitle()` sudah betul, hanya perlu data dengan ID
+
+### Fail Yang Diubah
+- `frontend/src/pages/InvoiceForm.jsx` - Tambah ID dalam transform data
+- `frontend/src/pages/QuoteForm.jsx` - Tambah ID dalam transform data
+- `frontend/src/pages/ReceiptForm.jsx` - Tambah ID dalam transform data
+
+### Kesan
+- DocumentForm sekarang menunjukkan title yang betul:
+  - Create mode: "Create New Invoice/Quote/Receipt"
+  - Edit mode: "Update Invoice/Quote/Receipt"
+- User dapat membezakan dengan jelas antara mode create dan edit
+
+### Masalah Refresh Data Selepas Update (2024-12-19)
+- **Masalah**: Selepas update berjaya, user perlu navigate untuk melihat data terkini
+- **Punca**: Sistem hanya navigate tanpa refresh data dalam edit mode
+- **Kesan**: User tidak dapat melihat perubahan data secara real-time
+
+### Perubahan Yang Dilakukan
+- **InvoiceForm**: Tambah refresh data dengan `invoicesAPI.getById(id)` selepas update berjaya
+- **QuoteForm**: Tambah refresh data dengan `quotesAPI.getById(id)` selepas update berjaya
+- **ReceiptForm**: Tambah refresh data dengan `receiptsAPI.getById(id)` selepas update berjaya
+- **Logic**: Edit mode refresh data tanpa navigate, create mode tetap navigate ke list
+
+### Fail Yang Diubah
+- `frontend/src/pages/InvoiceForm.jsx` - Tambah refresh logic dalam handleSubmit
+- `frontend/src/pages/QuoteForm.jsx` - Tambah refresh logic dalam handleSubmit
+- `frontend/src/pages/ReceiptForm.jsx` - Tambah refresh logic dalam handleSubmit
+
+### Kesan
+- Edit mode: Data refresh secara automatik tanpa navigate, user kekal di halaman edit
+- Create mode: Navigate ke list page seperti biasa
+- Data sentiasa terkini selepas update berjaya
+- API `getById()` akan return data terkini dari database
+
+### Implementasi useOutletContext (2024-12-19)
+- **Masalah**: QuoteForm dan ReceiptForm tidak menggunakan useOutletContext seperti InvoiceForm
+- **Punca**: Hanya InvoiceForm yang di-update untuk menggunakan onPreview dari outlet context
+- **Kesan**: Preview functionality tidak konsisten antara semua form
+
+### Perubahan Yang Dilakukan
+- **QuoteForm**: Tambah `useOutletContext` import dan `onPreview` usage
+- **ReceiptForm**: Tambah `useOutletContext` import dan `onPreview` usage
+- **Preview Logic**: Ganti `navigate()` dengan `onPreview()` untuk konsistensi
+
+### Fail Yang Diubah
+- `frontend/src/pages/QuoteForm.jsx` - Tambah useOutletContext dan onPreview('QUOTE', id)
+- `frontend/src/pages/ReceiptForm.jsx` - Tambah useOutletContext dan onPreview('RECEIPT', id)
+
+### Kesan
+- Semua form (Invoice, Quote, Receipt) menggunakan useOutletContext secara konsisten
+- Preview functionality berfungsi dengan betul melalui outlet context
+- Code lebih maintainable dan konsisten
+
+### Masalah Font 404 Error dalam Print Preview (2024-12-19)
+- **Masalah**: Font tidak dapat dimuat dalam print preview, menyebabkan 404 errors
+- **Punca**: Font paths menggunakan relative paths yang tidak betul dalam print components
+- **Kesan**: Print preview tidak dapat memuat fonts dengan betul
+
+### Perubahan Yang Dilakukan
+- **PrintA4.jsx**: Betulkan @font-face paths dari `url(fonts/...)` ke `url(/fonts/...)`
+- **print-v1.css**: Betulkan font paths dari `url(../assets/fonts/...)` ke `url(/fonts/...)`
+- **print-v2.css**: Betulkan font paths dari `url(../assets/fonts/...)` ke `url(/fonts/...)`
+
+### Fail Yang Diubah
+- `frontend/src/components/PrintA4.jsx` - Betulkan @font-face paths
+- `frontend/src/styles/print-v1.css` - Betulkan font paths
+- `frontend/src/styles/print-v2.css` - Betulkan font paths
+
+### Kesan
+- Font dapat dimuat dengan betul dalam print preview
+- Tidak ada lagi 404 errors untuk font files
+- Print preview berfungsi dengan sempurna untuk semua document types
 
 ## Kemaskini Data Invoice (2024-12-19)
 
@@ -5671,6 +5775,34 @@ cd ..
 rsync -av --exclude='node_modules' --exclude='.git' --exclude='backup' \
   ./ mahsites:/var/www/mahsoft/html/v3/
 ```
+
+### Deploy Static Public ke Nginx Root (/var/www/mahsoft/html/v3/public)
+
+Jika ingin menghidang fail static (HTML/CSS/JS, imej, font) terus dari Nginx, deploy kandungan folder `public/` ke pelayan:
+
+1) Sediakan direktori (sekali sahaja):
+
+```bash
+ssh mahsites "sudo mkdir -p /var/www/mahsoft/html/v3/public && sudo chmod -R 755 /var/www/mahsoft/html"
+```
+
+2) Salin kandungan `public/` ke pelayan menggunakan rsync (gunakan `sudo rsync` di pihak jauh):
+
+```bash
+rsync -avz --delete -e "ssh -o BatchMode=yes -o StrictHostKeyChecking=no" \
+  --rsync-path="sudo rsync" ./public/ mahsites:/var/www/mahsoft/html/v3/public/
+```
+
+3) Sahkan fail telah berada di destinasi dan domain aktif (contoh `.net`):
+
+```bash
+ssh mahsites "ls -la /var/www/mahsoft/html/v3/public | head -n 50"
+curl -I https://invoice.mahsites.net
+```
+
+Nota:
+- Pastikan konfigurasi Nginx menunjuk ke root static jika diperlukan: `root /var/www/mahsoft/html/v3/public;`.
+- Jika menggunakan reverse proxy penuh ke Node.js, langkah ini tetap berguna untuk aset static umum (imej, font) jika dihidang terus oleh Nginx.
 
 3. **Setup di server:**
 ```bash

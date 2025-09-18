@@ -16,7 +16,8 @@ async function seedCustomers() {
       email: customerData.email,
       phone: customerData.phone,
       address: customerData.address,
-      taxNumber: customerData.taxNumber
+      taxNumber: customerData.taxNumber,
+      attn: customerData.contactPerson,
       // Note: code and contactPerson are not stored as they're not in the schema
     };
     

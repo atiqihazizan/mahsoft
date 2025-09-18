@@ -80,7 +80,17 @@ app.get('*', (req, res) => {
     });
   }
   
-  // Serve index.html for SPA routing
+  // Skip static files (assets, fonts, etc.) - let express.static handle these
+  if (req.path.startsWith('/assets/') || 
+      req.path.startsWith('/fonts/') || 
+      req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|ttf|woff|woff2)$/)) {
+    return res.status(404).json({
+      error: 'File tidak ditemui',
+      message: `File ${req.path} tidak wujud`
+    });
+  }
+  
+  // Serve index.html for SPA routing - this handles all client-side routes
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

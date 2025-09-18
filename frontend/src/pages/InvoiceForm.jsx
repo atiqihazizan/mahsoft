@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
 import { DocumentForm } from '../components'
 import { validateForm } from '../utils/formValidation'
 import { customersAPI, companiesAPI, invoicesAPI } from '../utils/apiClient'
@@ -9,6 +9,7 @@ const InvoiceForm = () => {
   const navigate = useNavigate()
   const { id } = useParams() // Untuk edit mode
   const isEditMode = Boolean(id)
+  const { onPreview } = useOutletContext?.() || {}
   const { user } = useAuth()
 
   // State untuk data
@@ -23,6 +24,7 @@ const InvoiceForm = () => {
     if (!invoice) return null
 
     return {
+      id: invoice.id, // Pastikan ID dikekalkan untuk edit mode
       customerId: invoice.customerId,
       companyId: invoice.companyId,
       date: new Date(invoice.date).toISOString().split('T')[0],
@@ -176,8 +178,21 @@ const InvoiceForm = () => {
         // Show success message
         // alert(isEditMode ? 'Invoice updated successfully!' : 'Invoice created successfully!')
         
-        // Navigate back to invoices list with refresh state
-        navigate('/invoices', { state: { refresh: true } })
+        if (isEditMode) {
+          // Refresh data untuk edit mode tanpa navigate
+          try {
+            const refreshResponse = await invoicesAPI.getById(id)
+            if (refreshResponse.success) {
+              const transformedData = transformInvoiceData(refreshResponse.data)
+              setInvoiceData(transformedData)
+            }
+          } catch (refreshError) {
+            console.error('Error refreshing invoice data:', refreshError)
+          }
+        } else {
+          // Navigate back to invoices list untuk create mode
+          navigate('/invoices', { state: { refresh: true } })
+        }
       } else {
         alert(response.error || 'An error occurred while saving invoice. Please try again.')
       }
@@ -217,7 +232,7 @@ const InvoiceForm = () => {
         initialData={invoiceData}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        onPreview={isEditMode ? (() => navigate(`/invoice-print/${id}`)) : undefined}
+        onPreview={isEditMode ? (() => onPreview('INVOICE', id)) : undefined}
         loading={submitting}
         customers={customers}
         companies={companies}

@@ -1,8 +1,8 @@
 /* Print CSS untuk Invoice, Quote dan Receipt Preview */
 /* Berdasarkan template CSS yang disediakan */
 
-@font-face { font-family: audiowide; src: url(../assets/fonts/Audiowide-Regular.ttf); }
-@font-face { font-family: roboto; src: url(../assets/fonts/Roboto-Regular.ttf); }
+@font-face { font-family: audiowide; src: url(/fonts/Audiowide-Regular.ttf); }
+@font-face { font-family: roboto; src: url(/fonts/Roboto-Regular.ttf); }
 
 /* Base Styles */
 /* .paper { background-color: #f8fafc; padding: 2rem; min-height: 100vh; } */

@@ -11,15 +11,6 @@ const InvoicePrintPreview = () => {
   const [loading, setLoading] = useState(true)
   const hasFetchedRef = useRef(false)
 
-  // Legacy print.css injection kini dikendalikan oleh PrintPreview
-  // useEffect(() => {
-  //   import('../styles/print.css')
-  //   return () => {
-  //     const existingLink = document.querySelector('link[href*="print.css"]')
-  //     if (existingLink) existingLink.remove()
-  //   }
-  // }, [])
-
   // Fetch invoice data by id and map to local state shape
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -95,10 +86,6 @@ const InvoicePrintPreview = () => {
     hasFetchedRef.current = true
     fetchInvoice()
   }, [id])
-
-  // Legacy handlers digantikan oleh PrintPreview
-  // const handlePrint = () => {}
-  // const handleBack = () => { window.history.back() }
 
   // Return null if loading or no data
   const isActive = ['draft','sent','overdue'].includes(invoiceData?.status)

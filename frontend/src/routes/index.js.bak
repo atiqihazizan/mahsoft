@@ -9,7 +9,7 @@ import Receipt from '../pages/Receipt.jsx'
 import InvoiceForm from '../pages/InvoiceForm.jsx'
 import QuoteForm from '../pages/QuoteForm.jsx'
 import ReceiptForm from '../pages/ReceiptForm.jsx'
-import InvoicePrintPreview from '../components/InvoicePrintPreview.jsx'
+// import InvoicePrintPreview from '../components/InvoicePrintPreview.jsx'
 import ProtectedRoute from './ProtectedRoute.jsx'
 
 const router = createBrowserRouter([

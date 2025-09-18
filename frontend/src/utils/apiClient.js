@@ -176,9 +176,13 @@ class ApiClient {
 
 // Create API client instance with base URL
 // In development, use proxy from vite.config.js
-// In production, use environment variable or default to localhost:5000
+// In production, use environment variable or default to production URL
+// const baseURL = import.meta.env.VITE_API_BASE_URL || 
+//   (import.meta.env.DEV ? '' : 'https://invoice.mahsites.net')
+
+// Use environment variable or default to empty string for proxy
 const baseURL = import.meta.env.VITE_API_BASE_URL || 
-  (import.meta.env.DEV ? '' : 'http://localhost:5000')
+  (import.meta.env.DEV ? '' : 'https://invoice.mahsites.net')
 const apiClient = new ApiClient(baseURL)
 
 // Auth API methods

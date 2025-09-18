@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
 import { DocumentForm } from '../components'
 import { validateForm } from '../utils/formValidation'
 import { customersAPI, companiesAPI, quotesAPI } from '../utils/apiClient'
@@ -9,6 +9,7 @@ const QuoteForm = () => {
   const navigate = useNavigate()
   const { id } = useParams() // Untuk edit mode
   const isEditMode = Boolean(id)
+  const { onPreview } = useOutletContext?.() || {}
   const { user } = useAuth()
 
   // State untuk data
@@ -23,6 +24,7 @@ const QuoteForm = () => {
     if (!quote) return null
 
     return {
+      id: quote.id, // Pastikan ID dikekalkan untuk edit mode
       customerId: quote.customerId,
       companyId: quote.companyId,
       date: new Date(quote.date).toISOString().split('T')[0],
@@ -176,8 +178,21 @@ const QuoteForm = () => {
         // Show success message
         // alert(isEditMode ? 'Quote updated successfully!' : 'Quote created successfully!')
         
-        // Navigate back to quotes list with refresh flag
-        navigate('/quotes', { state: { refresh: true } })
+        if (isEditMode) {
+          // Refresh data untuk edit mode tanpa navigate
+          try {
+            const refreshResponse = await quotesAPI.getById(id)
+            if (refreshResponse.success) {
+              const transformedData = transformQuoteData(refreshResponse.data)
+              setQuoteData(transformedData)
+            }
+          } catch (refreshError) {
+            console.error('Error refreshing quote data:', refreshError)
+          }
+        } else {
+          // Navigate back to quotes list untuk create mode
+          navigate('/quotes', { state: { refresh: true } })
+        }
       } else {
         throw new Error(response?.error || 'API response not successful')
       }
@@ -214,7 +229,7 @@ const QuoteForm = () => {
         type="quote"
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        onPreview={isEditMode ? (() => navigate(`/quote-print/${id}`)) : undefined}
+        onPreview={isEditMode ? (() => onPreview('QUOTATION', id)) : undefined}
         loading={submitting}
         customers={customers}
         companies={companies}

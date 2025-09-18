@@ -2,22 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { PrintPreview } from '../components'
 import { useParams } from 'react-router-dom'
 import { quotesAPI } from '../utils/apiClient'
-// import { renderStructuredText } from '../components/TextFormatting'
 
 const QuotePrintPreview = () => {
   const { id } = useParams()
 
   const [quoteData, setQuoteData] = useState(null)
   const [loading, setLoading] = useState(true)
-
-  // Legacy print.css injection dipindahkan ke komponen PrintPreview
-  // useEffect(() => {
-  //   import('../styles/print.css')
-  //   return () => {
-  //     const existingLink = document.querySelector('link[href*="print.css"]')
-  //     if (existingLink) existingLink.remove()
-  //   }
-  // }, [])
 
   useEffect(() => {
     const fetchQuote = async () => {
@@ -93,10 +83,6 @@ const QuotePrintPreview = () => {
 
     fetchQuote()
   }, [id])
-
-  // Legacy handlers digantikan oleh PrintPreview
-  // const handlePrint = () => {}
-  // const handleBack = () => { window.history.back() }
 
   const isActive = ['draft', 'sent', 'expired'].includes(quoteData?.status)
 

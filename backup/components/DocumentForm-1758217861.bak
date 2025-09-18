@@ -197,14 +197,11 @@ const DocumentForm = ({
   }
 
   const getFormTitle = () => {
-    const isEdit = initialData && initialData.id
-    const action = isEdit ? 'Update' : 'Create'
-    
     switch (type) {
-      case 'invoice': return `${action} ${isEdit ? 'Invoice' : 'New Invoice'}`
-      case 'quote': return `${action} ${isEdit ? 'Quote' : 'New Quote'}`
-      case 'receipt': return `${action} ${isEdit ? 'Receipt' : 'New Receipt'}`
-      default: return `${action} ${isEdit ? 'Document' : 'New Document'}`
+      case 'invoice': return 'Create New Invoice'
+      case 'quote': return 'Create New Quote'
+      case 'receipt': return 'Create New Receipt'
+      default: return 'Create New Document'
     }
   }
 
@@ -232,9 +229,9 @@ const DocumentForm = ({
             <div>
               <h1 className="text-2xl font-bold">{getFormTitle()}</h1>
               <p className="text-white text-opacity-90">
-                {type === 'invoice' && (initialData && initialData.id ? 'Update invoice details' : 'Create invoice for your customers')}
-                {type === 'quote' && (initialData && initialData.id ? 'Update quote details' : 'Create quote for your customers')}
-                {type === 'receipt' && (initialData && initialData.id ? 'Update payment receipt details' : 'Create payment receipt for your customers')}
+                {type === 'invoice' && 'Create invoice for your customers'}
+                {type === 'quote' && 'Create quote for your customers'}
+                {type === 'receipt' && 'Create payment receipt for your customers'}
               </p>
             </div>
           </div>
@@ -605,7 +602,7 @@ const DocumentForm = ({
               disabled={isSubmitting || loading}
               className="px-6 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting || loading ? 'Saving...' : (initialData && initialData.id ? 'Update' : 'Save')}
+              {isSubmitting || loading ? 'Saving...' : 'Save'}
             </button>
           </div>
         </form>

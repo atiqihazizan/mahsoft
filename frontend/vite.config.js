@@ -11,7 +11,7 @@ export default defineConfig({
     open: false,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://invoice.mahsites.net/',
         changeOrigin: true,
         secure: false,
       },
@@ -40,5 +40,5 @@ export default defineConfig({
       }
     }
   },
-  base: './',
+  base: '/',
 })

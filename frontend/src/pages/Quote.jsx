@@ -48,7 +48,6 @@ const Quote = () => {
             quotesAPI.updateStatus(id, 'EXPIRED')
           )
         )
-        console.log(`Updated ${expiredQuotes.length} quotes to EXPIRED status`)
         
         // Update local state untuk quote yang telah diubah status
         setQuotes(prevQuotes => 
@@ -155,7 +154,7 @@ const Quote = () => {
       {
         key: 'quoteNumber',
         header: 'Quote No.',
-        headerClassName: 'text-center',
+        headerClassName: 'text-center w-28',
         cellClassName: 'text-center text-sm',
         render: (value) => <TableCell value={value} className="font-medium text-gray-900" />
       },
@@ -190,20 +189,20 @@ const Quote = () => {
         cellClassName: 'text-center text-sm',
         render: (value) => <DateFormat date={value} />
       },
-    {
-      key: 'validUntil',
-      header: 'Validity',
-      headerClassName: 'text-center',
-      cellClassName: 'text-center text-sm font-medium',
-      render: (value) => <DateFormat date={value} />
-      // render: (value, row) => (
-      //   <ExpiryStatus 
-      //     validUntil={value} 
-      //     status={row.status} 
-      //     calculateDaysUntilExpiry={calculateDaysUntilExpiry} 
-      //   />
-      // )
-    }
+    // {
+    //   key: 'validUntil',
+    //   header: 'Validity',
+    //   headerClassName: 'text-center',
+    //   cellClassName: 'text-center text-sm font-medium',
+    //   render: (value) => <DateFormat date={value} />
+    //   // render: (value, row) => (
+    //   //   <ExpiryStatus 
+    //   //     validUntil={value} 
+    //   //     status={row.status} 
+    //   //     calculateDaysUntilExpiry={calculateDaysUntilExpiry} 
+    //   //   />
+    //   // )
+    // }
   ]
   return (
     <PageWrapper

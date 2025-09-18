@@ -15,9 +15,9 @@ import Receipt from '../pages/Receipt.jsx'
 import InvoiceForm from '../pages/InvoiceForm.jsx'
 import QuoteForm from '../pages/QuoteForm.jsx'
 import ReceiptForm from '../pages/ReceiptForm.jsx'
-import InvoicePrintPreview from '../pages/InvoicePrintPreview.jsx'
-import QuotePrintPreview from '../pages/QuotePrintPreview.jsx'
-import ReceiptPrintPreview from '../pages/ReceiptPrintPreview.jsx'
+// import InvoicePrintPreview from '../pages/InvoicePrintPreview.jsx'
+// import QuotePrintPreview from '../pages/QuotePrintPreview.jsx'
+// import ReceiptPrintPreview from '../pages/ReceiptPrintPreview.jsx'
 import ErrorPage from '../pages/ErrorPage.jsx'
 import ProtectedRoute from './ProtectedRoute.jsx'
 
@@ -83,9 +83,9 @@ const router = createBrowserRouter([
       { path: '/receipts/new', element: <ReceiptForm /> },
       { path: '/receipts/:id/edit', element: <ReceiptForm /> },
       // Print routes
-      { path: '/invoice-print/:id', element: <InvoicePrintPreview /> },
-      { path: '/quote-print/:id', element: <QuotePrintPreview /> },
-      { path: '/receipt-print/:id', element: <ReceiptPrintPreview /> },
+      // { path: '/invoice-print/:id', element: <InvoicePrintPreview /> },
+      // { path: '/quote-print/:id', element: <QuotePrintPreview /> },
+      // { path: '/receipt-print/:id', element: <ReceiptPrintPreview /> },
     ],
   },
   // Catch-all route for 404 errors

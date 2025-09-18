@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
 import { DocumentForm } from '../components'
 import { validateForm } from '../utils/formValidation'
 import { customersAPI, companiesAPI, receiptsAPI } from '../utils/apiClient'
@@ -9,6 +9,7 @@ const ReceiptForm = () => {
   const navigate = useNavigate()
   const { id } = useParams() // Untuk edit mode
   const isEditMode = Boolean(id)
+  const { onPreview } = useOutletContext?.() || {}
   const { user } = useAuth()
 
   // State untuk data
@@ -23,6 +24,7 @@ const ReceiptForm = () => {
     if (!receipt) return null
 
     return {
+      id: receipt.id, // Pastikan ID dikekalkan untuk edit mode
       customerId: receipt.customerId,
       companyId: receipt.companyId,
       date: new Date(receipt.date).toISOString().split('T')[0],
@@ -174,8 +176,21 @@ const ReceiptForm = () => {
         // Show success message
         // alert(isEditMode ? 'Receipt updated successfully!' : 'Receipt created successfully!')
         
-        // Navigate back to receipts list with refresh state
-        navigate('/receipts', { state: { refresh: true } })
+        if (isEditMode) {
+          // Refresh data untuk edit mode tanpa navigate
+          try {
+            const refreshResponse = await receiptsAPI.getById(id)
+            if (refreshResponse.success) {
+              const transformedData = transformReceiptData(refreshResponse.data)
+              setReceiptData(transformedData)
+            }
+          } catch (refreshError) {
+            console.error('Error refreshing receipt data:', refreshError)
+          }
+        } else {
+          // Navigate back to receipts list untuk create mode
+          navigate('/receipts', { state: { refresh: true } })
+        }
       } else {
         alert(response.error || 'An error occurred while saving receipt. Please try again.')
       }
@@ -215,7 +230,7 @@ const ReceiptForm = () => {
         initialData={receiptData}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        onPreview={isEditMode ? (() => navigate(`/receipt-print/${id}`)) : undefined}
+        onPreview={isEditMode ? (() => onPreview('RECEIPT', id)) : undefined}
         loading={submitting}
         customers={customers}
         companies={companies}

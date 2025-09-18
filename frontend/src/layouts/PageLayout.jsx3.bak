@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import { Navbar, MDBCard, MDBButton, Footer, PrintA4 } from '../components'
+import { Navbar, MDBCard, MDBButton, Footer, PrintA4, Button } from '../components'
 import usePrintPreview from '../hooks/usePrintPreview'
 
 const PageLayout = ({
@@ -21,7 +21,6 @@ const PageLayout = ({
   // Search and filter props
   searchTerm = '',
   onSearchChange,
-  
   searchPlaceholder = 'Cari...',
   showHistory = false,
   onToggleHistory,
@@ -52,18 +51,17 @@ const PageLayout = ({
 
   // Preview state dikongsi untuk pages (table) melalui Outlet context
   const [previewRequest, setPreviewRequest] = useState(null)
+  const [triggerPrint, setTriggerPrint] = useState(false)
   const { data: preview, loading: previewLoading, error: previewError } = usePrintPreview(
     previewRequest?.type,
     previewRequest?.id
   )
 
-  const onPreview = (type, id) => {
-    setPreviewRequest({ type, id })
-  }
+  const onPreview = (type, id) => setPreviewRequest({ type, id })
   const closePreview = () => setPreviewRequest(null)
+  const handlePrint = () => setTriggerPrint(true);
 
   return (
-    // <div className={`min-h-screen bg-gray-50 flex flex-col ${className}`} {...props}>
     <div className={`min-h-screen bg-gray-50 flex flex-col ${className}`} {...props}>
       <Navbar />
 
@@ -185,26 +183,62 @@ const PageLayout = ({
         )}
       </main>
 
+      {previewRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          {/* <div className="bg-white w-full max-w-5xl h-[calc(100vh-100px)] overflow-auto rounded-lg shadow-xl relative"> */}
+          <div className="bg-white w-[210mm] h-[calc(100vh-100px)] overflow-auto rounded-lg shadow-xl relative">
+            <div className="absolute top-3 right-3 flex gap-2">
+              <Button variant="primary" size="sm" onClick={handlePrint}>Print</Button>
+              <Button variant="outline-secondary" size="sm" onClick={closePreview}>Close</Button>
+            </div>
+            {previewLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#3b71ca] border-t-transparent mx-auto mb-4"></div>
+                  <p className="text-sm text-gray-600">Generating preview...</p>
+                </div>
+              </div>
+            ) : previewError ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center px-6">
+                  <p className="text-red-600 font-medium mb-2">Error loading preview</p>
+                  <p className="text-gray-600 text-sm">{String(previewError)}</p>
+                </div>
+              </div>
+            ) : (
+              <PrintA4
+                documentType={preview?.documentType || previewRequest?.type || ''}
+                customer={preview?.customer || {}}
+                documentNumber={preview?.documentNumber || ''}
+                date={preview?.date || ''}
+                validUntil={preview?.validUntil || ''}
+                items={preview?.items || []}
+                subtotal={preview?.subtotal || 0}
+                tax={preview?.tax || 0}
+                total={preview?.total || 0}
+                company={preview?.company || {}}
+                bank={preview?.bank || {}}
+                issuedBy={preview?.issuedBy || preview?.company?.manager || ''}
+                notes={preview?.notes || ''}
+                // onEdit={() => {
+                //   const id = previewRequest?.id
+                //   const type = (previewRequest?.type || '').toUpperCase()
+                //   if (type === 'INVOICE') window.location.href = `/invoices/${id}/edit`
+                //   else if (type === 'QUOTATION' || type === 'QUOTE') window.location.href = `/quotes/${id}/edit`
+                //   else if (type === 'RECEIPT') window.location.href = `/receipts/${id}/edit`
+                // }}
+                // showEditButton={showEditButton}
+                triggerPrint={triggerPrint}
+                setTriggerPrint={setTriggerPrint}
+                loading={previewLoading}
+                error={previewError}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
       <Footer />
-      <PrintA4
-        documentType={preview?.documentType || previewRequest?.type || ''}
-        customer={preview?.customer || {}}
-        documentNumber={preview?.documentNumber || ''}
-        date={preview?.date || ''}
-        validUntil={preview?.validUntil || ''}
-        items={preview?.items || []}
-        subtotal={preview?.subtotal || 0}
-        tax={preview?.tax || 0}
-        total={preview?.total || 0}
-        company={preview?.company || {}}
-        bank={preview?.bank || {}}
-        issuedBy={preview?.issuedBy || preview?.company?.manager || ''}
-        notes={preview?.notes || ''}
-        loading={previewLoading}
-        error={previewError}
-        previewData={preview}
-        setPreviewRequest={setPreviewRequest}
-      />
     </div>
   )
 }
