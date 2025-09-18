@@ -5842,6 +5842,37 @@ Untuk sebarang pertanyaan atau isu, sila hubungi pasukan development atau buat i
 **Tarikh**: 2024  
 **Pembangun**: Mahsoft Development Team
  
+## Apa itu PR (Pull Request)?
+
+**PR (Pull Request)** ialah permintaan untuk menggabungkan perubahan kod daripada satu branch ke branch lain (biasanya ke `main`) sambil membolehkan semakan (code review) terlebih dahulu.
+
+- **Tujuan**: Memastikan kualiti kod, semakan rakan sepasukan, dan rekod perubahan yang jelas.
+- **Aliran ringkas**:
+  1) Cipta branch baharu daripada `main`.
+  2) Buat perubahan dan commit.
+  3) Push branch ke remote.
+  4) Buka PR di GitHub, tambah penerangan ringkas.
+  5) Reviewer semak, beri komen, dan luluskan.
+  6) Merge PR ke `main` bila lulus.
+- **Bila guna PR**: Bila bekerja berkumpulan, perubahan berisiko, atau mahu semakan formal. Untuk perubahan kecil persendirian, push terus ke `main` boleh dipertimbangkan (ikut polisi repo).
+- **Istilah penting**: `branch` (salinan laluan kerja), `review` (semakan kod), `merge` (gabung perubahan).
+
+### Cara ringkas buat PR di GitHub
+
+```bash
+# 1) Cipta branch dan tukar ke branch tersebut
+git checkout -b fitur/kemas-kini-print
+
+# 2) Buat perubahan, kemudian add & commit
+git add -A
+git commit -m "Kemas kini gaya cetakan dan header"
+
+# 3) Push branch ke remote
+git push -u origin fitur/kemas-kini-print
+```
+
+Kemudian buka repository di GitHub → pilih branch tersebut → klik "Compare & pull request" → isi penerangan → hantar PR.
+
 ## Penjajaran Teks Justify (Sekata Kiri & Kanan)
 
 Gunakan salah satu kaedah mengikut konteks aplikasi anda:
