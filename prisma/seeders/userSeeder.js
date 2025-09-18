@@ -8,21 +8,26 @@ async function seedUsers() {
   console.log('👥 Seeding users...');
   
   for (const userData of users) {
-    // Hash password
-    const hashedPassword = await hashPassword(userData.password);
-    
-    const userDataWithHashedPassword = {
-      ...userData,
-      password: hashedPassword,
-      isActive: true // Explicitly set isActive to true
-    };
+    try {
+      // Hash password
+      const hashedPassword = await hashPassword(userData.password);
+      
+      const userDataWithHashedPassword = {
+        ...userData,
+        password: hashedPassword,
+        isActive: true
+      };
 
-    // Use upsert to handle existing users
-    await prisma.user.upsert({
-      where: { username: userData.username },
-      update: userDataWithHashedPassword,
-      create: userDataWithHashedPassword
-    });
+      await prisma.user.create({
+        data: userDataWithHashedPassword
+      });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        console.log(`User ${userData.username} already exists, skipping...`);
+      } else {
+        throw error;
+      }
+    }
   }
   
   console.log(`✅ ${users.length} users seeded`);

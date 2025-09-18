@@ -20,7 +20,8 @@
     "db:seed:invoices": "node prisma/seeders/index.js invoices",
     "db:seed:receipts": "node prisma/seeders/index.js receipts",
     "db:seed:payments": "node prisma/seeders/index.js payments",
-    "db:seed:debtors": "node prisma/seeders/index.js debtors"
+    "db:seed:debtors": "node prisma/seeders/index.js debtors",
+    "db:clear": "node prisma/clearData.js"
   },
   "dependencies": {
     "@prisma/client": "^6.16.0",

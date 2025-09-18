@@ -16,9 +16,9 @@ module.exports = [
     // Company details
     ssm: '003198940-K',
     manager: 'Muhammad Atiqi Hazizan',
-    assist: 'Siti Nurhaliza',
-    accountant: 'Ahmad Razak',
-    technical: 'Muhammad Ali',
+    assist: '',
+    accountant: '',
+    technical: '',
     
     // Sequence numbers
     invoiceSeq: 18,
@@ -30,7 +30,9 @@ module.exports = [
     invoicePrefix: 'INV',
     quotePrefix: 'QT',
     receiptPrefix: 'RCP',
-    deliveryOrderPrefix: 'DO'
+    deliveryOrderPrefix: 'DO',
+
+    tempId: 1,
   },
   {
     name: 'MAHSOFT Engineering',
@@ -49,9 +51,9 @@ module.exports = [
     // Company details
     ssm: '003198940-K',
     manager: 'Mohd Saiful Budriz Bin Mad Kasa',
-    assist: 'Fatimah Zahra',
-    accountant: 'Hassan Ali',
-    technical: 'Ahmad Fauzi',
+    assist: '',
+    accountant: '',
+    technical: '',
     
     // Sequence numbers
     invoiceSeq: 4,
@@ -63,6 +65,8 @@ module.exports = [
     invoicePrefix: 'INV',
     quotePrefix: 'QT',
     receiptPrefix: 'RCP',
-    deliveryOrderPrefix: 'DO'
+    deliveryOrderPrefix: 'DO',
+
+    tempId: 2,
   }
 ];

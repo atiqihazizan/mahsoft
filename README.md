@@ -4329,10 +4329,68 @@ npm run db:push        # Push schema changes (dev)
 npm run db:migrate     # Run migrations (prod)
 npm run db:studio      # Open Prisma Studio
 npm run db:seed        # Seed database
+npm run db:clear       # Clear semua data dari database
+
+# Clear Data Commands
+npm run db:clear       # Clear semua data dari database (berhati-hati!)
+npm run db:seed        # Seed data selepas clear
 
 # Server Commands
 npm run dev            # Start development server
 npm start              # Start production server
+```
+
+### Database Management
+
+#### Clear Data
+Untuk clear semua data dari database (berhati-hati!):
+
+```bash
+# Clear semua data
+npm run db:clear
+
+# Seed data selepas clear
+npm run db:seed
+```
+
+**⚠️ PERINGATAN:** Command `db:clear` akan memadam SEMUA data dari database. Pastikan anda backup data penting terlebih dahulu!
+
+**Urutan Clear Data:**
+1. Delivery Details
+2. Delivery Orders  
+3. Payments
+4. Debtors
+5. Invoices
+6. Receipts
+7. Quotes
+8. Customers
+9. Suppliers
+10. Users
+11. Companies
+
+**Contoh Penggunaan:**
+```bash
+# Clear semua data
+npm run db:clear
+
+# Output akan menunjukkan:
+# 🗑️  Memulakan proses clear data...
+# ================================
+# 1. Clearing delivery_details...
+# 2. Clearing delivery_orders...
+# ... (dan seterusnya)
+# ✅ Semua data telah berjaya di-clear!
+
+# Seed data baru
+npm run db:seed
+
+# Output akan menunjukkan:
+# 🌱 Starting database seeding...
+# ================================
+# 🏢 Seeding companies...
+# ✅ 2 companies seeded
+# ... (dan seterusnya)
+# 🎉 All seeders completed successfully!
 ```
 
 ### Frontend Development
@@ -5519,6 +5577,234 @@ lsof -ti:3000
 
 # Kill process
 kill -9 <PID>
+```
+
+## 🚀 Deployment ke Cloud
+
+### Prerequisites untuk Deployment
+
+Sebelum deploy, pastikan anda ada:
+- SSH access ke server cloud
+- Node.js dan npm di server
+- MySQL/PostgreSQL database di server
+- PM2 untuk process management (akan diinstall secara automatik)
+
+### Konfigurasi Environment Production
+
+1. **Buat file `env.production`:**
+```bash
+cp env.example env.production
+```
+
+2. **Kemaskini `env.production` dengan nilai production:**
+```env
+# Database Production
+DATABASE_URL="mysql://username:password@localhost:3306/mahsoft_db_prod"
+
+# Server Production
+PORT=5000
+NODE_ENV=production
+
+# Security (PENTING: kemaskini dengan nilai sebenar)
+JWT_SECRET="your-super-secret-jwt-key-here"
+BCRYPT_ROUNDS=12
+
+# CORS (kemaskini dengan domain sebenar)
+CORS_ORIGIN="https://yourdomain.com"
+```
+
+### Cara Deploy Menggunakan Script Automatik
+
+1. **Jalankan script deployment:**
+```bash
+./deploy.sh
+```
+
+Script ini akan:
+- ✅ Build frontend secara automatik
+- ✅ Upload semua fail ke server
+- ✅ Install dependencies di server
+- ✅ Setup database dengan Prisma
+- ✅ Start aplikasi dengan PM2
+- ✅ Setup process management
+
+### Deploy Manual (Jika Perlu)
+
+Jika script automatik tidak berfungsi, ikuti langkah manual:
+
+1. **Build frontend:**
+```bash
+cd frontend
+npm install
+npm run build:public
+cd ..
+```
+
+2. **Upload ke server:**
+```bash
+# Upload semua fail (kecuali node_modules, .git, dll)
+rsync -av --exclude='node_modules' --exclude='.git' --exclude='backup' \
+  ./ mahsites:/var/www/mahsoft/html/v3/
+```
+
+3. **Setup di server:**
+```bash
+# SSH ke server
+ssh mahsites
+
+# Masuk ke folder projek
+cd /var/www/mahsoft/html/v3
+
+# Install dependencies
+npm install --production
+
+# Setup database
+npx prisma generate
+npx prisma db push
+
+# Install PM2 (jika belum ada)
+npm install -g pm2
+
+# Start aplikasi
+pm2 start server.js --name mahsoft-api --env production
+pm2 save
+pm2 startup
+```
+
+### Pengurusan Aplikasi di Server
+
+```bash
+# Check status aplikasi
+pm2 status
+
+# Lihat logs
+pm2 logs mahsoft-api
+
+# Restart aplikasi
+pm2 restart mahsoft-api
+
+# Stop aplikasi
+pm2 stop mahsoft-api
+
+# Monitor real-time
+pm2 monit
+```
+
+### Setup Reverse Proxy (Nginx)
+
+Jika menggunakan Nginx sebagai reverse proxy:
+
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+### Setup SSL Certificate (Let's Encrypt)
+
+```bash
+# Install certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Generate SSL certificate
+sudo certbot --nginx -d yourdomain.com
+
+# Auto-renewal
+sudo crontab -e
+# Tambah: 0 12 * * * /usr/bin/certbot renew --quiet
+```
+
+### Troubleshooting Deployment
+
+**1. Port sudah digunakan:**
+```bash
+# Cari process yang menggunakan port 5000
+lsof -ti:5000
+kill -9 <PID>
+```
+
+**2. Database connection error:**
+```bash
+# Check database service
+sudo systemctl status mysql
+# atau
+sudo systemctl status postgresql
+
+# Restart database
+sudo systemctl restart mysql
+```
+
+**3. PM2 tidak start:**
+```bash
+# Check logs
+pm2 logs mahsoft-api
+
+# Reset PM2
+pm2 kill
+pm2 start server.js --name mahsoft-api
+```
+
+**4. Permission error:**
+```bash
+# Fix permission
+sudo chown -R $USER:$USER /var/www/mahsoft/html/v3
+chmod -R 755 /var/www/mahsoft/html/v3
+```
+
+### Monitoring & Maintenance
+
+**1. Setup monitoring:**
+```bash
+# Install monitoring tools
+npm install -g pm2-logrotate
+
+# Setup log rotation
+pm2 install pm2-logrotate
+```
+
+**2. Backup database:**
+```bash
+# Backup MySQL
+mysqldump -u username -p mahsoft_db_prod > backup_$(date +%Y%m%d).sql
+
+# Backup PostgreSQL
+pg_dump -U username mahsoft_db_prod > backup_$(date +%Y%m%d).sql
+```
+
+**3. Update aplikasi:**
+```bash
+# Pull changes dari git
+git pull origin main
+
+# Rebuild dan restart
+./deploy.sh
+```
+
+### Konfigurasi Firewall
+
+```bash
+# Allow port 80 dan 443
+sudo ufw allow 80
+sudo ufw allow 443
+
+# Allow port 5000 untuk development (jika perlu)
+sudo ufw allow 5000
+
+# Enable firewall
+sudo ufw enable
 ```
 
 ## Sokongan

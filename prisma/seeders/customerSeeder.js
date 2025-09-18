@@ -6,9 +6,11 @@ const prisma = new PrismaClient();
 async function seedCustomers() {
   console.log('👤 Seeding customers...');
   
-  for (const customerData of customers) {
+  for (let i = 0; i < customers.length; i++) {
+    const customerData = customers[i];
     // Map the data to match Prisma schema
     const mappedData = {
+      tempId: i + 1,
       name: customerData.name.toUpperCase(),
       short: customerData.short.toUpperCase(),
       email: customerData.email,

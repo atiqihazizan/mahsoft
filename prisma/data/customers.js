@@ -81,6 +81,15 @@ module.exports = [
     taxNumber: null
   },
   {
+    short: 'RAZA',
+    name: 'RAZA SEJATI SDN BHD',
+    contactPerson: '',
+    address: 'Kampung Belah Dua',
+    email: null,
+    phone: null,
+    taxNumber: null
+  },
+  {
     short: 'PAN-INTER',
     name: 'PAN-INTERNATIONAL ELECTRONIC (M) SDN. BHD',
     contactPerson: null,

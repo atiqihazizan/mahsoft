@@ -23,11 +23,11 @@ async function main() {
     await seedUsers();
     await seedCustomers();
     await seedSuppliers();
-    await seedQuotes();
     await seedInvoices();
     await seedReceipts();
-    await seedPayments();
-    await seedDebtors();
+    await seedQuotes();
+    // await seedPayments();
+    // await seedDebtors();
     
     console.log('================================');
     console.log('🎉 All seeders completed successfully!');
@@ -98,11 +98,11 @@ if (seederName) {
   }
 } else {
   // Run all seeders
-  main()
-    .catch((error) => {
-      console.error('❌ Seeding failed:', error);
-      process.exit(1);
-    });
+  // main()
+  //   .catch((error) => {
+  //     console.error('❌ Seeding failed:', error);
+  //     process.exit(1);
+  //   });
 }
 
 module.exports = main;

@@ -41,6 +41,9 @@ app.use('/api/v1/delivery-orders', require('./routes/deliveryOrders'));
 app.use('/api/v1/outstanding', require('./routes/outstanding'));
 app.use('/api/v1/dashboard', require('./routes/dashboard'));
 
+// Serve static files from public directory
+app.use(express.static('public'));
+
 // Health check
 app.get('/health', (req, res) => {
   res.status(200).json({
