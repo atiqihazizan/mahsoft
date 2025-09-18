@@ -6032,3 +6032,29 @@ Gunakan salah satu kaedah mengikut konteks aplikasi anda:
 ```
 
 Nota: `text-align: justify;` sudah mencukupi pada pelayar moden. Untuk bacaan lebih selesa, tambah `leading-relaxed` (Tailwind) atau `line-height: 1.625;` (CSS).
+
+---
+
+## 📋 Changelog
+
+### v1.1.0 (2024-01-20) - Refactor Print Preview System
+- **🔄 Refactored Print Preview Components**: Completely redesigned print preview components (PrintPreview, InvoicePrintPreview, QuotePrintPreview, ReceiptPrintPreview) for better performance and user experience
+- **🆕 New PrintA4 Component**: Created dedicated A4 print layout component for consistent document printing across all document types
+- **✨ Enhanced Document Forms**: Improved DocumentForm component with better validation, user interface, and error handling
+- **📱 Updated Page Layout**: Enhanced PageLayout component with improved responsive design and better mobile compatibility
+- **🛣️ Improved Routing**: Streamlined routing structure with better navigation and cleaner URL patterns
+- **🔧 API Client Updates**: Enhanced API client with better error handling, response management, and timeout handling
+- **⚙️ Server Configuration**: Updated server configurations for better performance and stability
+- **💾 Backup System**: Implemented comprehensive backup system for all components to prevent data loss
+- **🎨 CSS Improvements**: Enhanced styling and print CSS for better document appearance and readability
+- **📁 Code Organization**: Better file structure and component organization for easier maintenance
+
+### v1.0.0 (2024-01-15) - Initial Release
+- Complete invoice, receipt, and quote management system
+- User authentication and authorization
+- Company management
+- Customer and supplier management
+- Payment tracking
+- Outstanding debt management
+- Print functionality for all documents
+- Responsive web interface
