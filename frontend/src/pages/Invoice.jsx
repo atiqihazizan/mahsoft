@@ -105,6 +105,35 @@ const Invoice = () => {
     }
   }
 
+  // Function to handle convert to delivery order
+  const handleConvertToDeliveryOrder = async (invoiceId) => {
+    const confirmMessage = 'Are you sure you want to create a Delivery Order from this invoice?'
+    
+    if (!window.confirm(confirmMessage)) {
+      return // User cancelled, exit function
+    }
+
+    try {
+      setActionLoading(prev => ({ ...prev, [invoiceId]: true }))
+      
+      const response = await invoicesAPI.convertToDeliveryOrder(invoiceId)
+      
+      if (response?.success) {
+        alert(`Delivery Order ${response.data.doNumber} created successfully!`)
+        // Optionally navigate to delivery orders page
+        // navigate('/delivery-orders')
+      } else {
+        const errorMessage = response?.message || response?.error || 'Unknown error'
+        alert(`Failed to create Delivery Order: ${errorMessage}`)
+      }
+    } catch (error) {
+      alert(`Error creating Delivery Order: ${error.message}`)
+      console.error('Error creating Delivery Order:', error)
+    } finally {
+      setActionLoading(prev => ({ ...prev, [invoiceId]: false }))
+    }
+  }
+
   // Function to fetch invoices
   const fetchInvoices = async () => {
     try {
@@ -269,6 +298,7 @@ const Invoice = () => {
           //   navigate(`/invoice-print/${row.id}`)
           // }
         }}
+        onConvert={(row) => handleConvertToDeliveryOrder(row.id)}
         onDelete={async (row) => {
           const isActive = row.status === 'draft' || row.status === 'sent' || row.status === 'overdue'
           if (isActive && confirm('Are you sure you want to delete this invoice?')) {

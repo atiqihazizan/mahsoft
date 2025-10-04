@@ -78,7 +78,7 @@ const DataTable = ({
         </thead>
         <tbody className={bodyClassName || 'bg-white divide-y divide-gray-200'}>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className={`hover:bg-gray-50 transition-colors duration-150 ${rowClassName}`}>
+            <tr key={row.id || rowIndex} className={`hover:bg-gray-50 transition-colors duration-150 ${rowClassName}`}>
               {columns.map((column, colIndex) => (
                 <td key={colIndex} className={`py-4 pl-6 text-sm text-gray-900 whitespace-nowrap ${column.cellClassName || ''}`}>
                   {column.render ? column.render(row[column.key], row) : row[column.key]}

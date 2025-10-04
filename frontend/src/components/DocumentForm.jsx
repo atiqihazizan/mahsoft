@@ -3,7 +3,7 @@ import { CurrencyFormat, DateFormat } from './index'
 import { DescriptionField } from './FormFields'
 
 const DocumentForm = ({ 
-  type = 'invoice', // 'invoice', 'quote', 'receipt'
+  type = 'invoice', // 'invoice', 'quote', 'receipt', 'delivery_order'
   initialData = null,
   onSubmit,
   onCancel,
@@ -20,6 +20,10 @@ const DocumentForm = ({
     date: new Date().toISOString().split('T')[0],
     dueDate: type === 'invoice' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '', // 30 hari untuk invoice
     validUntil: type === 'quote' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '', // 30 hari untuk quote
+    deliveryDate: type === 'delivery_order' ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '', // 7 hari untuk delivery order
+    deliveryAddress: '',
+    contactPerson: '',
+    contactPhone: '',
     subject: '',
     notes: '',
     
@@ -204,6 +208,7 @@ const DocumentForm = ({
       case 'invoice': return `${action} ${isEdit ? 'Invoice' : 'New Invoice'}`
       case 'quote': return `${action} ${isEdit ? 'Quote' : 'New Quote'}`
       case 'receipt': return `${action} ${isEdit ? 'Receipt' : 'New Receipt'}`
+      case 'delivery_order': return `${action} ${isEdit ? 'Delivery Order' : 'New Delivery Order'}`
       default: return `${action} ${isEdit ? 'Document' : 'New Document'}`
     }
   }
@@ -213,6 +218,7 @@ const DocumentForm = ({
       case 'invoice': return '📄'
       case 'quote': return '💰'
       case 'receipt': return '🧾'
+      case 'delivery_order': return '🚚'
       default: return '📝'
     }
   }
@@ -225,6 +231,7 @@ const DocumentForm = ({
           type === 'invoice' ? 'bg-blue-500' : 
           type === 'quote' ? 'bg-green-500' : 
           type === 'receipt' ? 'bg-purple-500' : 
+          type === 'delivery_order' ? 'bg-orange-500' : 
           'bg-blue-500'
         }`}>
           <div className="flex items-center">
@@ -235,6 +242,7 @@ const DocumentForm = ({
                 {type === 'invoice' && (initialData && initialData.id ? 'Update invoice details' : 'Create invoice for your customers')}
                 {type === 'quote' && (initialData && initialData.id ? 'Update quote details' : 'Create quote for your customers')}
                 {type === 'receipt' && (initialData && initialData.id ? 'Update payment receipt details' : 'Create payment receipt for your customers')}
+                {type === 'delivery_order' && (initialData && initialData.id ? 'Update delivery order details' : 'Create delivery order for your customers')}
               </p>
             </div>
           </div>
@@ -283,7 +291,7 @@ const DocumentForm = ({
                 <option value="">Select company...</option>
                 {companies.map(company => (
                   <option key={company.id} value={company.id}>
-                    {company.name}
+                    {company.label}
                   </option>
                 ))}
               </select>
@@ -365,6 +373,26 @@ const DocumentForm = ({
                 />
                 {errors.validUntil && (
                   <p className="text-red-500 text-sm mt-1">{errors.validUntil}</p>
+                )}
+              </div>
+            )}
+
+            {/* Delivery Date (Delivery Order only) */}
+            {type === 'delivery_order' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Delivery Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.deliveryDate ?? ''}
+                  onChange={(e) => handleInputChange('deliveryDate', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.deliveryDate ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.deliveryDate && (
+                  <p className="text-red-500 text-sm mt-1">{errors.deliveryDate}</p>
                 )}
               </div>
             )}
@@ -565,6 +593,71 @@ const DocumentForm = ({
               </div>
             </div>
           </div>
+
+          {/* Delivery Order specific fields */}
+          {type === 'delivery_order' && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Delivery Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Delivery Address */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Delivery Address <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={formData.deliveryAddress ?? ''}
+                    onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.deliveryAddress ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    rows={3}
+                    placeholder="Enter delivery address..."
+                  />
+                  {errors.deliveryAddress && (
+                    <p className="text-red-500 text-sm mt-1">{errors.deliveryAddress}</p>
+                  )}
+                </div>
+
+                {/* Contact Person */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact Person <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.contactPerson ?? ''}
+                    onChange={(e) => handleInputChange('contactPerson', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.contactPerson ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter contact person name..."
+                  />
+                  {errors.contactPerson && (
+                    <p className="text-red-500 text-sm mt-1">{errors.contactPerson}</p>
+                  )}
+                </div>
+
+                {/* Contact Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={formData.contactPhone ?? ''}
+                    onChange={(e) => handleInputChange('contactPhone', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.contactPhone ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter contact phone number..."
+                  />
+                  {errors.contactPhone && (
+                    <p className="text-red-500 text-sm mt-1">{errors.contactPhone}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Notes - Using DescriptionField */}
           <div className="mb-8">

@@ -239,6 +239,52 @@ export const validateReceiptForm = (formData) => {
   return errors
 }
 
+// Validation untuk Delivery Order form
+const validateDeliveryOrderForm = (formData) => {
+  const errors = {}
+
+  // Required fields
+  if (!formData.customerId) errors.customerId = 'Pelanggan diperlukan'
+  if (!formData.companyId) errors.companyId = 'Syarikat diperlukan'
+  if (!formData.date) errors.date = 'Tarikh diperlukan'
+  if (!formData.deliveryDate) errors.deliveryDate = 'Tarikh penghantaran diperlukan'
+  if (!formData.deliveryAddress?.trim()) errors.deliveryAddress = 'Alamat penghantaran diperlukan'
+  if (!formData.contactPerson?.trim()) errors.contactPerson = 'Nama kontak diperlukan'
+
+  // Date validation
+  if (formData.date && formData.deliveryDate) {
+    const date = new Date(formData.date)
+    const deliveryDate = new Date(formData.deliveryDate)
+    if (deliveryDate < date) {
+      errors.deliveryDate = 'Tarikh penghantaran tidak boleh lebih awal dari tarikh DO'
+    }
+  }
+
+  // Phone validation (optional)
+  if (formData.contactPhone && !validationRules.phone(formData.contactPhone)) {
+    errors.contactPhone = 'Format telefon tidak sah'
+  }
+
+  // Items validation
+  if (!formData.items || formData.items.length === 0) {
+    errors.items = 'Sekurang-kurangnya satu item diperlukan'
+  } else {
+    formData.items.forEach((item, index) => {
+      if (!item.description?.trim()) {
+        errors[`items.${index}.description`] = 'Penerangan item diperlukan'
+      }
+      if (!item.quantity || item.quantity <= 0) {
+        errors[`items.${index}.quantity`] = 'Kuantiti mesti lebih dari 0'
+      }
+      if (!item.unitPrice || item.unitPrice < 0) {
+        errors[`items.${index}.unitPrice`] = 'Harga unit tidak sah'
+      }
+    })
+  }
+
+  return errors
+}
+
 // Generic form validation function
 export const validateForm = (formData, type = 'invoice') => {
   switch (type) {
@@ -248,6 +294,8 @@ export const validateForm = (formData, type = 'invoice') => {
       return validateQuoteForm(formData)
     case 'receipt':
       return validateReceiptForm(formData)
+    case 'delivery_order':
+      return validateDeliveryOrderForm(formData)
     default:
       return {}
   }

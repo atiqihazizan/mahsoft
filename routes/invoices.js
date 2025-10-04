@@ -43,10 +43,7 @@ const updateInvoiceValidation = [
 
 // Helper function to calculate totals
 const calculateTotals = (items, taxRate = 0.06) => {
-  const subtotal = items.reduce((sum, item) => {
-    return sum + (parseFloat(item.quantity) * parseFloat(item.unitPrice));
-  }, 0);
-  
+  const subtotal = items.reduce((sum, item) =>  sum + (parseFloat(item.quantity) * parseFloat(item.unitPrice)), 0);
   const taxAmount = subtotal * taxRate;
   const total = subtotal + taxAmount;
   
@@ -392,6 +389,87 @@ router.delete('/:id', [
   } catch (err) {
     console.error('Error deleting invoice:', err);
     error(res, 'Ralat memadam invois');
+  }
+});
+
+// POST /api/v1/invoices/:id/convert-to-delivery-order - Tukar invois kepada delivery order
+router.post('/:id/convert-to-delivery-order', [
+  param('id').isString().withMessage('ID tidak sah'),
+  body('deliveryDate').optional().isISO8601().withMessage('Format tarikh penghantaran tidak sah'),
+  body('deliveryAddress').optional().isString().withMessage('Alamat penghantaran mestilah teks'),
+  body('contactPerson').optional().isString().withMessage('Nama kontak mestilah teks'),
+  body('contactPhone').optional().isMobilePhone('any').withMessage('Format telefon kontak tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { deliveryDate, deliveryAddress, contactPerson, contactPhone } = req.body;
+
+    // Get invoice dengan semua data yang diperlukan
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      include: {
+        company: { select: { id: true, name: true, deliveryOrderSeq: true, deliveryOrderPrefix: true } },
+        user: { select: { id: true, name: true } },
+        customer: { select: { id: true, name: true, address: true, phone: true } }
+      }
+    });
+
+    if (!invoice) {
+      return notFound(res, 'Invois tidak ditemui');
+    }
+
+    if (invoice.status === 'CANCELLED') {
+      return badRequest(res, 'Invois yang dibatalkan tidak boleh ditukar kepada delivery order');
+    }
+
+    // Generate delivery order number
+    const { generateDeliveryOrderNumber } = require('../utils/numberGenerator');
+    const doNumber = await generateDeliveryOrderNumber(invoice.companyId);
+
+    // Convert invoice items to delivery details
+    const deliveryDetails = invoice.items?.map(item => ({
+      description: item.description,
+      quantity: parseFloat(item.quantity),
+      unitPrice: parseFloat(item.unitPrice),
+      amount: parseFloat(item.quantity) * parseFloat(item.unitPrice),
+      deliveredQty: 0 // Belum dihantar
+    })) || [];
+
+    // Create delivery order
+    const deliveryOrder = await prisma.deliveryOrder.create({
+      data: {
+        doNumber,
+        date: new Date(),
+        deliveryDate: new Date(deliveryDate || Date.now() + 7 * 24 * 60 * 60 * 1000), // Default 7 hari
+        subtotal: invoice.subtotal,
+        taxAmount: invoice.taxAmount,
+        total: invoice.total,
+        deliveryAddress: deliveryAddress || invoice.customer.address,
+        contactPerson: contactPerson || invoice.customer.name,
+        contactPhone: contactPhone || invoice.customer.phone,
+        notes: `Created from Invoice ${invoice.invoiceNumber}`,
+        companyId: invoice.companyId,
+        userId: invoice.userId,
+        customerId: invoice.customerId,
+        invoiceId: invoice.id,
+        details: {
+          create: deliveryDetails
+        }
+      },
+      include: {
+        company: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true } },
+        customer: { select: { id: true, name: true } },
+        invoice: { select: { id: true, invoiceNumber: true } },
+        details: true
+      }
+    });
+
+    success(res, deliveryOrder, 'Delivery order berjaya dicipta dari invois', 201);
+  } catch (err) {
+    console.error('Error converting invoice to delivery order:', err);
+    error(res, 'Ralat menukar invois kepada delivery order');
   }
 });
 

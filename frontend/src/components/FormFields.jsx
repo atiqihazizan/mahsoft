@@ -292,18 +292,24 @@ export const PasswordInput = ({
   required = false, 
   disabled = false,
   className = "",
+  helperText = "",
   ...props 
 }) => (
-  <input
-    type="password"
-    value={value || ''}
-    onChange={onChange}
-    placeholder={placeholder}
-    required={required}
-    disabled={disabled}
-    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
-    {...props}
-  />
+  <div>
+    <input
+      type="password"
+      value={value || ''}
+      onChange={onChange}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+      {...props}
+    />
+    {helperText && (
+      <p className="mt-1 text-xs text-gray-500">{helperText}</p>
+    )}
+  </div>
 )
 
 // Description Field component (enhanced textarea with formatting)

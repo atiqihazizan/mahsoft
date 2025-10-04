@@ -37,10 +37,7 @@ const updateReceiptValidation = [
 
 // Helper function to calculate totals
 const calculateTotals = (items, taxRate = 0.06) => {
-  const subtotal = items.reduce((sum, item) => {
-    return sum + (parseFloat(item.quantity) * parseFloat(item.unitPrice));
-  }, 0);
-  
+  const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity) * parseFloat(item.unitPrice)), 0);
   const taxAmount = subtotal * taxRate;
   const total = subtotal + taxAmount;
   

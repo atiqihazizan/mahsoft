@@ -299,9 +299,11 @@ export const ActionButtonPresets = {
     showShare: false,
     showPaid: true,
     showCancel: true,
+    showConvert: true, // Convert to Delivery Order
     customLabels: {
       paid: 'Mark as Paid',
-      cancel: 'Cancel Invoice'
+      cancel: 'Cancel Invoice',
+      convert: 'Create DO'
     }
   },
   
@@ -316,6 +318,25 @@ export const ActionButtonPresets = {
     customLabels: {
       duplicate: 'Salin Receipt',
       download: 'Muat Turun PDF'
+    }
+  },
+  
+  // Untuk Delivery Order
+  delivery_order: {
+    showView: false,
+    showEdit: false,
+    showDelete: false,
+    showPrint: false,
+    showDuplicate: false,
+    showDownload: false,
+    showShare: false,
+    showConfirm: true,
+    showDeliver: true,
+    showCancel: true,
+    customLabels: {
+      confirm: 'Confirm DO',
+      deliver: 'Mark as Delivered',
+      cancel: 'Cancel DO'
     }
   },
   

@@ -12,9 +12,11 @@ import UsersSettings from '../pages/settings/UsersSettings.jsx'
 import Invoice from '../pages/Invoice.jsx'
 import Quote from '../pages/Quote.jsx'
 import Receipt from '../pages/Receipt.jsx'
+import DeliveryOrder from '../pages/DeliveryOrder.jsx'
 import InvoiceForm from '../pages/InvoiceForm.jsx'
 import QuoteForm from '../pages/QuoteForm.jsx'
 import ReceiptForm from '../pages/ReceiptForm.jsx'
+import DeliveryOrderForm from '../pages/DeliveryOrderForm.jsx'
 // import InvoicePrintPreview from '../pages/InvoicePrintPreview.jsx'
 // import QuotePrintPreview from '../pages/QuotePrintPreview.jsx'
 // import ReceiptPrintPreview from '../pages/ReceiptPrintPreview.jsx'
@@ -82,6 +84,10 @@ const router = createBrowserRouter([
       { path: '/receipts', element: <Receipt /> },
       { path: '/receipts/new', element: <ReceiptForm /> },
       { path: '/receipts/:id/edit', element: <ReceiptForm /> },
+      // Delivery Order routes
+      { path: '/delivery-orders', element: <DeliveryOrder /> },
+      { path: '/delivery-orders/new', element: <DeliveryOrderForm /> },
+      { path: '/delivery-orders/:id/edit', element: <DeliveryOrderForm /> },
       // Print routes
       // { path: '/invoice-print/:id', element: <InvoicePrintPreview /> },
       // { path: '/quote-print/:id', element: <QuotePrintPreview /> },

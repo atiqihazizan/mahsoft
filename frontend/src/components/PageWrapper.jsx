@@ -7,7 +7,7 @@ const PageWrapper = ({
   filterOptions = ["ALL", "ACTIVE", "DONE"],
   activeFilter = "ALL",
   onFilterChange,
-  buttonColor = "blue", // blue, green, purple
+  buttonColor = "blue", // blue, green, purple, orange
   children
 }) => {
   // Button color configurations
@@ -33,6 +33,13 @@ const PageWrapper = ({
         hover: 'hover:bg-purple-700',
         focus: 'focus:ring-purple-500',
         shadow: 'hover:shadow-[0_8px_9px_-4px_rgba(147,51,234,0.3),0_4px_18px_0_rgba(147,51,234,0.2)]'
+      },
+      orange: {
+        bg: 'bg-orange-600',
+        border: 'border-orange-600',
+        hover: 'hover:bg-orange-700',
+        focus: 'focus:ring-orange-500',
+        shadow: 'hover:shadow-[0_8px_9px_-4px_rgba(234,88,12,0.3),0_4px_18px_0_rgba(234,88,12,0.2)]'
       }
     }
     
@@ -46,7 +53,7 @@ const PageWrapper = ({
       {/* <div className="bg-white rounded-lg shadow-sm"> */}
       <div className="">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 pt-0 pb-6 border-b border-gray-200">
           {/* New Button */}
           <button
             onClick={onNewClick}

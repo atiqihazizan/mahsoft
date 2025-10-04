@@ -5,6 +5,7 @@ const prisma = require('../utils/prisma');
 const { success, error, notFound, badRequest, conflict } = require('../utils/response');
 const { handleValidationErrors } = require('../middleware/validation');
 const { generateDeliveryOrderNumber } = require('../utils/numberGenerator');
+const { authenticateToken } = require('../utils/auth');
 
 // Validation rules
 const createDeliveryOrderValidation = [
@@ -35,7 +36,7 @@ const updateDeliveryOrderValidation = [
 ];
 
 // GET /api/v1/delivery-orders - Dapatkan semua delivery orders
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
     const { page = 1, limit = 10, search, status, companyId, customerId } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -104,7 +105,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/v1/delivery-orders/:id - Dapatkan delivery order tertentu
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -154,7 +155,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/v1/delivery-orders - Cipta delivery order baru
-router.post('/', createDeliveryOrderValidation, async (req, res) => {
+router.post('/', authenticateToken, createDeliveryOrderValidation, async (req, res) => {
   try {
     const {
       companyId,
@@ -271,7 +272,7 @@ router.post('/', createDeliveryOrderValidation, async (req, res) => {
 });
 
 // PUT /api/v1/delivery-orders/:id - Kemaskini delivery order
-router.put('/:id', updateDeliveryOrderValidation, async (req, res) => {
+router.put('/:id', authenticateToken, updateDeliveryOrderValidation, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -330,7 +331,7 @@ router.put('/:id', updateDeliveryOrderValidation, async (req, res) => {
 });
 
 // POST /api/v1/delivery-orders/:id/update-delivery - Update delivery quantity
-router.post('/:id/update-delivery', [
+router.post('/:id/update-delivery', authenticateToken, [
   param('id').isString().withMessage('ID tidak sah'),
   body('details').isArray().withMessage('Details mestilah array'),
   body('details.*.id').notEmpty().withMessage('Detail ID diperlukan'),
@@ -385,7 +386,7 @@ router.post('/:id/update-delivery', [
 });
 
 // DELETE /api/v1/delivery-orders/:id - Padam delivery order
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -416,7 +417,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // GET /api/v1/delivery-orders/summary - Ringkasan delivery orders
-router.get('/summary', async (req, res) => {
+router.get('/summary', authenticateToken, async (req, res) => {
   try {
     const { companyId, status } = req.query;
 

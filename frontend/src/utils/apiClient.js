@@ -292,6 +292,10 @@ export const invoicesAPI = {
 
   markPaid: async (id, data) => {
     return apiClient.post(`/api/v1/invoices/${id}/mark-paid`, data)
+  },
+
+  convertToDeliveryOrder: async (id, deliveryData = {}) => {
+    return apiClient.post(`/api/v1/invoices/${id}/convert-to-delivery-order`, deliveryData)
   }
 }
 

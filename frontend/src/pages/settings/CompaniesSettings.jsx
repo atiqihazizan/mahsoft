@@ -25,7 +25,16 @@ const CompaniesSettings = () => {
     manager: '',
     assist: '',
     accountant: '',
-    technical: ''
+    technical: '',
+    // Prefix and Sequence Numbers
+    invoicePrefix: '',
+    quotePrefix: '',
+    receiptPrefix: '',
+    deliveryOrderPrefix: '',
+    invoiceSeq: 0,
+    quoteSeq: 0,
+    receiptSeq: 0,
+    deliveryOrderSeq: 0
   })
 
   // Fetch companies from API
@@ -110,7 +119,16 @@ const CompaniesSettings = () => {
       manager: company.manager || '',
       assist: company.assist || '',
       accountant: company.accountant || '',
-      technical: company.technical || ''
+      technical: company.technical || '',
+      // Prefix and Sequence Numbers
+      invoicePrefix: company.invoicePrefix || '',
+      quotePrefix: company.quotePrefix || '',
+      receiptPrefix: company.receiptPrefix || '',
+      deliveryOrderPrefix: company.deliveryOrderPrefix || '',
+      invoiceSeq: company.invoiceSeq || 0,
+      quoteSeq: company.quoteSeq || 0,
+      receiptSeq: company.receiptSeq || 0,
+      deliveryOrderSeq: company.deliveryOrderSeq || 0
     })
     setIsEdit(true)
     setShowDialog(true)
@@ -138,7 +156,16 @@ const CompaniesSettings = () => {
       manager: '',
       assist: '',
       accountant: '',
-      technical: ''
+      technical: '',
+      // Prefix and Sequence Numbers
+      invoicePrefix: '',
+      quotePrefix: '',
+      receiptPrefix: '',
+      deliveryOrderPrefix: '',
+      invoiceSeq: 0,
+      quoteSeq: 0,
+      receiptSeq: 0,
+      deliveryOrderSeq: 0
     })
     setEditingCompany(null)
     setIsEdit(false)
@@ -258,6 +285,78 @@ const CompaniesSettings = () => {
       type: 'text',
       required: false,
       placeholder: 'Enter technical person name'
+    },
+    
+    // Prefix and Sequence Numbers Section
+    {
+      name: 'section',
+      label: 'Document Prefix & Sequence Numbers',
+      type: 'section',
+      fullWidth: true
+    },
+    {
+      name: 'invoicePrefix',
+      label: 'Invoice Prefix',
+      type: 'text',
+      required: false,
+      placeholder: 'e.g., INV, MAH',
+      halfWidth: true
+    },
+    {
+      name: 'invoiceSeq',
+      label: 'Invoice Sequence Number',
+      type: 'number',
+      required: false,
+      placeholder: '0',
+      halfWidth: true
+    },
+    {
+      name: 'quotePrefix',
+      label: 'Quote Prefix',
+      type: 'text',
+      required: false,
+      placeholder: 'e.g., QUO, Q',
+      halfWidth: true
+    },
+    {
+      name: 'quoteSeq',
+      label: 'Quote Sequence Number',
+      type: 'number',
+      required: false,
+      placeholder: '0',
+      halfWidth: true
+    },
+    {
+      name: 'receiptPrefix',
+      label: 'Receipt Prefix',
+      type: 'text',
+      required: false,
+      placeholder: 'e.g., RCP, R',
+      halfWidth: true
+    },
+    {
+      name: 'receiptSeq',
+      label: 'Receipt Sequence Number',
+      type: 'number',
+      required: false,
+      placeholder: '0',
+      halfWidth: true
+    },
+    {
+      name: 'deliveryOrderPrefix',
+      label: 'Delivery Order Prefix',
+      type: 'text',
+      required: false,
+      placeholder: 'e.g., DO, D',
+      halfWidth: true
+    },
+    {
+      name: 'deliveryOrderSeq',
+      label: 'Delivery Order Sequence Number',
+      type: 'number',
+      required: false,
+      placeholder: '0',
+      halfWidth: true
     }
   ]
 
@@ -309,6 +408,26 @@ const CompaniesSettings = () => {
           {company.bankacc && (
             <div className="text-xs text-gray-400">Acc: {company.bankacc}</div>
           )}
+        </div>
+      )
+    },
+    {
+      key: 'prefixes',
+      header: 'Prefix & Sequence',
+      render: (company) => (
+        <div className="space-y-1">
+          <div className="text-xs">
+            <span className="font-medium text-blue-600">Invoice:</span> {company.invoicePrefix || 'N/A'}-{company.invoiceSeq || 0}
+          </div>
+          <div className="text-xs">
+            <span className="font-medium text-green-600">Quote:</span> {company.quotePrefix || 'N/A'}-{company.quoteSeq || 0}
+          </div>
+          <div className="text-xs">
+            <span className="font-medium text-purple-600">Receipt:</span> {company.receiptPrefix || 'N/A'}-{company.receiptSeq || 0}
+          </div>
+          <div className="text-xs">
+            <span className="font-medium text-orange-600">DO:</span> {company.deliveryOrderPrefix || 'N/A'}-{company.deliveryOrderSeq || 0}
+          </div>
         </div>
       )
     },

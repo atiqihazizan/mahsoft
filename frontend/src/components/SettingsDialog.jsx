@@ -1,28 +1,28 @@
 import React from 'react'
-import { 
-  Label, 
-  TextInput, 
-  EmailInput, 
-  TelInput, 
-  Textarea, 
-  Select, 
-  Checkbox, 
-  RadioGroup, 
-  NumberInput, 
-  DateInput, 
-  PasswordInput 
+import {
+  Label,
+  TextInput,
+  EmailInput,
+  TelInput,
+  Textarea,
+  Select,
+  Checkbox,
+  RadioGroup,
+  NumberInput,
+  DateInput,
+  PasswordInput
 } from './FormFields'
 
-const SettingsDialog = ({ 
-  isOpen, 
-  onClose, 
-  title, 
-  isEdit = false, 
-  formData = {}, 
-  onFormChange, 
-  onSubmit, 
-  fields = [], 
-  loading = false 
+const SettingsDialog = ({
+  isOpen,
+  onClose,
+  title,
+  isEdit = false,
+  formData = {},
+  onFormChange,
+  onSubmit,
+  fields = [],
+  loading = false
 }) => {
   if (!isOpen) return null
 
@@ -34,16 +34,17 @@ const SettingsDialog = ({
   }
 
   const renderField = (field) => {
-    const { 
-      name, 
-      label, 
-      type = 'text', 
-      required = false, 
-      placeholder = '', 
-      options = [], 
+    const {
+      name,
+      label,
+      type = 'text',
+      required = false,
+      placeholder = '',
+      options = [],
       disabled = false,
       className = '',
-      ...fieldProps 
+      helperText = '',
+      ...fieldProps
     } = field
 
     const value = formData[name] || ''
@@ -53,23 +54,24 @@ const SettingsDialog = ({
       required,
       placeholder,
       disabled,
-      className
+      className,
+      helperText
     }
 
     switch (type) {
       case 'email':
         return <EmailInput {...commonProps} {...fieldProps} />
-      
+
       case 'tel':
       case 'phone':
         return <TelInput {...commonProps} {...fieldProps} />
-      
+
       case 'textarea':
         return <Textarea {...commonProps} {...fieldProps} />
-      
+
       case 'select':
         return <Select {...commonProps} options={options} {...fieldProps} />
-      
+
       case 'checkbox':
         return (
           <Checkbox
@@ -81,7 +83,7 @@ const SettingsDialog = ({
             {...fieldProps}
           />
         )
-      
+
       case 'radio':
         return (
           <RadioGroup
@@ -94,16 +96,23 @@ const SettingsDialog = ({
             {...fieldProps}
           />
         )
-      
+
       case 'number':
         return <NumberInput {...commonProps} {...fieldProps} />
-      
+
       case 'date':
         return <DateInput {...commonProps} {...fieldProps} />
-      
+
       case 'password':
         return <PasswordInput {...commonProps} {...fieldProps} />
-      
+
+      case 'section':
+        return (
+          <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-4">
+            <h4 className="text-lg font-semibold text-gray-800 mb-4">{label}</h4>
+          </div>
+        )
+
       default:
         return <TextInput {...commonProps} {...fieldProps} />
     }
@@ -116,7 +125,7 @@ const SettingsDialog = ({
   }
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       onClick={handleOverlayClick}
     >
@@ -135,15 +144,19 @@ const SettingsDialog = ({
             </svg>
           </button>
         </div>
-        
+
         {/* Form */}
         <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {fields.map((field, index) => (
-            <div 
-              key={field.name || index} 
-              className={field.fullWidth ? 'md:col-span-2' : ''}
+            <div
+              key={field.name || index}
+              className={
+                field.fullWidth ? 'md:col-span-2' : 
+                field.halfWidth ? 'md:col-span-1' : 
+                'md:col-span-2'
+              }
             >
-              {field.type !== 'checkbox' && field.type !== 'radio' && (
+              {field.type !== 'checkbox' && field.type !== 'radio' && field.type !== 'section' && (
                 <Label required={field.required}>
                   {field.label}
                 </Label>
@@ -151,7 +164,7 @@ const SettingsDialog = ({
               {renderField(field)}
             </div>
           ))}
-          
+
           {/* Action Buttons */}
           <div className="md:col-span-2 flex justify-end space-x-3 pt-4">
             <button

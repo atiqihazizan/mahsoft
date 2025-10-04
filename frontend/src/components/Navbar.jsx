@@ -35,6 +35,12 @@ const Navbar = () => {
       activeClass: 'bg-purple-100 text-purple-700',
       inactiveClass: 'text-gray-700 hover:text-purple-700 hover:bg-gray-100'
     },
+    {
+      path: '/delivery-orders',
+      label: 'Delivery Orders',
+      activeClass: 'bg-orange-100 text-orange-700',
+      inactiveClass: 'text-gray-700 hover:text-orange-700 hover:bg-gray-100'
+    },
     // {
     //   path: '/settings',
     //   label: 'Settings',

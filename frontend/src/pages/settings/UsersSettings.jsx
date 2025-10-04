@@ -23,7 +23,7 @@ const UsersSettings = () => {
     try {
       setLoading(true)
       const response = await usersAPI.getAll()
-      
+
       if (response?.success) {
         const usersData = response.data.users || response.data || []
         setUsers(usersData)
@@ -44,8 +44,62 @@ const UsersSettings = () => {
     fetchUsers()
   }, [])
 
+  // Password validation function
+  const validatePassword = (password) => {
+    const errors = []
+    
+    if (!password) {
+      errors.push('Kata laluan diperlukan')
+      return { isValid: false, errors }
+    }
+    
+    if (password.length < 8) {
+      errors.push('Kata laluan mestilah sekurang-kurangnya 8 aksara')
+    }
+    
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Kata laluan mesti mengandungi sekurang-kurangnya satu huruf besar')
+    }
+    
+    if (!/[a-z]/.test(password)) {
+      errors.push('Kata laluan mesti mengandungi sekurang-kurangnya satu huruf kecil')
+    }
+    
+    if (!/[0-9]/.test(password)) {
+      errors.push('Kata laluan mesti mengandungi sekurang-kurangnya satu nombor')
+    }
+    
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push('Kata laluan mesti mengandungi sekurang-kurangnya satu aksara khas')
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Validate password for new users
+    if (!isEdit && formData.password) {
+      const passwordValidation = validatePassword(formData.password)
+      if (!passwordValidation.isValid) {
+        alert(`Password tidak sah:\n${passwordValidation.errors.join('\n')}`)
+        return
+      }
+    }
+    
+    // Validate password for edit if provided
+    if (isEdit && formData.password) {
+      const passwordValidation = validatePassword(formData.password)
+      if (!passwordValidation.isValid) {
+        alert(`Password tidak sah:\n${passwordValidation.errors.join('\n')}`)
+        return
+      }
+    }
+    
     try {
       let response
       if (isEdit) {
@@ -53,12 +107,14 @@ const UsersSettings = () => {
       } else {
         response = await usersAPI.create(formData)
       }
-      
+
       if (response?.success) {
         resetForm()
         fetchUsers() // Refresh users list
       } else {
-        alert(response?.message || `Failed to ${isEdit ? 'update' : 'create'} user`)
+        // Show detailed error message
+        const errorMsg = response?.message || response?.error || `Failed to ${isEdit ? 'update' : 'create'} user`
+        alert(`Error: ${errorMsg}`)
       }
     } catch (error) {
       console.error(`Error ${isEdit ? 'updating' : 'creating'} user:`, error)
@@ -70,7 +126,7 @@ const UsersSettings = () => {
     if (confirm('Are you sure you want to delete this user?')) {
       try {
         const response = await usersAPI.delete(userId)
-        
+
         if (response?.success) {
           fetchUsers() // Refresh users list
         } else {
@@ -167,7 +223,8 @@ const UsersSettings = () => {
       label: isEdit ? 'New Password (Optional)' : 'Password',
       type: 'password',
       required: !isEdit,
-      placeholder: isEdit ? 'Leave blank to keep current password' : 'Enter password'
+      placeholder: isEdit ? 'Leave blank to keep current password' : 'Enter password',
+      helperText: 'Password mesti: minimum 8 aksara, huruf besar, huruf kecil, nombor, dan aksara khas'
     }
   ]
 
@@ -177,41 +234,40 @@ const UsersSettings = () => {
       key: 'user',
       header: 'User',
       render: (user) => (
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">
-                            {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{user.name || 'N/A'}</div>
-                        <div className="text-sm text-gray-500">{user.email || 'N/A'}</div>
-                      </div>
-                    </div>
+        <div className="flex items-center">
+          <div className="flex-shrink-0 h-10 w-10">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">
+                {user.name?.charAt(0)?.toUpperCase() || 'U'}
+              </span>
+            </div>
+          </div>
+          <div className="ml-4">
+            <div className="text-sm font-medium text-gray-900">{user.name || 'N/A'}</div>
+            <div className="text-sm text-gray-500">{user.email || 'N/A'}</div>
+          </div>
+        </div>
       )
     },
     {
       key: 'role',
       header: 'Role',
       render: (user) => (
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
-                      {user.role || 'N/A'}
-                    </span>
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
+          {user.role || 'N/A'}
+        </span>
       )
     },
     {
       key: 'status',
       header: 'Status',
       render: (user) => (
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.isActive ? 'Active' : 'Inactive'}
-                    </span>
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.isActive
+            ? 'bg-green-100 text-green-800'
+            : 'bg-red-100 text-red-800'
+          }`}>
+          {user.isActive ? 'Active' : 'Inactive'}
+        </span>
       )
     },
     {
@@ -219,8 +275,8 @@ const UsersSettings = () => {
       header: 'Last Login',
       render: (user) => (
         <div className="text-sm text-gray-500">
-                    {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
-          </div>
+          {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
+        </div>
       )
     }
   ]
