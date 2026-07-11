@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate, useSearchParams, useOutletContext } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { DocumentForm } from '../components'
 import { deliveryOrdersAPI, customersAPI, companiesAPI } from '../utils/apiClient'
 import { useAuth } from '../contexts/AuthContext'
@@ -9,7 +9,6 @@ const DeliveryOrderForm = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { onPreview } = useOutletContext?.() || {}
   const { user } = useAuth()
   
   const isEditMode = Boolean(id)
@@ -167,12 +166,8 @@ const DeliveryOrderForm = () => {
       }
 
       if (response.success) {
-        // Show success message
-        const action = isEditMode ? 'updated' : 'created'
-        alert(`Delivery Order ${response.data.doNumber} ${action} successfully!`)
-        
-        // Navigate back to delivery orders list
-        navigate('/delivery-orders')
+        const doId = response.data?.id || id
+        navigate(`/delivery-orders/${doId}`)
       } else {
         const errorMessage = response?.message || response?.error || 'Unknown error'
         alert(`Failed to ${isEditMode ? 'update' : 'create'} delivery order: ${errorMessage}`)
@@ -209,7 +204,7 @@ const DeliveryOrderForm = () => {
       initialData={initialData}
       onSubmit={handleSubmit}
       onCancel={handleCancel}
-      onPreview={isEditMode ? (() => onPreview('DELIVERY_ORDER', id)) : undefined}
+      onPreview={isEditMode ? (() => navigate(`/delivery-orders/${id}`)) : undefined}
       loading={submitting}
       customers={customers}
       companies={companies}

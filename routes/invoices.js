@@ -19,6 +19,7 @@ const createInvoiceValidation = [
   body('items.*.description').notEmpty().withMessage('Penerangan item diperlukan'),
   body('items.*.quantity').isNumeric().withMessage('Kuantiti mestilah nombor'),
   body('items.*.unitPrice').isNumeric().withMessage('Harga unit mestilah nombor'),
+  body('items.*.unit').optional().isString(),
   handleValidationErrors
 ];
 
@@ -36,6 +37,7 @@ const updateInvoiceValidation = [
   body('items.*.description').optional().notEmpty().withMessage('Penerangan item diperlukan'),
   body('items.*.quantity').optional().isNumeric().withMessage('Kuantiti mestilah nombor'),
   body('items.*.unitPrice').optional().isNumeric().withMessage('Harga unit mestilah nombor'),
+  body('items.*.unit').optional().isString(),
   handleValidationErrors
 ];
 
@@ -77,7 +79,7 @@ router.get('/', async (req, res) => {
       prisma.invoice.findMany({
         where,
         skip,
-        // take: parseInt(limit),
+        take: parseInt(limit),
         orderBy: { createdAt: 'desc' },
         include: {
           company: { select: { id: true, name: true } },
@@ -184,7 +186,8 @@ router.post('/', createInvoiceValidation, async (req, res) => {
       // Simpan DescriptionField properties jika dibekalkan
       ...(item.variant && { variant: item.variant }),
       ...(item.listType && { listType: item.listType }),
-      ...(item.spacing && { spacing: item.spacing })
+      ...(item.spacing && { spacing: item.spacing }),
+      ...(item.unit && { unit: item.unit })
     }));
 
     // Create invoice with items
@@ -286,7 +289,8 @@ router.put('/:id', updateInvoiceValidation, async (req, res) => {
         amount: parseFloat(item.quantity) * parseFloat(item.unitPrice),
         ...(item.variant && { variant: item.variant }),
         ...(item.listType && { listType: item.listType }),
-        ...(item.spacing && { spacing: item.spacing })
+        ...(item.spacing && { spacing: item.spacing }),
+        ...(item.unit && { unit: item.unit })
       }));
 
       invoiceUpdateData.items = itemsWithAmounts;

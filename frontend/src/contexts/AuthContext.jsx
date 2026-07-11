@@ -106,7 +106,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return { 
         success: false, 
-        message: error.message || 'Ralat berlaku semasa log masuk' 
+        message: error.message || 'An error occurred during login' 
       }
     } finally {
       setIsLoading(false)

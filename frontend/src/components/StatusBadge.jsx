@@ -12,7 +12,7 @@ const StatusBadge = ({ status, statusConfig = {} }) => {
     rejected: { color: 'bg-red-100 text-red-800', text: 'Rejected' },
     expired: { color: 'bg-gray-100 text-gray-800', text: 'Expired' },
     sent: { color: 'bg-blue-100 text-blue-800', text: 'Sent' },
-    draft: { color: 'bg-gray-100 text-gray-800', text: 'Draft' },
+    draft: { color: 'bg-gray-100 text-gray-800', text: 'Issued' },
     active: { color: 'bg-green-100 text-green-800', text: 'Active' }
   }
 

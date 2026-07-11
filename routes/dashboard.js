@@ -1,10 +1,9 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
 const { authenticateToken } = require('../utils/auth');
 const { success, error } = require('../utils/response');
+const prisma = require('../utils/prisma');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // GET /api/v1/dashboard/stats - Dashboard statistics
 router.get('/stats', authenticateToken, async (req, res) => {
@@ -168,7 +167,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
       }
     };
 
-    success(res, stats, 'Dashboard statistics retrieved successfully');
+    success(res, stats, 'Statistik dashboard berjaya diambil');
 
   } catch (err) {
     console.error('Error getting dashboard stats:', err);
@@ -221,7 +220,7 @@ router.get('/recent-activity', authenticateToken, async (req, res) => {
       payments: recentPayments
     };
 
-    success(res, activity, 'Recent activity retrieved successfully');
+    success(res, activity, 'Aktiviti terkini berjaya diambil');
 
   } catch (err) {
     console.error('Error getting recent activity:', err);

@@ -1,0 +1,317 @@
+import React, { useState, useEffect } from 'react'
+import { MDBCard, MDBButton, DateFormat } from '../components'
+import { authAPI, dashboardAPI, deliveryOrdersAPI } from '../utils/apiClient'
+import { Link } from 'react-router-dom'
+
+const Dashboard = () => {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [recentDeliveryOrders, setRecentDeliveryOrders] = useState([])
+  const [stats, setStats] = useState({
+    totalInvoices: 0,
+    totalQuotes: 0,
+    totalReceipts: 0,
+    totalDeliveryOrders: 0,
+    currentYear: {
+      year: new Date().getFullYear(),
+      quotes: 0,
+      invoices: 0,
+      receipts: 0,
+      deliveryOrders: 0,
+      amounts: {
+        invoices: 0,
+        quotes: 0,
+        receipts: 0
+      }
+    }
+  })
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (token) {
+          // Fetch user data from API
+          const userResponse = await authAPI.getCurrentUser()
+          if (userResponse.success) {
+            setUser({
+              name: userResponse.data.name || 'Admin User',
+              role: userResponse.data.role || 'Administrator',
+              lastLogin: userResponse.data.lastLogin || new Date()
+            })
+          } else {
+            // Fallback if API fails
+            setUser({
+              name: 'Admin User',
+              role: 'Administrator',
+              lastLogin: new Date()
+            })
+          }
+          
+          // Fetch dashboard stats and recent delivery orders
+          const [statsResponse, deliveryOrdersResponse] = await Promise.all([
+            dashboardAPI.getStats(),
+            deliveryOrdersAPI.getAll({ limit: 5, sort: 'createdAt', order: 'desc' })
+          ])
+          
+          if (statsResponse.success) {
+            setStats({
+              totalInvoices: statsResponse.data.counts?.invoices || 0,
+              totalQuotes: statsResponse.data.counts?.quotes || 0,
+              totalReceipts: statsResponse.data.counts?.receipts || 0,
+              totalDeliveryOrders: statsResponse.data.counts?.deliveryOrders || 0,
+              currentYear: {
+                year: statsResponse.data.currentYear?.year || new Date().getFullYear(),
+                quotes: statsResponse.data.currentYear?.quotes || 0,
+                invoices: statsResponse.data.currentYear?.invoices || 0,
+                receipts: statsResponse.data.currentYear?.receipts || 0,
+                deliveryOrders: statsResponse.data.currentYear?.deliveryOrders || 0,
+                amounts: {
+                  invoices: statsResponse.data.currentYear?.amounts?.invoices || 0,
+                  quotes: statsResponse.data.currentYear?.amounts?.quotes || 0,
+                  receipts: statsResponse.data.currentYear?.amounts?.receipts || 0
+                }
+              }
+            })
+          } else {
+            // Fallback stats if API fails
+            setStats({
+              totalInvoices: 0,
+              totalQuotes: 0,
+              totalReceipts: 0,
+              totalCustomers: 0,
+              currentYear: {
+                year: new Date().getFullYear(),
+                quotes: 0,
+                invoices: 0,
+                receipts: 0,
+                customers: 0,
+                amounts: {
+                  invoices: 0,
+                  quotes: 0,
+                  receipts: 0
+                }
+              }
+            })
+          }
+
+          // Set recent delivery orders
+          if (deliveryOrdersResponse.success) {
+            setRecentDeliveryOrders(deliveryOrdersResponse.data.deliveryOrders || deliveryOrdersResponse.data || [])
+          } else {
+            setRecentDeliveryOrders([])
+          }
+        } else {
+          setUser(null)
+        }
+      } catch (error) {
+        // Fallback data if there's an error
+        setUser({
+          name: 'Admin User',
+          role: 'Administrator',
+          lastLogin: new Date()
+        })
+        setStats({
+          totalInvoices: 0,
+          totalQuotes: 0,
+          totalReceipts: 0,
+          totalDeliveryOrders: 0,
+          currentYear: {
+            year: new Date().getFullYear(),
+            quotes: 0,
+            invoices: 0,
+            receipts: 0,
+            deliveryOrders: 0,
+            amounts: {
+              invoices: 0,
+              quotes: 0,
+              receipts: 0
+            }
+          }
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadUserData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 font-['Roboto',sans-serif] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3b71ca] mx-auto mb-4"></div>
+          <p className="text-[#757575]">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-['Roboto',sans-serif]">
+      {/* <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"> */}
+      <div className="max-w-7xl mx-auto ">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#3b71ca] to-[#326abc] text-white rounded-lg p-8 mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div className="flex-1">
+              <h1 className="text-3xl font-normal text-white mb-2">Dashboard</h1>
+              <p className="text-blue-100 leading-relaxed">
+                Welcome back, {user?.name || 'User'}! 👋
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-blue-100">Last Login</div>
+              <div className="font-semibold text-white">
+                <DateFormat date={user?.lastLogin} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards - Current Year */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Dokumen Aktif Tahun {stats.currentYear.year}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MDBCard className="bg-[#3b71ca] text-white border-0 hover:shadow-xl transition-all duration-300">
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white text-sm font-medium uppercase tracking-wide mb-1">Invoices Aktif {stats.currentYear.year}</p>
+                    <p className="text-3xl font-bold text-white mb-1">{stats.currentYear.invoices}</p>
+                    <p className="text-white text-opacity-80 text-xs">Total: {stats.totalInvoices}</p>
+                  </div>
+                  <div className="text-4xl opacity-80">📄</div>
+                </div>
+              </div>
+            </MDBCard>
+
+            <MDBCard className="bg-[#14a44d] text-white border-0 hover:shadow-xl transition-all duration-300">
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white text-sm font-medium uppercase tracking-wide mb-1">Quotes Aktif {stats.currentYear.year}</p>
+                    <p className="text-3xl font-bold text-white mb-1">{stats.currentYear.quotes}</p>
+                    <p className="text-white text-opacity-80 text-xs">Total: {stats.totalQuotes}</p>
+                  </div>
+                  <div className="text-4xl opacity-80">💰</div>
+                </div>
+              </div>
+            </MDBCard>
+
+            <MDBCard className="bg-[#9c27b0] text-white border-0 hover:shadow-xl transition-all duration-300">
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white text-sm font-medium uppercase tracking-wide mb-1">Receipts Aktif {stats.currentYear.year}</p>
+                    <p className="text-3xl font-bold text-white mb-1">{stats.currentYear.receipts}</p>
+                    <p className="text-white text-opacity-80 text-xs">Total: {stats.totalReceipts}</p>
+                  </div>
+                  <div className="text-4xl opacity-80">🧾</div>
+                </div>
+              </div>
+            </MDBCard>
+
+            <MDBCard className="bg-[#e4a11b] text-white border-0 hover:shadow-xl transition-all duration-300">
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white text-sm font-medium uppercase tracking-wide mb-1">Delivery Orders {stats.currentYear.year}</p>
+                    <p className="text-3xl font-bold text-white mb-1">{stats.currentYear.deliveryOrders}</p>
+                    <p className="text-white text-opacity-80 text-xs">Total: {stats.totalDeliveryOrders}</p>
+                  </div>
+                  <div className="text-4xl opacity-80">🚚</div>
+                </div>
+              </div>
+            </MDBCard>
+          </div>
+        </div>
+
+        {/* Quick Actions & Recent Delivery Orders */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <MDBCard title="Quick Actions" className="hover:shadow-xl transition-all duration-300">
+            <div className="p-6">
+              <div className="grid grid-cols-2 gap-4">
+                <Link to="/invoices" className="p-4 bg-[#3b71ca] bg-opacity-10 hover:bg-[#3b71ca] hover:bg-opacity-20 rounded-lg text-center transition-all duration-200 block group">
+                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">📄</div>
+                  <div className="font-medium text-[#3b71ca]">Invoices</div>
+                </Link>
+                <Link to="/quotes" className="p-4 bg-[#14a44d] bg-opacity-10 hover:bg-[#14a44d] hover:bg-opacity-20 rounded-lg text-center transition-all duration-200 block group">
+                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">💰</div>
+                  <div className="font-medium text-[#14a44d]">Quotes</div>
+                </Link>
+                <Link to="/receipts" className="p-4 bg-[#9c27b0] bg-opacity-10 hover:bg-[#9c27b0] hover:bg-opacity-20 rounded-lg text-center transition-all duration-200 block group">
+                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">🧾</div>
+                  <div className="font-medium text-[#9c27b0]">Receipts</div>
+                </Link>
+                <Link to="/delivery-orders" className="p-4 bg-[#e4a11b] bg-opacity-10 hover:bg-[#e4a11b] hover:bg-opacity-20 rounded-lg text-center transition-all duration-200 block group">
+                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">🚚</div>
+                  <div className="font-medium text-[#e4a11b]">Delivery Orders</div>
+                </Link>
+              </div>
+            </div>
+          </MDBCard>
+
+          <MDBCard title="Recent Delivery Orders" className="hover:shadow-xl transition-all duration-300">
+            <div className="p-6">
+              <div className="space-y-3">
+                {recentDeliveryOrders.length > 0 ? (
+                  recentDeliveryOrders.map((deliveryOrder, index) => (
+                    <div key={deliveryOrder.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-[#e4a11b] bg-opacity-20 rounded-full flex items-center justify-center">
+                          <span className="text-[#e4a11b] font-semibold text-sm">🚚</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{deliveryOrder.doNumber || 'N/A'}</p>
+                          <p className="text-sm text-gray-500">{deliveryOrder.customer?.name || 'No customer'}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">
+                          {deliveryOrder.createdAt ? new Date(deliveryOrder.createdAt).toLocaleDateString('ms-MY') : 'N/A'}
+                        </p>
+                        <p className="text-xs text-gray-400">{deliveryOrder.status || 'DRAFT'}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No delivery orders found.</p>
+                    <p className="text-sm mt-2">Delivery orders will appear here when created.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </MDBCard>
+        </div>
+
+        {/* User Info */}
+        <MDBCard title="Account Information" className="bg-gray-50 hover:shadow-xl transition-all duration-300">
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm text-[#757575] font-medium uppercase tracking-wide mb-1">Name</p>
+                <p className="font-semibold text-[#4f4f4f]">{user?.name || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-[#757575] font-medium uppercase tracking-wide mb-1">Role</p>
+                <p className="font-semibold text-[#4f4f4f]">{user?.role || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-[#757575] font-medium uppercase tracking-wide mb-1">Status</p>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#14a44d] bg-opacity-10 text-[#14a44d]">
+                  Active
+                </span>
+              </div>
+            </div>
+          </div>
+        </MDBCard>
+      </div>
+    </div>
+  )
+}
+
+export default Dashboard
+

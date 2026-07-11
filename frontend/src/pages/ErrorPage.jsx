@@ -9,7 +9,7 @@ const ErrorPage = () => {
   const getErrorMessage = () => {
     if (error?.status === 404) {
       return {
-        title: 'Halaman Tidak Ditemui',
+        title: 'Page Not Found',
         message: 'Maaf, halaman yang anda cari tidak wujud.',
         icon: '⚠️'
       }
@@ -21,8 +21,8 @@ const ErrorPage = () => {
       }
     } else if (error?.status === 500) {
       return {
-        title: 'Ralat Pelayan',
-        message: 'Terdapat masalah dengan pelayan. Sila cuba lagi kemudian.',
+        title: 'Server Error',
+        message: 'There was a server error. Please try again later.',
         icon: '⚠️'
       }
     } else {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { DocumentForm } from '../components'
 import { validateForm } from '../utils/formValidation'
 import { customersAPI, companiesAPI, invoicesAPI } from '../utils/apiClient'
@@ -9,7 +9,6 @@ const InvoiceForm = () => {
   const navigate = useNavigate()
   const { id } = useParams() // Untuk edit mode
   const isEditMode = Boolean(id)
-  const { onPreview } = useOutletContext?.() || {}
   const { user } = useAuth()
 
   // State untuk data
@@ -56,7 +55,7 @@ const InvoiceForm = () => {
       ],
       subtotal: parseFloat(invoice.subtotal) || 0,
       taxRate: invoice.taxAmount && invoice.subtotal ? 
-        ((parseFloat(invoice.taxAmount) / parseFloat(invoice.subtotal)) * 100) : 6,
+        ((parseFloat(invoice.taxAmount) / parseFloat(invoice.subtotal)) * 100) : 0,
       taxAmount: parseFloat(invoice.taxAmount) || 0,
       total: parseFloat(invoice.total) || 0
     }
@@ -175,24 +174,8 @@ const InvoiceForm = () => {
       }
 
       if (response.success) {
-        // Show success message
-        // alert(isEditMode ? 'Invoice updated successfully!' : 'Invoice created successfully!')
-        
-        if (isEditMode) {
-          // Refresh data untuk edit mode tanpa navigate
-          try {
-            const refreshResponse = await invoicesAPI.getById(id)
-            if (refreshResponse.success) {
-              const transformedData = transformInvoiceData(refreshResponse.data)
-              setInvoiceData(transformedData)
-            }
-          } catch (refreshError) {
-            console.error('Error refreshing invoice data:', refreshError)
-          }
-        } else {
-          // Navigate back to invoices list untuk create mode
-          navigate('/invoices', { state: { refresh: true } })
-        }
+        const invoiceId = response.data?.id || id
+        navigate(`/invoices/${invoiceId}`)
       } else {
         alert(response.error || 'An error occurred while saving invoice. Please try again.')
       }
@@ -204,11 +187,9 @@ const InvoiceForm = () => {
     }
   }
 
-  // Handler untuk cancel form
+  // Handler untuk cancel form - navigasi sahaja, confirm dikendalikan oleh DocumentForm bila ada perubahan
   const handleCancel = () => {
-    if (window.confirm('Are you sure you want to cancel? Unsaved changes will be lost.')) {
-      navigate('/invoices')
-    }
+    navigate('/invoices')
   }
 
   // Loading state
@@ -226,18 +207,18 @@ const InvoiceForm = () => {
   }
 
   return (
-    // <div className="min-h-screen bg-gray-50">
+    <div className="max-w-7xl mx-auto">
       <DocumentForm
         type="invoice"
         initialData={invoiceData}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        onPreview={isEditMode ? (() => onPreview('INVOICE', id)) : undefined}
+        onPreview={isEditMode ? (() => navigate(`/invoices/${id}`)) : undefined}
         loading={submitting}
         customers={customers}
         companies={companies}
       />
-    // </div>
+    </div>
   )
 }
 

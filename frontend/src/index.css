@@ -2,18 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Font Face Definitions */
-@font-face {
-  font-family: 'Audiowide';
-  src: url('/fonts/Audiowide-Regular.ttf') format('truetype');
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Roboto';
-  src: url('/fonts/Roboto-Regular.ttf') format('truetype');
-  font-display: swap;
-}
+/* Font audiowide/roboto: dimuat daripada Google Fonts dalam index.html */
 
 /* Custom Animations */
 @keyframes slideUp {
@@ -68,4 +57,12 @@
   75% {
     transform: translateX(5px);
   }
+}
+
+/* Auto-height Markdown Editor */
+.w-md-editor {
+  min-height: 90px;
+}
+.w-md-editor-content {
+  min-height: 90px;
 }

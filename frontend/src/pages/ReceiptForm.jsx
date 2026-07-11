@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { DocumentForm } from '../components'
 import { validateForm } from '../utils/formValidation'
 import { customersAPI, companiesAPI, receiptsAPI } from '../utils/apiClient'
@@ -9,7 +9,6 @@ const ReceiptForm = () => {
   const navigate = useNavigate()
   const { id } = useParams() // Untuk edit mode
   const isEditMode = Boolean(id)
-  const { onPreview } = useOutletContext?.() || {}
   const { user } = useAuth()
 
   // State untuk data
@@ -55,7 +54,7 @@ const ReceiptForm = () => {
       ],
       subtotal: parseFloat(receipt.subtotal) || 0,
       taxRate: receipt.taxAmount && receipt.subtotal ? 
-        ((parseFloat(receipt.taxAmount) / parseFloat(receipt.subtotal)) * 100) : 6,
+        ((parseFloat(receipt.taxAmount) / parseFloat(receipt.subtotal)) * 100) : 0,
       taxAmount: parseFloat(receipt.taxAmount) || 0,
       total: parseFloat(receipt.total) || 0
     }
@@ -173,24 +172,8 @@ const ReceiptForm = () => {
       }
 
       if (response.success) {
-        // Show success message
-        // alert(isEditMode ? 'Receipt updated successfully!' : 'Receipt created successfully!')
-        
-        if (isEditMode) {
-          // Refresh data untuk edit mode tanpa navigate
-          try {
-            const refreshResponse = await receiptsAPI.getById(id)
-            if (refreshResponse.success) {
-              const transformedData = transformReceiptData(refreshResponse.data)
-              setReceiptData(transformedData)
-            }
-          } catch (refreshError) {
-            console.error('Error refreshing receipt data:', refreshError)
-          }
-        } else {
-          // Navigate back to receipts list untuk create mode
-          navigate('/receipts', { state: { refresh: true } })
-        }
+        const receiptId = response.data?.id || id
+        navigate(`/receipts/${receiptId}`)
       } else {
         alert(response.error || 'An error occurred while saving receipt. Please try again.')
       }
@@ -202,11 +185,9 @@ const ReceiptForm = () => {
     }
   }
 
-  // Handler untuk cancel form
+  // Handler untuk cancel form - navigasi sahaja, confirm dikendalikan oleh DocumentForm bila ada perubahan
   const handleCancel = () => {
-    if (window.confirm('Are you sure you want to cancel? Unsaved changes will be lost.')) {
-      navigate('/receipts')
-    }
+    navigate('/receipts')
   }
 
   // Loading state
@@ -230,7 +211,7 @@ const ReceiptForm = () => {
         initialData={receiptData}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        onPreview={isEditMode ? (() => onPreview('RECEIPT', id)) : undefined}
+        onPreview={isEditMode ? (() => navigate(`/receipts/${id}`)) : undefined}
         loading={submitting}
         customers={customers}
         companies={companies}

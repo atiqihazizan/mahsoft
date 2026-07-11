@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { DocumentForm } from '../components'
 import { validateForm } from '../utils/formValidation'
 import { customersAPI, companiesAPI, quotesAPI } from '../utils/apiClient'
@@ -9,7 +9,6 @@ const QuoteForm = () => {
   const navigate = useNavigate()
   const { id } = useParams() // Untuk edit mode
   const isEditMode = Boolean(id)
-  const { onPreview } = useOutletContext?.() || {}
   const { user } = useAuth()
 
   // State untuk data
@@ -56,7 +55,7 @@ const QuoteForm = () => {
       ],
       subtotal: parseFloat(quote.subtotal) || 0,
       taxRate: quote.taxAmount && quote.subtotal ? 
-        ((parseFloat(quote.taxAmount) / parseFloat(quote.subtotal)) * 100) : 6,
+        ((parseFloat(quote.taxAmount) / parseFloat(quote.subtotal)) * 100) : 0,
       taxAmount: parseFloat(quote.taxAmount) || 0,
       total: parseFloat(quote.total) || 0
     }
@@ -175,24 +174,8 @@ const QuoteForm = () => {
       }
 
       if (response && response.success) {
-        // Show success message
-        // alert(isEditMode ? 'Quote updated successfully!' : 'Quote created successfully!')
-        
-        if (isEditMode) {
-          // Refresh data untuk edit mode tanpa navigate
-          try {
-            const refreshResponse = await quotesAPI.getById(id)
-            if (refreshResponse.success) {
-              const transformedData = transformQuoteData(refreshResponse.data)
-              setQuoteData(transformedData)
-            }
-          } catch (refreshError) {
-            console.error('Error refreshing quote data:', refreshError)
-          }
-        } else {
-          // Navigate back to quotes list untuk create mode
-          navigate('/quotes', { state: { refresh: true } })
-        }
+        const quoteId = response.data?.id || id
+        navigate(`/quotes/${quoteId}`)
       } else {
         throw new Error(response?.error || 'API response not successful')
       }
@@ -204,11 +187,9 @@ const QuoteForm = () => {
     }
   }
 
-  // Handler untuk cancel form
+  // Handler untuk cancel form - navigasi sahaja, confirm dikendalikan oleh DocumentForm bila ada perubahan
   const handleCancel = () => {
-    if (window.confirm('Are you sure you want to cancel? Unsaved changes will be lost.')) {
-      navigate('/quotes')
-    }
+    navigate('/quotes')
   }
 
   // Loading state
@@ -224,12 +205,12 @@ const QuoteForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="max-w-7xl mx-auto">
       <DocumentForm
         type="quote"
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        onPreview={isEditMode ? (() => onPreview('QUOTATION', id)) : undefined}
+        onPreview={isEditMode ? (() => navigate(`/quotes/${id}`)) : undefined}
         loading={submitting}
         customers={customers}
         companies={companies}

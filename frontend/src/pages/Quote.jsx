@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { PageWrapper } from '../components'
 import { DataTable, StatusBadge, CurrencyFormat, DateFormat, ExpiryStatus, TableCell } from '../components'
 import { quotesAPI } from '../utils/apiClient'
@@ -7,7 +7,6 @@ import { quotesAPI } from '../utils/apiClient'
 const Quote = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { onPreview } = useOutletContext?.() || {}
   const [quotes, setQuotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -176,10 +175,10 @@ const Quote = () => {
         render: (value) => <CurrencyFormat amount={value} />
       },
       {
-        key: 'status',
+        key:'status',
         header: 'Status',
         headerClassName: 'text-center',
-        cellClassName: 'text-center',
+        cellClassName: 'text-center text-sm',
         render: (value) => <StatusBadge status={value} />
       },
       {
@@ -225,15 +224,12 @@ const Quote = () => {
         onAccept={(row) => handleQuoteStatusChange(row.id, 'accept')}
         onReject={(row) => handleQuoteStatusChange(row.id, 'reject')}
         onDummy={(row) => handleQuoteStatusChange(row.id, 'dummy')}
-        onEdit={(row) => navigate(`/quotes/${row.id}/edit`)}
+        onView={(row) => navigate(`/quotes/${row.id}`)}
         onDuplicate={(row) => {
           const duplicateData = { ...row }
           delete duplicateData.id
           localStorage.setItem('duplicateQuoteData', JSON.stringify(duplicateData))
           navigate('/quotes/new?duplicate=1')
-        }}
-        onPreview={(row) => {
-          onPreview('QUOTATION', row.id)
         }}
         onDelete={async (row) => {
           if (confirm('Are you sure you want to delete this quote?')) {

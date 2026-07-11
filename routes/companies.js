@@ -397,37 +397,6 @@ router.delete('/:id', [
   }
 });
 
-// GET /api/v1/companies/test-update/:id - Test update company
-router.get('/test-update/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    console.log('Testing update for company ID:', id);
-    
-    const testData = {
-      invoicePrefix: 'INV',
-      quotePrefix: 'QT',
-      receiptPrefix: 'RCP',
-      deliveryOrderPrefix: 'DO',
-      invoiceSeq: 1,
-      quoteSeq: 1,
-      receiptSeq: 1,
-      deliveryOrderSeq: 1
-    };
-    
-    console.log('Test data:', testData);
-    
-    const company = await prisma.company.update({
-      where: { id },
-      data: testData
-    });
-    
-    success(res, company, 'Test update berjaya');
-  } catch (err) {
-    console.error('Test update error:', err);
-    error(res, 'Test update gagal: ' + err.message);
-  }
-});
-
 // GET /api/v1/companies/prefixes/total - Dapatkan total prefix semua company
 router.get('/prefixes/total', async (req, res) => {
   try {

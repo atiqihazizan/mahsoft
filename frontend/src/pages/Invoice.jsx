@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { PageWrapper, DataTable, StatusBadge, CurrencyFormat, DateFormat, TableCell } from '../components'
 import { invoicesAPI } from '../utils/apiClient'
 import { formatText } from '../utils/textFormatting'
@@ -7,7 +7,6 @@ import { formatText } from '../utils/textFormatting'
 const Invoice = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { onPreview } = useOutletContext?.() || {}
   const [invoices, setInvoices] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -141,18 +140,24 @@ const Invoice = () => {
       const response = await invoicesAPI.getAll()
       
       if (response?.success) {
-        const transformedInvoices = response.data.invoices.map(invoice => ({
+        // Sokong pelbagai struktur respons dan pastikan sentiasa array
+        const rawInvoices = response.data?.invoices ?? response.data
+        const invoicesArray = Array.isArray(rawInvoices) ? rawInvoices : []
+
+        const transformedInvoices = invoicesArray.map(invoice => ({
           id: invoice.id,
           invoiceNumber: invoice.invoiceNumber,
           customerName: invoice.customer?.name || 'N/A',
           subject: invoice.subject || 'N/A',
           amount: parseFloat(invoice.total),
-          status: invoice.status.toLowerCase(),
+          status: (invoice.status || 'draft').toLowerCase(),
           date: invoice.date,
           dueDate: invoice.dueDate
         }))
         
-        if (transformedInvoices.length === 0) throw new Error('No data from API')
+        if (transformedInvoices.length === 0) {
+          console.warn('No invoice data from API, using empty list')
+        }
         
         // Set invoices first
         setInvoices(transformedInvoices)
@@ -160,7 +165,8 @@ const Invoice = () => {
         // Check dan update overdue status selepas set state
         await checkAndUpdateOverdueStatus(transformedInvoices)
       } else {
-        throw new Error('API response not successful')
+        console.error('API response not successful when loading invoices:', response)
+        setInvoices([])
       }
     } catch (error) {
       console.error('Error loading invoices:', error)
@@ -227,8 +233,8 @@ const Invoice = () => {
     {
       key: 'status',
       header: 'Status',
-      headerClassName: 'text-right w-24',
-      cellClassName: 'text-right',
+      headerClassName: 'text-center',
+      cellClassName: 'text-center text-sm',
       render: (value) => <StatusBadge status={value} />
     },
     {
@@ -291,13 +297,8 @@ const Invoice = () => {
           localStorage.setItem('duplicateInvoiceData', JSON.stringify(duplicateData))
           navigate('/invoices/new?duplicate=1')
         }}
-        onPreview={(row) => {
-          onPreview('INVOICE', row.id)
-          // if (onPreview) {
-          // } else {
-          //   navigate(`/invoice-print/${row.id}`)
-          // }
-        }}
+        onView={(row) => navigate(`/invoices/${row.id}`)}
+        onPreview={(row) => navigate(`/invoices/${row.id}`)}
         onConvert={(row) => handleConvertToDeliveryOrder(row.id)}
         onDelete={async (row) => {
           const isActive = row.status === 'draft' || row.status === 'sent' || row.status === 'overdue'

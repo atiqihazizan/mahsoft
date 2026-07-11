@@ -81,7 +81,7 @@ router.get('/invoices', async (req, res) => {
     success(res, {
       invoices: invoicesWithOutstanding,
       summary
-    }, 'Outstanding invoices retrieved successfully');
+    }, 'Invois tertunggak berjaya diambil');
 
   } catch (err) {
     console.error('Error getting outstanding invoices:', err);
@@ -171,7 +171,7 @@ router.get('/debtors', async (req, res) => {
     success(res, {
       debtors: debtorsWithOutstanding,
       summary
-    }, 'Outstanding debtors retrieved successfully');
+    }, 'Hutang tertunggak berjaya diambil');
 
   } catch (err) {
     console.error('Error getting outstanding debtors:', err);
@@ -265,7 +265,7 @@ router.get('/summary', async (req, res) => {
       }
     };
 
-    success(res, summary, 'Outstanding summary retrieved successfully');
+    success(res, summary, 'Ringkasan tertunggak berjaya diambil');
 
   } catch (err) {
     console.error('Error getting outstanding summary:', err);
@@ -406,7 +406,7 @@ router.get('/customer/:id', async (req, res) => {
       }
     };
 
-    success(res, summary, 'Customer outstanding retrieved successfully');
+    success(res, summary, 'Tertunggak pelanggan berjaya diambil');
 
   } catch (err) {
     console.error('Error getting customer outstanding:', err);

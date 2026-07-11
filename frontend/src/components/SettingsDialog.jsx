@@ -44,6 +44,8 @@ const SettingsDialog = ({
       disabled = false,
       className = '',
       helperText = '',
+      fullWidth,
+      halfWidth,
       ...fieldProps
     } = field
 

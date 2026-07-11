@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useEffect, useState } from 'react'
-import { renderStructuredText, renderSimpleText, renderWhatsAppText } from './TextFormatting'
+import MDEditor from '@uiw/react-md-editor'
 
 // Label component
 export const Label = ({ children, required = false, className = "" }) => (
@@ -17,18 +17,26 @@ export const TextInput = ({
   required = false, 
   disabled = false,
   className = "",
+  helperText, // digunakan di luar, jangan pass ke DOM
   ...props 
 }) => (
-  <input
-    type="text"
-    value={value || ''}
-    onChange={onChange}
-    placeholder={placeholder}
-    required={required}
-    disabled={disabled}
-    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
-    {...props}
-  />
+  <div className="w-full">
+    <input
+      type="text"
+      value={value || ''}
+      onChange={onChange}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+      {...props}
+    />
+    {helperText && (
+      <p className="mt-1 text-xs text-gray-500">
+        {helperText}
+      </p>
+    )}
+  </div>
 )
 
 // Email Input component
@@ -39,18 +47,26 @@ export const EmailInput = ({
   required = false, 
   disabled = false,
   className = "",
+  helperText,
   ...props 
 }) => (
-  <input
-    type="email"
-    value={value || ''}
-    onChange={onChange}
-    placeholder={placeholder}
-    required={required}
-    disabled={disabled}
-    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
-    {...props}
-  />
+  <div className="w-full">
+    <input
+      type="email"
+      value={value || ''}
+      onChange={onChange}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+      {...props}
+    />
+    {helperText && (
+      <p className="mt-1 text-xs text-gray-500">
+        {helperText}
+      </p>
+    )}
+  </div>
 )
 
 // Tel Input component
@@ -61,22 +77,30 @@ export const TelInput = ({
   required = false, 
   disabled = false,
   className = "",
+  helperText,
   ...props 
 }) => (
-  <input
-    type="tel"
-    value={value || ''}
-    onChange={onChange}
-    placeholder={placeholder}
-    required={required}
-    disabled={disabled}
-    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
-    {...props}
-  />
+  <div className="w-full">
+    <input
+      type="tel"
+      value={value || ''}
+      onChange={onChange}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+      {...props}
+    />
+    {helperText && (
+      <p className="mt-1 text-xs text-gray-500">
+        {helperText}
+      </p>
+    )}
+  </div>
 )
 
 // Textarea component with auto-resize
-export const Textarea = ({ 
+export const Textarea = React.forwardRef(({ 
   value, 
   onChange, 
   placeholder = "", 
@@ -84,16 +108,24 @@ export const Textarea = ({
   disabled = false,
   rows = 3,
   className = "",
-  autoResize = true, // New prop untuk enable/disable auto-resize
+  autoResize = true,
+  helperText,
   ...props 
-}) => {
-  const textareaRef = useRef(null)
+}, ref) => {
+  const internalRef = useRef(null)
 
-  // Function untuk auto-resize textarea
+  const mergedRef = (el) => {
+    internalRef.current = el
+    if (ref) {
+      if (typeof ref === 'function') ref(el)
+      else ref.current = el
+    }
+  }
+
   const adjustHeight = useCallback(() => {
-    if (textareaRef.current && autoResize) {
-      textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+    if (internalRef.current && autoResize) {
+      internalRef.current.style.height = 'auto'
+      internalRef.current.style.height = `${internalRef.current.scrollHeight}px`
     }
   }, [autoResize])
 
@@ -111,20 +143,29 @@ export const Textarea = ({
   }
 
   return (
-    <textarea
-      ref={textareaRef}
-      value={value || ''}
-      onChange={handleChange}
-      placeholder={placeholder}
-      required={required}
-      disabled={disabled}
-      rows={rows}
-      className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-[11pt] overflow-hidden ${className}`}
-      style={{ minHeight: `${rows * 1.5}rem` }}
-      {...props}
-    />
+    <div className="w-full">
+      <textarea
+        ref={mergedRef}
+        value={value || ''}
+        onChange={handleChange}
+        placeholder={placeholder}
+        required={required}
+        disabled={disabled}
+        rows={rows}
+        className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-[11pt] overflow-hidden ${className}`}
+        style={{ minHeight: `${rows * 1.5}rem` }}
+        {...props}
+      />
+      {helperText && (
+        <p className="mt-1 text-xs text-gray-500">
+          {helperText}
+        </p>
+      )}
+    </div>
   )
-}
+})
+
+Textarea.displayName = 'Textarea'
 
 // Select component
 export const Select = ({ 
@@ -247,21 +288,29 @@ export const NumberInput = ({
   max,
   step,
   className = "",
+  helperText,
   ...props 
 }) => (
-  <input
-    type="number"
-    value={value || ''}
-    onChange={onChange}
-    placeholder={placeholder}
-    required={required}
-    disabled={disabled}
-    min={min}
-    max={max}
-    step={step}
-    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
-    {...props}
-  />
+  <div className="w-full">
+    <input
+      type="number"
+      value={value || ''}
+      onChange={onChange}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      min={min}
+      max={max}
+      step={step}
+      className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+      {...props}
+    />
+    {helperText && (
+      <p className="mt-1 text-xs text-gray-500">
+        {helperText}
+      </p>
+    )}
+  </div>
 )
 
 // Date Input component
@@ -312,7 +361,7 @@ export const PasswordInput = ({
   </div>
 )
 
-// Description Field component (enhanced textarea with formatting)
+// Description Field component with auto-resize Markdown Editor
 export const DescriptionField = ({ 
   value, 
   onChange, 
@@ -320,108 +369,34 @@ export const DescriptionField = ({
   placeholder = "", 
   required = false, 
   disabled = false,
-  rows = 4,
   className = "",
-  variant = 'simple', // 'simple', 'structured', 'whatsapp'
-  listType = 'ul', // 'ul' atau 'ol' untuk structured variant
-  spacing = 'normal', // 'normal' atau 'wide' untuk spacing
   error = '',
-  showPreview = false,
-  autoResize = true, // New prop untuk auto-resize
+  minHeight = 90,
   ...props 
 }) => {
-  
-  // State untuk toggle preview mode
-  const [isPreview, setIsPreview] = useState(showPreview)
-  
-  // Function untuk render preview berdasarkan variant
-  const renderPreview = () => {
-    if (!value || (!showPreview && !isPreview)) return null
-    
-    const options = { listType, spacing }
-    
-    switch (variant) {
-      case 'structured':
-        return renderStructuredText(value, options)
-      case 'whatsapp':
-        return renderWhatsAppText(value)
-      case 'simple':
-      default:
-        return renderSimpleText(value)
-    }
+  const handleChange = (val) => {
+    onChange({ target: { value: val || '' } })
   }
 
   return (
-    <div className={className}>
+    <div className={className} data-color-mode="light">
       {label && (
-        <Label required={required}>
-          {label}
-        </Label>
+        <Label required={required}>{label}</Label>
       )}
-      
-      <div className="space-y-2">
-        {/* Textarea atau Preview berdasarkan mode */}
-        {!isPreview ? (
-          <Textarea
-            value={value || ''}
-            onChange={onChange}
-            placeholder={placeholder}
-            required={required}
-            disabled={disabled}
-            rows={rows}
-            autoResize={autoResize}
-            className={`resize-none ${error ? 'border-red-500' : ''}`}
-            {...props}
-          />
-        ) : (
-          <div className="min-h-[6rem] p-3 border border-gray-300 rounded-md bg-gray-50 text-sm">
-            {value ? renderPreview() : <span className="text-gray-400 italic">Tiada kandungan untuk preview</span>}
-          </div>
-        )}
-        
-        {/* Preview button dan format instructions */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            {/* Format Instructions */}
-            {variant === 'structured' && !isPreview && (
-              <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                <p><strong>Format:</strong> **Tajuk** untuk bold, - untuk bullet points</p>
-                <p><strong>Spacing:</strong> Kosongkan baris untuk space tambahan</p>
-                <p><strong>List Type:</strong> {listType === 'ol' ? 'Ordered (1,2,3...)' : 'Unordered (•)'}</p>
-              </div>
-            )}
-            
-            {variant === 'whatsapp' && !isPreview && (
-              <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                <p><strong>Format:</strong> *bold*, _italic_, ~strikethrough~, `monospace`</p>
-                <p><strong>Spacing:</strong> Kosongkan baris untuk space tambahan</p>
-              </div>
-            )}
-          </div>
-          
-          <div className="ml-4">
-            <button
-              type="button"
-              onClick={() => setIsPreview(!isPreview)}
-              className="text-xs px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-            >
-              {isPreview ? 'Edit' : 'Preview'}
-            </button>
-          </div>
-        </div>
-        
+      <div style={{ minHeight: `${minHeight}px` }}>
+        <MDEditor
+          value={value || ''}
+          onChange={handleChange}
+          preview="edit"
+          visibleDragbar={false}
+          height="auto"
+          textareaProps={{
+            placeholder: placeholder,
+            disabled: disabled,
+          }}
+        />
         {error && (
-          <p className="text-red-500 text-sm">{error}</p>
-        )}
-        
-        {/* Preview untuk showPreview prop (backward compatibility) */}
-        {showPreview && value && !isPreview && (
-          <div className="border-t pt-2">
-            <p className="text-xs font-medium text-gray-700 mb-1">Preview:</p>
-            <div className="bg-gray-50 p-2 rounded text-sm">
-              {renderPreview()}
-            </div>
-          </div>
+          <p className="text-red-500 text-sm mt-1">{error}</p>
         )}
       </div>
     </div>

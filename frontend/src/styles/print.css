@@ -1,7 +1,5 @@
 /* Print CSS untuk Invoice, Quote dan Receipt Preview */
-
-@font-face { font-family: audiowide; src: local('Audiowide'), url(/fonts/Audiowide-Regular.ttf) format('truetype'); font-display: swap; }
-@font-face { font-family: roboto; src: local('Roboto'), url(/fonts/Roboto-Regular.ttf) format('truetype'); font-display: swap; }
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&family=Roboto:ital,wght@0,300;0,400;0,700&display=swap');
 
 /* Base Styles */
 .paper .sheet { margin: auto; font-size: .9rem; background-color: white; line-height: 1.65; color: #212529; text-align: left; }
@@ -13,7 +11,7 @@
 .text-center { text-align: center; }
 .text-start { text-align: start; }
 .text-end { text-align: end; }
-.font-audiowide { font-family: audiowide, roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif; }
+.font-audiowide { font-family: 'Audiowide', 'Roboto', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
 .weight-400 { font-weight: 400; }
 .weight-600 { font-weight: 600; }
 .uppertext { text-transform: uppercase; }

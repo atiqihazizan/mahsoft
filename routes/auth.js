@@ -116,22 +116,24 @@ router.post('/login', loginValidation, async (req, res) => {
       WHERE BINARY username = ${username} OR BINARY email = ${username}
       LIMIT 1
     `;
+    console.log(username)
+    console.log(users)
     
     const user = users.length > 0 ? users[0] : null;
 
     if (!user) {
-      return unauthorized(res, 'Invalid username or password');
+      return unauthorized(res, 'Username atau kata laluan tidak sah');
     }
 
     if (!user.isActive) {
-      return unauthorized(res, 'Account has been deactivated');
+      return unauthorized(res, 'Akaun telah dinyahaktifkan');
     }
 
     // Compare password
     const isPasswordValid = await comparePassword(password, user.password);
 
     if (!isPasswordValid) {
-      return unauthorized(res, 'Invalid username or password');
+      return unauthorized(res, 'Username atau kata laluan tidak sah');
     }
 
     // Update last login
@@ -168,7 +170,7 @@ router.post('/login', loginValidation, async (req, res) => {
 });
 
 // POST /api/v1/auth/change-password - Tukar kata laluan
-router.post('/change-password', changePasswordValidation, async (req, res) => {
+router.post('/change-password', authenticateToken, changePasswordValidation, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user.id; // From auth middleware
@@ -253,7 +255,7 @@ router.post('/logout', async (req, res) => {
 });
 
 // POST /api/v1/auth/refresh - Refresh token
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id; // From auth middleware
 

@@ -47,7 +47,7 @@ model Company {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  tempId     Int
+  tempId     Int     @default(0)
   is_default Boolean @default(false)
 
   // Relations

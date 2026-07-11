@@ -12,6 +12,8 @@ const SettingsTable = ({
   loading = false,
   emptyMessage = "No data available"
 }) => {
+  const safeData = Array.isArray(data) ? data : []
+
   return (
     <div>
       {/* Header */}
@@ -61,7 +63,7 @@ const SettingsTable = ({
                     Loading...
                   </td>
                 </tr>
-              ) : data.length === 0 ? (
+              ) : safeData.length === 0 ? (
                 <tr>
                   <td 
                     colSpan={columns.length + 1} 
@@ -71,7 +73,7 @@ const SettingsTable = ({
                   </td>
                 </tr>
               ) : (
-                data.map((item, index) => (
+                safeData.map((item, index) => (
                   <tr key={item.id || index} className="hover:bg-gray-50">
                     {columns.map((column, colIndex) => (
                       <td 

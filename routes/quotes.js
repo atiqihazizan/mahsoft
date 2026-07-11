@@ -18,6 +18,7 @@ const createQuoteValidation = [
   body('items.*.description').notEmpty().withMessage('Penerangan item diperlukan'),
   body('items.*.quantity').isNumeric().withMessage('Kuantiti mestilah nombor'),
   body('items.*.unitPrice').isNumeric().withMessage('Harga unit mestilah nombor'),
+  body('items.*.unit').optional().isString(),
   handleValidationErrors
 ];
 
@@ -34,6 +35,7 @@ const updateQuoteValidation = [
   body('items.*.description').optional().notEmpty().withMessage('Penerangan item diperlukan'),
   body('items.*.quantity').optional().isNumeric().withMessage('Kuantiti mestilah nombor'),
   body('items.*.unitPrice').optional().isNumeric().withMessage('Harga unit mestilah nombor'),
+  body('items.*.unit').optional().isString(),
   handleValidationErrors
 ];
 
@@ -101,7 +103,7 @@ router.get('/', async (req, res) => {
       prisma.quote.findMany({
         where,
         skip,
-        // take: parseInt(limit),
+        take: parseInt(limit),
         orderBy: { createdAt: 'desc' },
         include: {
           company: { select: { id: true, name: true } },
@@ -177,8 +179,8 @@ router.post('/', createQuoteValidation, async (req, res) => {
     // Generate quote number using company sequence
     const quoteNumber = await generateQuoteNumber(companyId);
 
-    // Calculate totals (respect client taxRate if provided; else default 0)
-  const inputTaxRate = typeof req.body.taxRate === 'number' ? (req.body.taxRate / 100) : 0;
+    // Calculate totals (respect client taxRate if provided; else default 0.06)
+  const inputTaxRate = typeof req.body.taxRate === 'number' ? (req.body.taxRate / 100) : 0.06;
     const { subtotal, taxAmount, total } = calculateTotals(items, inputTaxRate);
 
     // Prepare items data with calculated amounts
@@ -189,7 +191,8 @@ router.post('/', createQuoteValidation, async (req, res) => {
     amount: parseFloat(item.quantity) * parseFloat(item.unitPrice),
     ...(item.variant && { variant: item.variant }),
     ...(item.listType && { listType: item.listType }),
-    ...(item.spacing && { spacing: item.spacing })
+    ...(item.spacing && { spacing: item.spacing }),
+    ...(item.unit && { unit: item.unit })
   }));
 
     // Create quote with items
@@ -263,7 +266,8 @@ router.put('/:id', updateQuoteValidation, async (req, res) => {
         amount: parseFloat(item.quantity) * parseFloat(item.unitPrice),
         ...(item.variant && { variant: item.variant }),
         ...(item.listType && { listType: item.listType }),
-        ...(item.spacing && { spacing: item.spacing })
+        ...(item.spacing && { spacing: item.spacing }),
+        ...(item.unit && { unit: item.unit })
       }));
       const updateTaxRate = typeof updateData.taxRate === 'number' ? (updateData.taxRate / 100) : 0;
       const { subtotal, taxAmount, total } = calculateTotals(itemsWithAmounts, updateTaxRate);

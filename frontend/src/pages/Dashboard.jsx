@@ -97,7 +97,9 @@ const Dashboard = () => {
 
           // Set recent delivery orders
           if (deliveryOrdersResponse.success) {
-            setRecentDeliveryOrders(deliveryOrdersResponse.data.deliveryOrders || deliveryOrdersResponse.data || [])
+            const rawOrders = deliveryOrdersResponse.data?.deliveryOrders ?? deliveryOrdersResponse.data
+            const safeOrders = Array.isArray(rawOrders) ? rawOrders : []
+            setRecentDeliveryOrders(safeOrders)
           } else {
             setRecentDeliveryOrders([])
           }
@@ -172,13 +174,13 @@ const Dashboard = () => {
 
         {/* Stats Cards - Current Year */}
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Dokumen Aktif Tahun {stats.currentYear.year}</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Active Documents {stats.currentYear.year}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MDBCard className="bg-[#3b71ca] text-white border-0 hover:shadow-xl transition-all duration-300">
               <div className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-white text-sm font-medium uppercase tracking-wide mb-1">Invoices Aktif {stats.currentYear.year}</p>
+                    <p className="text-white text-sm font-medium uppercase tracking-wide mb-1">Active Invoices {stats.currentYear.year}</p>
                     <p className="text-3xl font-bold text-white mb-1">{stats.currentYear.invoices}</p>
                     <p className="text-white text-opacity-80 text-xs">Total: {stats.totalInvoices}</p>
                   </div>
@@ -191,7 +193,7 @@ const Dashboard = () => {
               <div className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-white text-sm font-medium uppercase tracking-wide mb-1">Quotes Aktif {stats.currentYear.year}</p>
+                    <p className="text-white text-sm font-medium uppercase tracking-wide mb-1">Active Quotes {stats.currentYear.year}</p>
                     <p className="text-3xl font-bold text-white mb-1">{stats.currentYear.quotes}</p>
                     <p className="text-white text-opacity-80 text-xs">Total: {stats.totalQuotes}</p>
                   </div>
@@ -204,7 +206,7 @@ const Dashboard = () => {
               <div className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-white text-sm font-medium uppercase tracking-wide mb-1">Receipts Aktif {stats.currentYear.year}</p>
+                    <p className="text-white text-sm font-medium uppercase tracking-wide mb-1">Active Receipts {stats.currentYear.year}</p>
                     <p className="text-3xl font-bold text-white mb-1">{stats.currentYear.receipts}</p>
                     <p className="text-white text-opacity-80 text-xs">Total: {stats.totalReceipts}</p>
                   </div>
@@ -256,7 +258,7 @@ const Dashboard = () => {
           <MDBCard title="Recent Delivery Orders" className="hover:shadow-xl transition-all duration-300">
             <div className="p-6">
               <div className="space-y-3">
-                {recentDeliveryOrders.length > 0 ? (
+                {Array.isArray(recentDeliveryOrders) && recentDeliveryOrders.length > 0 ? (
                   recentDeliveryOrders.map((deliveryOrder, index) => (
                     <div key={deliveryOrder.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                       <div className="flex items-center space-x-3">

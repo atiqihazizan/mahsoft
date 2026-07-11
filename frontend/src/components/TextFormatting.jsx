@@ -78,6 +78,10 @@ export const renderWhatsAppText = (text) => {
   if (!text) return ''
   
   return text.split('\n').map((line, lineIndex) => {
+    if (line.trim() === '') {
+      return <div key={lineIndex} style={{ height: '16px' }} />
+    }
+
     // Process each line for formatting
     const patterns = [
       { regex: /\*\*([^*]+)\*\*/g, type: 'bold' },
@@ -145,7 +149,7 @@ export const renderWhatsAppText = (text) => {
     }
     
     return (
-      <div key={lineIndex} className="mb-1">
+      <div key={lineIndex} style={{ marginBottom: '0.25rem' }}>
         {parts.length > 0 ? parts : line}
       </div>
     )
@@ -257,8 +261,8 @@ export const renderStructuredText = (text, options = {}) => {
   lines.forEach((line, index) => {
     const trimmedLine = line.trim()
     
-    // Check if line is a title (bold text)
-    if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
+    // Check if line is a title (single **text** pair, no inner **)
+    if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**') && !trimmedLine.slice(2, -2).includes('**')) {
       // If we have a current list, render it first
       if (currentList.length > 0) {
         elements.push(
@@ -274,11 +278,11 @@ export const renderStructuredText = (text, options = {}) => {
         currentList = []
       }
       
-      // Add the title with spacing
+      // Add the title with spacing and inline formatting
       elements.push(
         <div key={index} className={spacingClass}>
           <p className="font-bold text-gray-800 mb-1">
-            {trimmedLine.slice(2, -2)}
+            {renderInlineFormatting(trimmedLine.slice(2, -2))}
           </p>
         </div>
       )
@@ -526,7 +530,7 @@ export const convertTextFormat = (text, fromVariant, toVariant) => {
  * @returns {string} Preview text
  */
 export const getPreviewText = (text, variant) => {
-  if (!text) return 'Tiada penerangan'
+  if (!text) return 'No description'
   
   switch (variant) {
     case 'simple':

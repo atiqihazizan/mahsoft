@@ -7,18 +7,18 @@ const path = require('path');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "http://localhost:5000", "https://invoice.mahsites.com", "https://invoice.mahsites.net"],
+      connectSrc: ["'self'", "http://localhost:5001", "https://invoice.mahsites.com", "https://invoice.mahsites.net"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      fontSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "data:", "https:", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: []
     }
@@ -41,6 +41,7 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // Routes
+app.use('/api/v1/setup', require('./routes/setup'));
 app.use('/api/v1/auth', require('./routes/auth'));
 app.use('/api/v1/companies', require('./routes/companies'));
 app.use('/api/v1/users', require('./routes/users'));
@@ -72,25 +73,22 @@ app.get('/health', (req, res) => {
 
 // Serve React app for all non-API routes (SPA routing)
 app.get('*', (req, res) => {
-  // Skip API routes
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({
       error: 'API endpoint tidak ditemui',
       message: `Route ${req.method} ${req.originalUrl} tidak wujud`
     });
   }
-  
-  // Skip static files (assets, fonts, etc.) - let express.static handle these
-  if (req.path.startsWith('/assets/') || 
-      req.path.startsWith('/fonts/') || 
-      req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|ttf|woff|woff2)$/)) {
-    return res.status(404).json({
-      error: 'File tidak ditemui',
-      message: `File ${req.path} tidak wujud`
-    });
+
+  // express.static gagal bagi path ini — jangan balas JSON (browser sangka CSS ialah JSON)
+  const looksLikeStaticAsset =
+    req.path.startsWith('/assets/') ||
+    req.path.startsWith('/fonts/') ||
+    /\.(js|mjs|css|png|jpg|jpeg|gif|svg|ico|ttf|woff2?|eot|otf|map|webp)$/i.test(req.path);
+  if (looksLikeStaticAsset) {
+    return res.status(404).type('text/plain').send('Not found');
   }
-  
-  // Serve index.html for SPA routing - this handles all client-side routes
+
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

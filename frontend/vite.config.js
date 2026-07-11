@@ -11,11 +11,18 @@ export default defineConfig({
     open: false,
     proxy: {
       '/api': {
-        target: 'https://invoice.mahsites.net/',
+        target: 'http://localhost:5001',
         changeOrigin: true,
         secure: false,
       },
     },
+    // proxy: {
+    //   '/api': {
+    //     target: 'https://invoice.mahsites.net/',
+    //     changeOrigin: true,
+    //     secure: false,
+    //   },
+    // },
   },
   build: {
     outDir: '../public',

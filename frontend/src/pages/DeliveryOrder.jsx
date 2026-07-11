@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { PageWrapper, DataTable, StatusBadge, CurrencyFormat, DateFormat, TableCell } from '../components'
 import { deliveryOrdersAPI } from '../utils/apiClient'
 import { formatText } from '../utils/textFormatting'
@@ -7,7 +7,6 @@ import { formatText } from '../utils/textFormatting'
 const DeliveryOrder = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { onPreview } = useOutletContext?.() || {}
   const [deliveryOrders, setDeliveryOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -140,13 +139,6 @@ const DeliveryOrder = () => {
       render: (value) => <CurrencyFormat amount={value} />
     },
     {
-      key: 'status',
-      header: 'Status',
-      headerClassName: 'text-right w-24',
-      cellClassName: 'text-right',
-      render: (value) => <StatusBadge status={value} />
-    },
-    {
       key: 'date',
       header: 'Date',
       headerClassName: 'text-center w-24',
@@ -197,13 +189,12 @@ const DeliveryOrder = () => {
         columns={columns}
         loading={loading}
         getButtonState={getButtonState}
+        onView={(row) => navigate(`/delivery-orders/${row.id}`)}
         onEdit={(row) => {
           const isActive = row.status === 'draft' || row.status === 'confirmed'
           isActive ? navigate(`/delivery-orders/${row.id}/edit`) : alert('Hanya delivery order yang aktif boleh diedit')
         }}
-        onPreview={(row) => {
-          onPreview('DELIVERY_ORDER', row.id)
-        }}
+        onPreview={(row) => navigate(`/delivery-orders/${row.id}`)}
         onConfirm={(row) => handleDeliveryOrderStatusChange(row.id, 'confirm')}
         onDeliver={(row) => handleDeliveryOrderStatusChange(row.id, 'deliver')}
         onCancel={(row) => handleDeliveryOrderStatusChange(row.id, 'cancel')}

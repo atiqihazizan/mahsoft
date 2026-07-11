@@ -91,29 +91,28 @@ const DataTable = ({
                     <div className="flex space-x-2 justify-center">
                       {onPaid && (
                         <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'paid') ? 'Tidak boleh Paid' : 'Paid'}
+                          content={getButtonState && !getButtonState(row, 'paid') ? 'Cannot mark as paid' : 'Mark invoice as paid'}
                           position="top"
                           delay={300}
-                          offset={{ x: -10, y: 0 }} // Sesuaikan x untuk kiri/kanan, y untuk atas/bawah
+                          offset={{ x: -10, y: 0 }}
                         >
-                          <button type="button"
+                          <button
+                            type="button"
                             onClick={() => onPaid(row)}
                             disabled={getButtonState ? !getButtonState(row, 'paid') : false}
-                            className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'paid')
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-green-600 hover:text-green-900 hover:bg-green-50'
-                              }`}
+                            className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                              getButtonState && !getButtonState(row, 'paid')
+                                ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                                : 'border-green-500 text-green-600 hover:bg-green-50'
+                            }`}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
-                            </svg>
+                            Paid
                           </button>
                         </Tooltip>
                       )}
                       {onAccept && (
                         <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'accept') ? 'Tidak boleh Accept' : 'Accept'}
+                          content={getButtonState && !getButtonState(row, 'accept') ? 'Cannot Accept' : 'Accept'}
                           position="top"
                           delay={300}
                           offset={{ x: -10, y: 0 }}
@@ -134,7 +133,7 @@ const DataTable = ({
                       )}
                       {onReject && (
                         <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'reject') ? 'Tidak boleh Reject' : 'Reject'}
+                          content={getButtonState && !getButtonState(row, 'reject') ? 'Cannot Reject' : 'Reject'}
                           position="top"
                           delay={300}
                           offset={{ x: -10, y: 0 }}
@@ -155,7 +154,7 @@ const DataTable = ({
                       )}
                       {onDummy && (
                         <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'dummy') ? 'Tidak boleh Dummy' : 'Dummy'}
+                          content={getButtonState && !getButtonState(row, 'dummy') ? 'Cannot Dummy' : 'Dummy'}
                           position="top"
                           delay={300}
                           offset={{ x: -10, y: 0 }}
@@ -182,117 +181,114 @@ const DataTable = ({
               {/* Standard Actions Column */}
               {hasStandardActions && (
                 <td className="py-4 px-6 text-sm text-gray-900 whitespace-nowrap text-center">
-                  {!shouldHideActions(row) && (
-                    <div className="flex space-x-2 justify-center">
-                      {onView && (
-                        <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'view') ? 'Tidak boleh lihat' : 'View'}
-                          position="top"
-                          delay={300}
-                          offset={{ x: -10, y: 0 }}
+                  <div className="flex space-x-2 justify-center">
+                    {onView && (
+                      <Tooltip
+                        content={getButtonState && !getButtonState(row, 'view') ? 'Cannot View' : 'View'}
+                        position="top"
+                        delay={300}
+                      >
+                        <button type="button"
+                          onClick={() => onView(row)}
+                          disabled={getButtonState ? !getButtonState(row, 'view') : false}
+                          className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'view')
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : 'text-blue-600 hover:text-blue-900 hover:bg-blue-50'
+                            }`}
                         >
-                          <button type="button"
-                            onClick={() => onView(row)}
-                            disabled={getButtonState ? !getButtonState(row, 'view') : false}
-                            className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'view')
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-blue-600 hover:text-blue-900 hover:bg-blue-50'
-                              }`}
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                      </Tooltip>
+                    )}
+                    {!shouldHideActions(row) && (
+                      <>
+                        {onEdit && (
+                          <Tooltip
+                            content={getButtonState && !getButtonState(row, 'edit') ? 'Cannot Edit' : 'Edit'}
+                            position="top"
+                            delay={300}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </button>
-                        </Tooltip>
-                      )}
-                      {onEdit && (
-                        <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'edit') ? 'Tidak boleh edit' : 'Edit'}
-                          position="top"
-                          delay={300}
-                          offset={{ x: -10, y: 0 }} // Sesuaikan x untuk kiri/kanan, y untuk atas/bawah
-                        >
-                          <button type="button"
-                            onClick={() => onEdit(row)}
-                            disabled={getButtonState ? !getButtonState(row, 'edit') : false}
-                            className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'edit')
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-green-600 hover:text-green-900 hover:bg-green-50'
-                              }`}
+                            <button type="button"
+                              onClick={() => onEdit(row)}
+                              disabled={getButtonState ? !getButtonState(row, 'edit') : false}
+                              className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'edit')
+                                  ? 'text-gray-400 cursor-not-allowed'
+                                  : 'text-green-600 hover:text-green-900 hover:bg-green-50'
+                                }`}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                          </Tooltip>
+                        )}
+                        {onPreview && (
+                          <Tooltip
+                            content={getButtonState && !getButtonState(row, 'preview') ? 'Cannot Preview' : 'Preview'}
+                            position="top"
+                            delay={300}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                        </Tooltip>
-                      )}
-                      {onPreview && (
-                        <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'preview') ? 'Tidak boleh preview' : 'Preview'}
-                          position="top"
-                          delay={300}
-                          offset={{ x: -10, y: 0 }}
-                        >
-                          <button type="button"
-                            onClick={() => onPreview(row)}
-                            disabled={getButtonState ? !getButtonState(row, 'preview') : false}
-                            className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'preview')
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-orange-600 hover:text-orange-900 hover:bg-orange-50'
-                              }`}
+                            <button type="button"
+                              onClick={() => onPreview(row)}
+                              disabled={getButtonState ? !getButtonState(row, 'preview') : false}
+                              className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'preview')
+                                  ? 'text-gray-400 cursor-not-allowed'
+                                  : 'text-orange-600 hover:text-orange-900 hover:bg-orange-50'
+                                }`}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
+                          </Tooltip>
+                        )}
+                        {onDuplicate && (
+                          <Tooltip
+                            content={getButtonState && !getButtonState(row, 'duplicate') ? 'Cannot Duplicate' : 'Duplicate'}
+                            position="top"
+                            delay={300}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </button>
-                        </Tooltip>
-                      )}
-                      {onDuplicate && (
-                        <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'duplicate') ? 'Tidak boleh salin' : 'Duplicate'}
-                          position="top"
-                          delay={300}
-                          offset={{ x: -10, y: 0 }}
-                        >
-                          <button type="button"
-                            onClick={() => onDuplicate(row)}
-                            disabled={getButtonState ? !getButtonState(row, 'duplicate') : false}
-                            className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'duplicate')
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-purple-600 hover:text-purple-900 hover:bg-purple-50'
-                              }`}
+                            <button type="button"
+                              onClick={() => onDuplicate(row)}
+                              disabled={getButtonState ? !getButtonState(row, 'duplicate') : false}
+                              className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'duplicate')
+                                  ? 'text-gray-400 cursor-not-allowed'
+                                  : 'text-purple-600 hover:text-purple-900 hover:bg-purple-50'
+                                }`}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                          </Tooltip>
+                        )}
+                        {onDelete && (
+                          <Tooltip
+                            content={getButtonState && !getButtonState(row, 'delete') ? 'Cannot Delete' : 'Delete'}
+                            position="top"
+                            delay={300}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          </button>
-                        </Tooltip>
-                      )}
-                      {onDelete && (
-                        <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'delete') ? 'Tidak boleh padam' : 'Delete'}
-                          position="top"
-                          delay={300}
-                          offset={{ x: -10, y: 0 }}
-                        >
-                          <button type="button"
-                            onClick={() => onDelete(row)}
-                            disabled={getButtonState ? !getButtonState(row, 'delete') : false}
-                            className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'delete')
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-red-600 hover:text-red-900 hover:bg-red-50'
-                              }`}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </Tooltip>
-                      )}
-                    </div>
-                  )}
+                            <button type="button"
+                              onClick={() => onDelete(row)}
+                              disabled={getButtonState ? !getButtonState(row, 'delete') : false}
+                              className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'delete')
+                                  ? 'text-gray-400 cursor-not-allowed'
+                                  : 'text-red-600 hover:text-red-900 hover:bg-red-50'
+                                }`}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </Tooltip>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </td>
               )}
             </tr>

@@ -110,7 +110,8 @@ class ApiClient {
           success: false,
           error: data.message || `HTTP ${error.response.status}: ${error.response.statusText}`,
           message: data.message || `HTTP ${error.response.status}: ${error.response.statusText}`,
-          status: error.response.status
+          status: error.response.status,
+          errors: data.errors || null
         }
       } else if (error.request) {
         // Network error
@@ -216,6 +217,19 @@ export const authAPI = {
   // Refresh token
   refreshToken: async () => {
     return apiClient.post('/api/v1/auth/refresh')
+  }
+}
+
+// Setup API methods (first-time setup)
+export const setupAPI = {
+  // Semak status setup (sama ada perlu daftar pertama kali)
+  getStatus: async () => {
+    return apiClient.get('/api/v1/setup/status')
+  },
+
+  // Jalankan setup pertama (cipta syarikat + admin)
+  setup: async (data) => {
+    return apiClient.post('/api/v1/setup', data)
   }
 }
 

@@ -49,28 +49,28 @@ const UsersSettings = () => {
     const errors = []
     
     if (!password) {
-      errors.push('Kata laluan diperlukan')
+      errors.push('Password is required')
       return { isValid: false, errors }
     }
     
     if (password.length < 8) {
-      errors.push('Kata laluan mestilah sekurang-kurangnya 8 aksara')
+      errors.push('Password must be at least 8 characters')
     }
     
     if (!/[A-Z]/.test(password)) {
-      errors.push('Kata laluan mesti mengandungi sekurang-kurangnya satu huruf besar')
+      errors.push('Password must contain at least one uppercase letter')
     }
     
     if (!/[a-z]/.test(password)) {
-      errors.push('Kata laluan mesti mengandungi sekurang-kurangnya satu huruf kecil')
+      errors.push('Password must contain at least one lowercase letter')
     }
     
     if (!/[0-9]/.test(password)) {
-      errors.push('Kata laluan mesti mengandungi sekurang-kurangnya satu nombor')
+      errors.push('Password must contain at least one number')
     }
     
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      errors.push('Kata laluan mesti mengandungi sekurang-kurangnya satu aksara khas')
+      errors.push('Password must contain at least one special character')
     }
     
     return {
@@ -86,7 +86,7 @@ const UsersSettings = () => {
     if (!isEdit && formData.password) {
       const passwordValidation = validatePassword(formData.password)
       if (!passwordValidation.isValid) {
-        alert(`Password tidak sah:\n${passwordValidation.errors.join('\n')}`)
+        alert(`Invalid password:\n${passwordValidation.errors.join('\n')}`)
         return
       }
     }
@@ -95,7 +95,7 @@ const UsersSettings = () => {
     if (isEdit && formData.password) {
       const passwordValidation = validatePassword(formData.password)
       if (!passwordValidation.isValid) {
-        alert(`Password tidak sah:\n${passwordValidation.errors.join('\n')}`)
+        alert(`Invalid password:\n${passwordValidation.errors.join('\n')}`)
         return
       }
     }

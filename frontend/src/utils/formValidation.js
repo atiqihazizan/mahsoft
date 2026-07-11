@@ -1,22 +1,21 @@
-// Utility functions untuk form validation
+// Form validation utilities
 
-// Validation rules untuk field yang berbeza
 export const validationRules = {
-  required: (value, message = 'Field ini diperlukan') => {
+  required: (value, message = 'This field is required') => {
     if (!value || (typeof value === 'string' && value.trim() === '')) {
       return message
     }
     return null
   },
 
-  email: (value, message = 'Format email tidak sah') => {
+  email: (value, message = 'Invalid email format') => {
     if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       return message
     }
     return null
   },
 
-  phone: (value, message = 'Format telefon tidak sah') => {
+  phone: (value, message = 'Invalid phone format') => {
     if (value && !/^[\+]?[0-9\s\-\(\)]{10,}$/.test(value)) {
       return message
     }
@@ -25,54 +24,54 @@ export const validationRules = {
 
   minLength: (min, message) => (value) => {
     if (value && value.length < min) {
-      return message || `Minimum ${min} aksara diperlukan`
+      return message || `Minimum ${min} characters required`
     }
     return null
   },
 
   maxLength: (max, message) => (value) => {
     if (value && value.length > max) {
-      return message || `Maksimum ${max} aksara dibenarkan`
+      return message || `Maximum ${max} characters allowed`
     }
     return null
   },
 
   min: (min, message) => (value) => {
     if (value !== null && value !== undefined && value < min) {
-      return message || `Nilai mesti sekurang-kurangnya ${min}`
+      return message || `Value must be at least ${min}`
     }
     return null
   },
 
   max: (max, message) => (value) => {
     if (value !== null && value !== undefined && value > max) {
-      return message || `Nilai mesti tidak melebihi ${max}`
+      return message || `Value must not exceed ${max}`
     }
     return null
   },
 
-  positive: (value, message = 'Nilai mesti positif') => {
+  positive: (value, message = 'Value must be positive') => {
     if (value !== null && value !== undefined && value <= 0) {
       return message
     }
     return null
   },
 
-  date: (value, message = 'Format tarikh tidak sah') => {
+  date: (value, message = 'Invalid date format') => {
     if (value && isNaN(Date.parse(value))) {
       return message
     }
     return null
   },
 
-  futureDate: (value, message = 'Tarikh mesti pada masa hadapan') => {
+  futureDate: (value, message = 'Date must be in the future') => {
     if (value && new Date(value) <= new Date()) {
       return message
     }
     return null
   },
 
-  pastDate: (value, message = 'Tarikh mesti pada masa lalu') => {
+  pastDate: (value, message = 'Date must be in the past') => {
     if (value && new Date(value) >= new Date()) {
       return message
     }
@@ -80,53 +79,49 @@ export const validationRules = {
   }
 }
 
-// Validation untuk form invoice
 export const validateInvoiceForm = (formData) => {
   const errors = {}
 
-  // Basic validation
   if (!formData.customerId) {
-    errors.customerId = 'Sila pilih pelanggan'
+    errors.customerId = 'Please select a customer'
   }
 
   if (!formData.companyId) {
-    errors.companyId = 'Sila pilih syarikat'
+    errors.companyId = 'Please select a company'
   }
 
   if (!formData.date) {
-    errors.date = 'Sila masukkan tarikh'
+    errors.date = 'Please enter a date'
   } else if (validationRules.date(formData.date)) {
-    errors.date = 'Format tarikh tidak sah'
+    errors.date = 'Invalid date format'
   }
 
   if (!formData.dueDate) {
-    errors.dueDate = 'Sila masukkan tarikh tamat tempoh'
+    errors.dueDate = 'Please enter a due date'
   } else if (validationRules.date(formData.dueDate)) {
-    errors.dueDate = 'Format tarikh tidak sah'
+    errors.dueDate = 'Invalid date format'
   } else if (new Date(formData.dueDate) <= new Date(formData.date)) {
-    errors.dueDate = 'Tarikh tamat tempoh mesti selepas tarikh invois'
+    errors.dueDate = 'Due date must be after invoice date'
   }
 
-  // Tax rate validation
   if (formData.taxRate < 0 || formData.taxRate > 100) {
-    errors.taxRate = 'Kadar cukai mesti antara 0% hingga 100%'
+    errors.taxRate = 'Tax rate must be between 0% and 100%'
   }
 
-  // Items validation
   if (!formData.items || formData.items.length === 0) {
-    errors.items = 'Sila tambah sekurang-kurangnya satu item'
+    errors.items = 'Please add at least one item'
   } else {
     formData.items.forEach((item, index) => {
       if (!item.description || item.description.trim() === '') {
-        errors[`item_${index}_description`] = 'Sila masukkan perihalan item'
+        errors[`item_${index}_description`] = 'Please enter item description'
       }
 
       if (!item.quantity || item.quantity <= 0) {
-        errors[`item_${index}_quantity`] = 'Kuantiti mesti lebih daripada 0'
+        errors[`item_${index}_quantity`] = 'Quantity must be greater than 0'
       }
 
       if (item.unitPrice < 0) {
-        errors[`item_${index}_unitPrice`] = 'Harga unit tidak boleh negatif'
+        errors[`item_${index}_unitPrice`] = 'Unit price cannot be negative'
       }
     })
   }
@@ -134,53 +129,49 @@ export const validateInvoiceForm = (formData) => {
   return errors
 }
 
-// Validation untuk form quotation
 export const validateQuoteForm = (formData) => {
   const errors = {}
 
-  // Basic validation
   if (!formData.customerId) {
-    errors.customerId = 'Sila pilih pelanggan'
+    errors.customerId = 'Please select a customer'
   }
 
   if (!formData.companyId) {
-    errors.companyId = 'Sila pilih syarikat'
+    errors.companyId = 'Please select a company'
   }
 
   if (!formData.date) {
-    errors.date = 'Sila masukkan tarikh'
+    errors.date = 'Please enter a date'
   } else if (validationRules.date(formData.date)) {
-    errors.date = 'Format tarikh tidak sah'
+    errors.date = 'Invalid date format'
   }
 
   if (!formData.validUntil) {
-    errors.validUntil = 'Sila masukkan tarikh sah hingga'
+    errors.validUntil = 'Please enter a valid until date'
   } else if (validationRules.date(formData.validUntil)) {
-    errors.validUntil = 'Format tarikh tidak sah'
+    errors.validUntil = 'Invalid date format'
   } else if (new Date(formData.validUntil) <= new Date(formData.date)) {
-    errors.validUntil = 'Tarikh sah hingga mesti selepas tarikh sebut harga'
+    errors.validUntil = 'Valid until date must be after quote date'
   }
 
-  // Tax rate validation
   if (formData.taxRate < 0 || formData.taxRate > 100) {
-    errors.taxRate = 'Kadar cukai mesti antara 0% hingga 100%'
+    errors.taxRate = 'Tax rate must be between 0% and 100%'
   }
 
-  // Items validation
   if (!formData.items || formData.items.length === 0) {
-    errors.items = 'Sila tambah sekurang-kurangnya satu item'
+    errors.items = 'Please add at least one item'
   } else {
     formData.items.forEach((item, index) => {
       if (!item.description || item.description.trim() === '') {
-        errors[`item_${index}_description`] = 'Sila masukkan perihalan item'
+        errors[`item_${index}_description`] = 'Please enter item description'
       }
 
       if (!item.quantity || item.quantity <= 0) {
-        errors[`item_${index}_quantity`] = 'Kuantiti mesti lebih daripada 0'
+        errors[`item_${index}_quantity`] = 'Quantity must be greater than 0'
       }
 
       if (item.unitPrice < 0) {
-        errors[`item_${index}_unitPrice`] = 'Harga unit tidak boleh negatif'
+        errors[`item_${index}_unitPrice`] = 'Unit price cannot be negative'
       }
     })
   }
@@ -188,50 +179,45 @@ export const validateQuoteForm = (formData) => {
   return errors
 }
 
-// Validation untuk form receipt
 export const validateReceiptForm = (formData) => {
   const errors = {}
 
-  // Basic validation
   if (!formData.customerId) {
-    errors.customerId = 'Sila pilih pelanggan'
+    errors.customerId = 'Please select a customer'
   }
 
   if (!formData.companyId) {
-    errors.companyId = 'Sila pilih syarikat'
+    errors.companyId = 'Please select a company'
   }
 
   if (!formData.date) {
-    errors.date = 'Sila masukkan tarikh'
+    errors.date = 'Please enter a date'
   } else if (validationRules.date(formData.date)) {
-    errors.date = 'Format tarikh tidak sah'
+    errors.date = 'Invalid date format'
   }
 
-  // Payment method validation (if applicable)
   if (formData.paymentMethod && !formData.paymentMethod.trim()) {
-    errors.paymentMethod = 'Sila pilih kaedah pembayaran'
+    errors.paymentMethod = 'Please select a payment method'
   }
 
-  // Tax rate validation
   if (formData.taxRate < 0 || formData.taxRate > 100) {
-    errors.taxRate = 'Kadar cukai mesti antara 0% hingga 100%'
+    errors.taxRate = 'Tax rate must be between 0% and 100%'
   }
 
-  // Items validation
   if (!formData.items || formData.items.length === 0) {
-    errors.items = 'Sila tambah sekurang-kurangnya satu item'
+    errors.items = 'Please add at least one item'
   } else {
     formData.items.forEach((item, index) => {
       if (!item.description || item.description.trim() === '') {
-        errors[`item_${index}_description`] = 'Sila masukkan perihalan item'
+        errors[`item_${index}_description`] = 'Please enter item description'
       }
 
       if (!item.quantity || item.quantity <= 0) {
-        errors[`item_${index}_quantity`] = 'Kuantiti mesti lebih daripada 0'
+        errors[`item_${index}_quantity`] = 'Quantity must be greater than 0'
       }
 
       if (item.unitPrice < 0) {
-        errors[`item_${index}_unitPrice`] = 'Harga unit tidak boleh negatif'
+        errors[`item_${index}_unitPrice`] = 'Unit price cannot be negative'
       }
     })
   }
@@ -239,45 +225,40 @@ export const validateReceiptForm = (formData) => {
   return errors
 }
 
-// Validation untuk Delivery Order form
 const validateDeliveryOrderForm = (formData) => {
   const errors = {}
 
-  // Required fields
-  if (!formData.customerId) errors.customerId = 'Pelanggan diperlukan'
-  if (!formData.companyId) errors.companyId = 'Syarikat diperlukan'
-  if (!formData.date) errors.date = 'Tarikh diperlukan'
-  if (!formData.deliveryDate) errors.deliveryDate = 'Tarikh penghantaran diperlukan'
-  if (!formData.deliveryAddress?.trim()) errors.deliveryAddress = 'Alamat penghantaran diperlukan'
-  if (!formData.contactPerson?.trim()) errors.contactPerson = 'Nama kontak diperlukan'
+  if (!formData.customerId) errors.customerId = 'Customer is required'
+  if (!formData.companyId) errors.companyId = 'Company is required'
+  if (!formData.date) errors.date = 'Date is required'
+  if (!formData.deliveryDate) errors.deliveryDate = 'Delivery date is required'
+  if (!formData.deliveryAddress?.trim()) errors.deliveryAddress = 'Delivery address is required'
+  if (!formData.contactPerson?.trim()) errors.contactPerson = 'Contact person is required'
 
-  // Date validation
   if (formData.date && formData.deliveryDate) {
     const date = new Date(formData.date)
     const deliveryDate = new Date(formData.deliveryDate)
     if (deliveryDate < date) {
-      errors.deliveryDate = 'Tarikh penghantaran tidak boleh lebih awal dari tarikh DO'
+      errors.deliveryDate = 'Delivery date cannot be earlier than DO date'
     }
   }
 
-  // Phone validation (optional)
   if (formData.contactPhone && !validationRules.phone(formData.contactPhone)) {
-    errors.contactPhone = 'Format telefon tidak sah'
+    errors.contactPhone = 'Invalid phone format'
   }
 
-  // Items validation
   if (!formData.items || formData.items.length === 0) {
-    errors.items = 'Sekurang-kurangnya satu item diperlukan'
+    errors.items = 'At least one item is required'
   } else {
     formData.items.forEach((item, index) => {
       if (!item.description?.trim()) {
-        errors[`items.${index}.description`] = 'Penerangan item diperlukan'
+        errors[`items.${index}.description`] = 'Item description is required'
       }
       if (!item.quantity || item.quantity <= 0) {
-        errors[`items.${index}.quantity`] = 'Kuantiti mesti lebih dari 0'
+        errors[`items.${index}.quantity`] = 'Quantity must be greater than 0'
       }
       if (!item.unitPrice || item.unitPrice < 0) {
-        errors[`items.${index}.unitPrice`] = 'Harga unit tidak sah'
+        errors[`items.${index}.unitPrice`] = 'Invalid unit price'
       }
     })
   }
@@ -285,7 +266,6 @@ const validateDeliveryOrderForm = (formData) => {
   return errors
 }
 
-// Generic form validation function
 export const validateForm = (formData, type = 'invoice') => {
   switch (type) {
     case 'invoice':

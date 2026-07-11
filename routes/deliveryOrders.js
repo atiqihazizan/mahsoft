@@ -96,7 +96,7 @@ router.get('/', authenticateToken, async (req, res) => {
         totalItems: total,
         itemsPerPage: parseInt(limit)
       }
-    }, 'Delivery orders retrieved successfully');
+    }, 'Senarai delivery order berjaya diambil');
 
   } catch (err) {
     console.error('Error getting delivery orders:', err);
@@ -146,7 +146,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
       return notFound(res, 'Delivery order tidak dijumpai');
     }
 
-    success(res, deliveryOrder, 'Delivery order retrieved successfully');
+    success(res, deliveryOrder, 'Delivery order berjaya diambil');
 
   } catch (err) {
     console.error('Error getting delivery order:', err);
@@ -377,7 +377,7 @@ router.post('/:id/update-delivery', authenticateToken, [
       });
     }
 
-    success(res, { message: 'Delivery quantities updated successfully' }, 'Delivery quantities berjaya dikemaskini');
+    success(res, { message: 'Kuantiti penghantaran berjaya dikemaskini' }, 'Kuantiti penghantaran berjaya dikemaskini');
 
   } catch (err) {
     console.error('Error updating delivery quantities:', err);
@@ -453,7 +453,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
       }
     };
 
-    success(res, summary, 'Delivery orders summary retrieved successfully');
+    success(res, summary, 'Ringkasan delivery order berjaya diambil');
 
   } catch (err) {
     console.error('Error getting delivery orders summary:', err);

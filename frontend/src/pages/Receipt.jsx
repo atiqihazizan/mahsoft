@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { PageWrapper } from '../components'
 import { DataTable, StatusBadge, CurrencyFormat, DateFormat, TableCell } from '../components'
 import { receiptsAPI } from '../utils/apiClient'
@@ -8,7 +8,6 @@ import { formatText } from '../utils/textFormatting'
 const Receipt = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { onPreview } = useOutletContext?.() || {}
   const [receipts, setReceipts] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -23,8 +22,9 @@ const Receipt = () => {
       const response = await receiptsAPI.getAll()
 
       if (response?.success) {
-        // Handle both possible response structures
-        const receiptsData = response.data.receipts || response.data || []
+        // Handle both possible response structures dan pastikan sentiasa array
+        const rawReceipts = response.data?.receipts ?? response.data
+        const receiptsData = Array.isArray(rawReceipts) ? rawReceipts : []
 
         const transformedReceipts = receiptsData.map(receipt => ({
           id: receipt.id,
@@ -39,7 +39,7 @@ const Receipt = () => {
           userName: receipt.user?.name || 'N/A',
           subtotal: parseFloat(receipt.subtotal || 0),
           taxAmount: parseFloat(receipt.taxAmount || 0),
-          details: receipt.details || [],
+          details: Array.isArray(receipt.details) ? receipt.details : [],
           notes: receipt.notes || '',
           createdAt: receipt.createdAt,
           updatedAt: receipt.updatedAt
@@ -205,11 +205,7 @@ const Receipt = () => {
         data={filteredReceipts}
         columns={columns}
         loading={loading}
-        // Tiada quick actions untuk resit
-        // onView={(row) => {
-        //   // TODO: Implement view receipt functionality
-        //   console.log('View receipt:', row.id)
-        // }}
+        onView={(row) => navigate(`/receipts/${row.id}`)}
         onEdit={(row) => {
           const isActive = row.status === 'draft' || row.status === 'issued'
           isActive ? navigate(`/receipts/${row.id}/edit`) : alert('Only active receipts can be edited')
@@ -220,9 +216,7 @@ const Receipt = () => {
           localStorage.setItem('duplicateReceiptData', JSON.stringify(duplicateData))
           navigate('/receipts/new?duplicate=1')
         }}
-        onPreview={(row) => {
-          onPreview('RECEIPT', row.id)
-        }}
+        onPreview={(row) => navigate(`/receipts/${row.id}`)}
         onDelete={async (row) => {
           const isActive = row.status === 'draft' || row.status === 'issued'
           if (isActive && confirm(`Are you sure you want to delete receipt ${row.receiptNumber}?`)) {

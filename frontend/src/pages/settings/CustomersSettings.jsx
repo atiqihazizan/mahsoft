@@ -96,16 +96,16 @@ const CustomersSettings = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    // Filter out empty strings and convert to null for optional fields
+    // Bersihkan data: hanya hantar field optional jika ada nilai (elak null yang rosakkan validation)
     const cleanedFormData = {
       name: formData.name,
       short: formData.short,
-      email: formData.email || null,
-      phone: formData.phone || null,
-      mobile: formData.mobile || null,
-      address: formData.address || null,
-      attn: formData.attn || null,
-      taxNumber: formData.taxNumber || null
+      ...(formData.email && { email: formData.email }),
+      ...(formData.phone && { phone: formData.phone }),
+      ...(formData.mobile && { mobile: formData.mobile }),
+      ...(formData.address && { address: formData.address }),
+      ...(formData.attn && { attn: formData.attn }),
+      ...(formData.taxNumber && { taxNumber: formData.taxNumber })
     }
     
     try {
@@ -120,10 +120,29 @@ const CustomersSettings = () => {
         resetForm()
         fetchCustomers() // Refresh customers list
       } else {
-        console.error('Error:', response?.message || 'Operation failed')
+        // Tunjukkan mesej validation terperinci jika ada
+        let errorMessage = response?.message || 'Operation failed'
+        if (response?.errors && Array.isArray(response.errors) && response.errors.length > 0) {
+          const messages = Array.from(
+            new Set(response.errors.map(err => err.message || err.msg))
+          )
+          errorMessage = messages.join('\n')
+        }
+        alert(errorMessage)
+        console.error('Error:', errorMessage)
       }
     } catch (error) {
-      console.error('Error:', error)
+      // Jika axios/apiClient attach errors, cuba baca
+      const resp = error?.response?.data || error
+      let errorMessage = resp?.message || error?.message || 'Operation failed'
+      if (resp?.errors && Array.isArray(resp.errors) && resp.errors.length > 0) {
+        const messages = Array.from(
+          new Set(resp.errors.map(err => err.message || err.msg))
+        )
+        errorMessage = messages.join('\n')
+      }
+      alert(errorMessage)
+      console.error('Error:', errorMessage)
     }
   }
 

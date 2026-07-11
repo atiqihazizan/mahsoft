@@ -114,7 +114,7 @@ const ActionButtonGroup = ({
       key: 'delete',
       show: showDelete,
       icon: TrashIcon,
-      label: customLabels.delete || 'Padam',
+      label: customLabels.delete || 'Delete',
       onClick: onDelete,
       loading: loading.delete,
       className: 'text-red-600 hover:bg-red-50 hover:text-red-700'
@@ -346,9 +346,9 @@ export const ActionButtonPresets = {
     showEdit: true,
     showDelete: true,
     customLabels: {
-      view: 'Lihat Detail',
+      view: 'View Detail',
       edit: 'Edit Item',
-      delete: 'Padam Item'
+      delete: 'Delete Item'
     }
   },
   
@@ -358,9 +358,9 @@ export const ActionButtonPresets = {
     showPrint: true,
     showDownload: true,
     customLabels: {
-      view: 'Lihat Detail',
-      print: 'Cetak Dokumen',
-      download: 'Muat Turun'
+      view: 'View Detail',
+      print: 'Print Document',
+      download: 'Download'
     }
   }
 }

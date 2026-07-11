@@ -1,15 +1,8 @@
 const prisma = require('./prisma');
 
-/**
- * Format prefix with year codes
- * @param {string} prefix - Prefix string
- * @param {number} currentYear - Current year
- * @returns {string} Formatted prefix
- */
 function formatPrefixWithYear(prefix, currentYear) {
   if (!prefix || prefix.trim() === '') return '';
   
-  // Check for year codes in prefix
   if (prefix.includes('[yyyy]')) {
     return prefix.replace('[yyyy]', currentYear.toString());
   } else if (prefix.includes('[yy]')) {
@@ -21,168 +14,71 @@ function formatPrefixWithYear(prefix, currentYear) {
   return prefix;
 }
 
-/**
- * Generate invoice number using company sequence
- * @param {string} companyId - Company ID
- * @returns {Promise<string>} Generated invoice number
- */
+function buildNumber(prefix, seq, currentYear) {
+  const formattedPrefix = formatPrefixWithYear(prefix, currentYear);
+  
+  if (!formattedPrefix) {
+    return seq.toString().padStart(4, '0');
+  }
+  
+  const hasYearCode = prefix.includes('[yyyy]') || prefix.includes('[yy]') || prefix.includes('[year]');
+  
+  if (hasYearCode) {
+    return `${formattedPrefix}${seq.toString().padStart(4, '0')}`;
+  } else {
+    return `${formattedPrefix}${currentYear}${seq.toString().padStart(4, '0')}`;
+  }
+}
+
+async function generateSequenceNumber(companyId, field) {
+  const currentYear = new Date().getFullYear();
+
+  const result = await prisma.$transaction(async (tx) => {
+    const company = await tx.company.findUnique({
+      where: { id: companyId },
+      select: {
+        invoicePrefix: true, quotePrefix: true, receiptPrefix: true, deliveryOrderPrefix: true,
+        invoiceSeq: true, quoteSeq: true, receiptSeq: true, deliveryOrderSeq: true
+      }
+    });
+
+    if (!company) {
+      throw new Error('Company not found');
+    }
+
+    const prefixMap = {
+      invoice: 'invoicePrefix', quote: 'quotePrefix', receipt: 'receiptPrefix', deliveryOrder: 'deliveryOrderPrefix',
+      invoiceSeq: 'invoiceSeq', quoteSeq: 'quoteSeq', receiptSeq: 'receiptSeq', deliveryOrderSeq: 'deliveryOrderSeq'
+    };
+
+    const prefix = company[prefixMap[field]] || '';
+    const nextSeq = company[prefixMap[field + 'Seq']] + 1;
+
+    await tx.company.update({
+      where: { id: companyId },
+      data: { [prefixMap[field + 'Seq']]: nextSeq }
+    });
+
+    return { prefix, seq: nextSeq, currentYear };
+  });
+
+  return buildNumber(result.prefix, result.seq, result.currentYear);
+}
+
 async function generateInvoiceNumber(companyId) {
-  const company = await prisma.company.findUnique({
-    where: { id: companyId }
-  });
-
-  if (!company) {
-    throw new Error('Company not found');
-  }
-
-  const currentYear = new Date().getFullYear();
-  const prefix = company.invoicePrefix || '';
-  const nextNumber = company.invoiceSeq + 1;
-
-  // Update company sequence
-  await prisma.company.update({
-    where: { id: companyId },
-    data: { invoiceSeq: nextNumber }
-  });
-
-  const formattedPrefix = formatPrefixWithYear(prefix, currentYear);
-  
-  // If prefix is empty, return only number
-  if (!formattedPrefix) {
-    return nextNumber.toString().padStart(4, '0');
-  }
-  
-  // Check if prefix contains year codes
-  const hasYearCode = prefix.includes('[yyyy]') || prefix.includes('[yy]') || prefix.includes('[year]');
-  
-  if (hasYearCode) {
-    return `${formattedPrefix}${nextNumber.toString().padStart(4, '0')}`;
-  } else {
-    return `${formattedPrefix}${currentYear}${nextNumber.toString().padStart(4, '0')}`;
-  }
+  return generateSequenceNumber(companyId, 'invoice');
 }
 
-/**
- * Generate quote number using company sequence
- * @param {string} companyId - Company ID
- * @returns {Promise<string>} Generated quote number
- */
 async function generateQuoteNumber(companyId) {
-  const company = await prisma.company.findUnique({
-    where: { id: companyId }
-  });
-
-  if (!company) {
-    throw new Error('Company not found');
-  }
-
-  const currentYear = new Date().getFullYear();
-  const prefix = company.quotePrefix || '';
-  const nextNumber = company.quoteSeq + 1;
-
-  // Update company sequence
-  await prisma.company.update({
-    where: { id: companyId },
-    data: { quoteSeq: nextNumber }
-  });
-
-  const formattedPrefix = formatPrefixWithYear(prefix, currentYear);
-  
-  // If prefix is empty, return only number
-  if (!formattedPrefix) {
-    return nextNumber.toString().padStart(4, '0');
-  }
-  
-  // Check if prefix contains year codes
-  const hasYearCode = prefix.includes('[yyyy]') || prefix.includes('[yy]') || prefix.includes('[year]');
-  
-  if (hasYearCode) {
-    return `${formattedPrefix}${nextNumber.toString().padStart(4, '0')}`;
-  } else {
-    return `${formattedPrefix}${currentYear}${nextNumber.toString().padStart(4, '0')}`;
-  }
+  return generateSequenceNumber(companyId, 'quote');
 }
 
-/**
- * Generate receipt number using company sequence
- * @param {string} companyId - Company ID
- * @returns {Promise<string>} Generated receipt number
- */
 async function generateReceiptNumber(companyId) {
-  const company = await prisma.company.findUnique({
-    where: { id: companyId }
-  });
-
-  if (!company) {
-    throw new Error('Company not found');
-  }
-
-  const currentYear = new Date().getFullYear();
-  const prefix = company.receiptPrefix || '';
-  const nextNumber = company.receiptSeq + 1;
-
-  // Update company sequence
-  await prisma.company.update({
-    where: { id: companyId },
-    data: { receiptSeq: nextNumber }
-  });
-
-  const formattedPrefix = formatPrefixWithYear(prefix, currentYear);
-  
-  // If prefix is empty, return only number
-  if (!formattedPrefix) {
-    return nextNumber.toString().padStart(4, '0');
-  }
-  
-  // Check if prefix contains year codes
-  const hasYearCode = prefix.includes('[yyyy]') || prefix.includes('[yy]') || prefix.includes('[year]');
-  
-  if (hasYearCode) {
-    return `${formattedPrefix}${nextNumber.toString().padStart(4, '0')}`;
-  } else {
-    return `${formattedPrefix}${currentYear}${nextNumber.toString().padStart(4, '0')}`;
-  }
+  return generateSequenceNumber(companyId, 'receipt');
 }
 
-/**
- * Generate delivery order number using company sequence
- * @param {string} companyId - Company ID
- * @returns {Promise<string>} Generated delivery order number
- */
 async function generateDeliveryOrderNumber(companyId) {
-  const company = await prisma.company.findUnique({
-    where: { id: companyId }
-  });
-
-  if (!company) {
-    throw new Error('Company not found');
-  }
-
-  const currentYear = new Date().getFullYear();
-  const prefix = company.deliveryOrderPrefix || '';
-  const nextNumber = company.deliveryOrderSeq + 1;
-
-  // Update company sequence
-  await prisma.company.update({
-    where: { id: companyId },
-    data: { deliveryOrderSeq: nextNumber }
-  });
-
-  const formattedPrefix = formatPrefixWithYear(prefix, currentYear);
-  
-  // If prefix is empty, return only number
-  if (!formattedPrefix) {
-    return nextNumber.toString().padStart(4, '0');
-  }
-  
-  // Check if prefix contains year codes
-  const hasYearCode = prefix.includes('[yyyy]') || prefix.includes('[yy]') || prefix.includes('[year]');
-  
-  if (hasYearCode) {
-    return `${formattedPrefix}${nextNumber.toString().padStart(4, '0')}`;
-  } else {
-    return `${formattedPrefix}${currentYear}${nextNumber.toString().padStart(4, '0')}`;
-  }
+  return generateSequenceNumber(companyId, 'deliveryOrder');
 }
 
 /**

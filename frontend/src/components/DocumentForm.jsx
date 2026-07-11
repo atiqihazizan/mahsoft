@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react'
+import Select from 'react-select'
 import { CurrencyFormat, DateFormat } from './index'
 import { DescriptionField } from './FormFields'
+import { customersAPI } from '../utils/apiClient'
+
+const autoShort = (name) => {
+  const words = name.trim().split(/\s+/)
+  if (!words[0]) return ''
+  const prefixes = ['sykt', 'ptd', 'sdn', 'bhd', 'pvt', 'ltd', 'inc', 'corp', 'm/s']
+  if (words.length > 1 && (prefixes.includes(words[0].toLowerCase()) || words[0].length <= 2)) {
+    return words.slice(0, 2).join(' ')
+  }
+  return words[0]
+}
 
 const DocumentForm = ({ 
   type = 'invoice', // 'invoice', 'quote', 'receipt', 'delivery_order'
@@ -33,18 +45,15 @@ const DocumentForm = ({
         id: 1,
         description: '',
         quantity: 1,
+        unit: '',
         unitPrice: 0,
         amount: 0,
-        // DescriptionField properties
-        variant: 'structured',
-        listType: 'ul',
-        spacing: 'normal'
       }
     ],
     
     // Totals
     subtotal: 0,
-    taxRate: 6, // Default 6% GST
+    taxRate: 0, // Default 0% tax
     taxAmount: 0,
     total: 0
   })
@@ -52,28 +61,29 @@ const DocumentForm = ({
   // State untuk UI
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+
+  // State untuk customer creation modal
+  const [showCustomerForm, setShowCustomerForm] = useState(false)
+  const [newCustomer, setNewCustomer] = useState({ name: '', short: '' })
+  const [extraCustomers, setExtraCustomers] = useState([])
+  const [customerCreating, setCustomerCreating] = useState(false)
+  const [customerSearchInput, setCustomerSearchInput] = useState('')
+
+  const safeCustomers = [...extraCustomers, ...(Array.isArray(customers) ? customers : [])]
+  const safeCompanies = Array.isArray(companies) ? companies : []
 
   // Initialize form dengan data sedia ada
   useEffect(() => {
     if (initialData) {
-      // Ensure items have DescriptionField properties
-      const processedData = {
-        ...initialData,
-        items: initialData.items?.map(item => ({
-          ...item,
-          variant: item.variant || 'structured',
-          listType: item.listType || 'ul',
-          spacing: item.spacing || 'normal'
-        })) || []
-      }
-      setFormData(processedData)
+      setFormData(initialData)
     }
   }, [initialData])
 
   // Auto-select company dengan is_default=1
   useEffect(() => {
-    if (companies.length > 0 && !formData.companyId) {
-      const defaultCompany = companies.find(company => company.is_default === true)
+    if (safeCompanies.length > 0 && !formData.companyId) {
+      const defaultCompany = safeCompanies.find(company => company.is_default === true)
       if (defaultCompany) {
         setFormData(prev => ({
           ...prev,
@@ -81,7 +91,7 @@ const DocumentForm = ({
         }))
       }
     }
-  }, [companies, formData.companyId])
+  }, [safeCompanies, formData.companyId])
 
   // Calculate totals whenever items change
   useEffect(() => {
@@ -102,6 +112,7 @@ const DocumentForm = ({
   }
 
   const handleInputChange = (field, value) => {
+    setIsDirty(true)
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -112,6 +123,7 @@ const DocumentForm = ({
   }
 
   const handleItemChange = (itemId, field, value) => {
+    setIsDirty(true)
     setFormData(prev => ({
       ...prev,
       items: prev.items.map(item => {
@@ -128,20 +140,8 @@ const DocumentForm = ({
     }))
   }
 
-  // Handler khusus untuk DescriptionField properties
-  const handleItemDescriptionFieldChange = (itemId, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.map(item => {
-        if (item.id === itemId) {
-          return { ...item, [field]: value }
-        }
-        return item
-      })
-    }))
-  }
-
   const addItem = () => {
+    setIsDirty(true)
     const newId = Math.max(...formData.items.map(item => item.id), 0) + 1
     setFormData(prev => ({
       ...prev,
@@ -151,19 +151,43 @@ const DocumentForm = ({
           id: newId,
           description: '',
           quantity: 1,
+          unit: '',
           unitPrice: 0,
           amount: 0,
-          // DescriptionField properties
-          variant: 'structured',
-          listType: 'ul',
-          spacing: 'normal'
         }
       ]
     }))
   }
 
   const removeItem = (itemId) => {
-    if (formData.items.length > 1) setFormData(prev => ({ ...prev, items: prev.items.filter(item => item.id !== itemId) }))
+    if (formData.items.length > 1) {
+      setIsDirty(true)
+      setFormData(prev => ({ ...prev, items: prev.items.filter(item => item.id !== itemId) }))
+    }
+  }
+
+  const createCustomer = async () => {
+    if (!newCustomer.name.trim() || !newCustomer.short.trim()) return
+    setCustomerCreating(true)
+    try {
+      const res = await customersAPI.create({
+        name: newCustomer.name.trim(),
+        short: newCustomer.short.trim()
+      })
+      if (res?.success) {
+        const created = res.data
+        setExtraCustomers(prev => [...prev, created])
+        handleInputChange('customerId', created.id)
+        setShowCustomerForm(false)
+        setNewCustomer({ name: '', short: '' })
+      } else {
+        alert(res?.message || 'Failed to create customer')
+      }
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to create customer')
+    } finally {
+      setCustomerCreating(false)
+    }
   }
 
   const validateForm = () => {
@@ -200,6 +224,18 @@ const DocumentForm = ({
     }
   }
 
+  const handleCancelClick = () => {
+    if (typeof onCancel !== 'function') return
+    // Jika tiada perubahan, terus batal tanpa popup
+    if (!isDirty) {
+      onCancel()
+      return
+    }
+    if (window.confirm('Are you sure you want to cancel? Unsaved changes will be lost.')) {
+      onCancel()
+    }
+  }
+
   const getFormTitle = () => {
     const isEdit = initialData && initialData.id
     const action = isEdit ? 'Update' : 'Create'
@@ -222,6 +258,17 @@ const DocumentForm = ({
       default: return '📝'
     }
   }
+
+  // Computed options for customer dropdown
+  const customerOptions = (() => {
+    const opts = safeCustomers.map(c => ({ value: c.id, label: c.name }))
+    const trimmed = customerSearchInput.trim()
+    const hasExactMatch = trimmed && safeCustomers.some(c => c.name.toLowerCase() === trimmed.toLowerCase())
+    if (trimmed && !hasExactMatch) {
+      opts.push({ value: '__create__', label: `+ Add "${trimmed}"` })
+    }
+    return opts
+  })()
 
   return (
     <div className="">
@@ -256,23 +303,104 @@ const DocumentForm = ({
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Customer <span className="text-red-500">*</span>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomerForm(true)}
+                  className="ml-2 inline-flex items-center px-2 py-0.5 text-xs font-medium rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                  title="Add new customer"
+                >
+                  + New
+                </button>
               </label>
-              <select
-                value={formData.customerId}
-                onChange={(e) => handleInputChange('customerId', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.customerId ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Select customer...</option>
-                {customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </option>
-                ))}
-              </select>
+              <Select
+                value={safeCustomers.find(c => c.id === formData.customerId) ? { value: formData.customerId, label: safeCustomers.find(c => c.id === formData.customerId).name } : null}
+                onChange={(option) => {
+                  if (option && option.value === '__create__') {
+                    const trimmed = customerSearchInput.trim()
+                    setNewCustomer({ name: trimmed, short: autoShort(trimmed) })
+                    setShowCustomerForm(true)
+                    return
+                  }
+                  handleInputChange('customerId', option ? option.value : '')
+                }}
+                onInputChange={(value) => setCustomerSearchInput(value)}
+                options={customerOptions}
+                placeholder="Select customer..."
+                isSearchable
+                classNamePrefix="react-select"
+                className={`${errors.customerId ? 'border-red-500' : ''}`}
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    borderColor: errors.customerId ? '#ef4444' : state.isFocused ? '#3b82f6' : '#d1d5db',
+                    boxShadow: state.isFocused ? '0 0 0 2px rgba(59,130,246,0.5)' : 'none',
+                    '&:hover': { borderColor: '#3b82f6' },
+                    minHeight: '38px'
+                  })
+                }}
+                isClearable
+              />
               {errors.customerId && (
                 <p className="text-red-500 text-sm mt-1">{errors.customerId}</p>
+              )}
+
+              {/* Customer Creation Modal */}
+              {showCustomerForm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                  <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Customer</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Full Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={newCustomer.name}
+                          onChange={(e) => {
+                            const name = e.target.value
+                            setNewCustomer(prev => {
+                              const short = prev.short || autoShort(name)
+                              return { name, short }
+                            })
+                          }}
+                          placeholder="Enter customer name"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          autoFocus
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Short Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={newCustomer.short}
+                          onChange={(e) => setNewCustomer(prev => ({ ...prev, short: e.target.value }))}
+                          placeholder="Enter short name"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end space-x-3 mt-6">
+                      <button
+                        type="button"
+                        onClick={() => { setShowCustomerForm(false); setNewCustomer({ name: '', short: '' }) }}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={createCustomer}
+                        disabled={customerCreating || !newCustomer.name.trim() || !newCustomer.short.trim()}
+                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {customerCreating ? 'Creating...' : 'Create Customer'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -281,20 +409,25 @@ const DocumentForm = ({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Company <span className="text-red-500">*</span>
               </label>
-              <select
-                value={formData.companyId}
-                onChange={(e) => handleInputChange('companyId', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.companyId ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Select company...</option>
-                {companies.map(company => (
-                  <option key={company.id} value={company.id}>
-                    {company.label}
-                  </option>
-                ))}
-              </select>
+              <Select
+                value={safeCompanies.find(c => c.id === formData.companyId) ? { value: formData.companyId, label: safeCompanies.find(c => c.id === formData.companyId).label } : null}
+                onChange={(option) => handleInputChange('companyId', option ? option.value : '')}
+                options={safeCompanies.map(c => ({ value: c.id, label: c.label }))}
+                placeholder="Select company..."
+                isSearchable
+                classNamePrefix="react-select"
+                className={`${errors.companyId ? 'border-red-500' : ''}`}
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    borderColor: errors.companyId ? '#ef4444' : state.isFocused ? '#3b82f6' : '#d1d5db',
+                    boxShadow: state.isFocused ? '0 0 0 2px rgba(59,130,246,0.5)' : 'none',
+                    '&:hover': { borderColor: '#3b82f6' },
+                    minHeight: '38px'
+                  })
+                }}
+                isClearable
+              />
               {errors.companyId && (
                 <p className="text-red-500 text-sm mt-1">{errors.companyId}</p>
               )}
@@ -414,155 +547,128 @@ const DocumentForm = ({
             </div>
           </div>
 
-          {/* Items Table */}
+          {/* Items - Card Layout */}
           <div className="mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Items & Services</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Items & Services</h3>
+
+            <div className="space-y-4">
+              {formData.items.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5"
+                >
+                  {/* Section 1: Description */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
+                      Description
+                    </label>
+                    <DescriptionField
+                      value={item.description ?? ''}
+                      onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
+                      label=""
+                      placeholder="Enter item description..."
+                      error={errors[`item_${index}_description`]}
+                      minHeight={40}
+                    />
+                  </div>
+
+                  {/* Section 2: Qty / Unit / Unit Price / Amount */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                        Quantity
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={item.quantity ?? 0}
+                        onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          errors[`item_${index}_quantity`] ? 'border-red-500' : 'border-gray-200'
+                        }`}
+                      />
+                      {errors[`item_${index}_quantity`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`item_${index}_quantity`]}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                        Unit
+                      </label>
+                      <input
+                        type="text"
+                        value={item.unit ?? ''}
+                        onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
+                        placeholder="pcs"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                        Unit Price
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={item.unitPrice ?? 0}
+                        onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          errors[`item_${index}_unitPrice`] ? 'border-red-500' : 'border-gray-200'
+                        }`}
+                      />
+                      {errors[`item_${index}_unitPrice`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`item_${index}_unitPrice`]}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                        Amount
+                      </label>
+                      <div className="w-full px-3 py-2 border border-gray-100 rounded-lg bg-gray-50 text-right font-semibold text-gray-900">
+                        <CurrencyFormat amount={item.amount} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Delete */}
+                  <div className="flex justify-end mt-3">
+                    {formData.items.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete Item
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {/* Add Item Card */}
               <button
                 type="button"
                 onClick={addItem}
-                className="bg-green-400 text-white px-4 py-2 rounded-md hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-300"
+                className="w-full rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/50 transition-all p-6 cursor-pointer group"
               >
-                + Add Item
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
+                    <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600 transition-colors">Add New Item</span>
+                  <span className="text-xs text-gray-400">Click to add another item</span>
+                </div>
               </button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="pl-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th className="pl-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
-                      Quantity
-                    </th>
-                    <th className="pl-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
-                      Unit Price
-                    </th>
-                    <th className="pl-4 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
-                      Amount
-                    </th>
-                    <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-5">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {formData.items.map((item, index) => (
-                    <tr key={item.id}>
-                      <td className="pl-4 py-4 align-top">
-                        <div className="min-h-[80px]">
-                          <DescriptionField
-                            value={item.description ?? ''}
-                            onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                            label=""
-                            placeholder="Enter item description..."
-                            variant={item.variant || 'structured'}
-                            listType={item.listType || 'ul'}
-                            spacing={item.spacing || 'normal'}
-                            rows={4}
-                            error={errors[`item_${index}_description`]}
-                            showPreview={true}
-                          />
-                          
-                          {/* DescriptionField Controls */}
-                          <div className="mt-2 space-y-2">
-                            <div className="flex space-x-2">
-                              {/* Variant Control */}
-                              <select
-                                value={item.variant || 'structured'}
-                                onChange={(e) => handleItemDescriptionFieldChange(item.id, 'variant', e.target.value)}
-                                className="text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              >
-                                <option value="simple">Simple</option>
-                                <option value="structured">Structured</option>
-                                <option value="whatsapp">WhatsApp</option>
-                              </select>
-                              
-                              {/* List Type Control (only for structured) */}
-                              {(item.variant || 'structured') === 'structured' && (
-                                <select
-                                  value={item.listType || 'ul'}
-                                  onChange={(e) => handleItemDescriptionFieldChange(item.id, 'listType', e.target.value)}
-                                  className="text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                >
-                                  <option value="ul">Bullet List</option>
-                                  <option value="ol">Numbered List</option>
-                                </select>
-                              )}
-                              
-                              {/* Spacing Control */}
-                              <select
-                                value={item.spacing || 'normal'}
-                                onChange={(e) => handleItemDescriptionFieldChange(item.id, 'spacing', e.target.value)}
-                                className="text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              >
-                                <option value="normal">Normal</option>
-                                <option value="wide">Wide</option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="pl-4 py-4 align-top">
-                        <div className="min-h-[80px] flex flex-col justify-start">
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={item.quantity ?? 0}
-                            onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              errors[`item_${index}_quantity`] ? 'border-red-500' : 'border-gray-300'
-                            }`}
-                          />
-                          {errors[`item_${index}_quantity`] && (
-                            <p className="text-red-500 text-xs mt-1">{errors[`item_${index}_quantity`]}</p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="pl-4 py-4 align-top">
-                        <div className="min-h-[80px] flex flex-col justify-start">
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={item.unitPrice ?? 0}
-                            onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              errors[`item_${index}_unitPrice`] ? 'border-red-500' : 'border-gray-300'
-                            }`}
-                          />
-                          {errors[`item_${index}_unitPrice`] && (
-                            <p className="text-red-500 text-xs mt-1">{errors[`item_${index}_unitPrice`]}</p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="pl-4 py-4 align-top">
-                        <div className="min-h-[80px] flex flex-col justify-start">
-                          <div className="text-right py-2">
-                            <CurrencyFormat amount={item.amount} />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 align-top">
-                        <div className="min-h-[80px] flex flex-col justify-start">
-                          {formData.items.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeItem(item.id)}
-                              className="text-red-600 hover:text-red-800 focus:outline-none py-2"
-                            >
-                              🗑️
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </div>
 
@@ -666,12 +772,6 @@ const DocumentForm = ({
               onChange={(e) => handleInputChange('notes', e.target.value)}
               label="Additional Notes"
               placeholder="Enter additional notes (optional)..."
-              variant="structured"
-              listType="ul"
-              spacing="normal"
-              rows={1}
-              autoResize={true}
-              showPreview={false}
             />
           </div>
 
@@ -688,7 +788,7 @@ const DocumentForm = ({
             )}
             <button
               type="button"
-              onClick={onCancel}
+              onClick={handleCancelClick}
               className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
               Cancel

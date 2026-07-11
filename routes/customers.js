@@ -7,37 +7,39 @@ const { handleValidationErrors } = require('../middleware/validation');
 
 // Validation rules
 const createCustomerValidation = [
-  body('name').notEmpty().withMessage('Customer name is required'),
-  body('short').notEmpty().withMessage('Short name is required'),
-  body('email').optional().isEmail().withMessage('Invalid email format'),
-  body('phone').optional().isString().withMessage('Phone must be a string'),
-  body('mobile').optional().isString().withMessage('Mobile must be a string'),
-  body('address').optional().isString().withMessage('Address must be a string'),
-  body('attn').optional().isString().withMessage('Attention must be a string'),
-  body('taxNumber').optional().isString().withMessage('Tax number must be a string'),
+  body('name').notEmpty().withMessage('Nama pelanggan diperlukan'),
+  body('short').notEmpty().withMessage('Nama pendek diperlukan'),
+  body('email').optional().isEmail().withMessage('Format email tidak sah'),
+  body('phone').optional().isString().withMessage('Telefon mestilah teks'),
+  body('mobile').optional().isString().withMessage('Mobile mestilah teks'),
+  body('address').optional().isString().withMessage('Alamat mestilah teks'),
+  body('attn').optional().isString().withMessage('Tandaan mestilah teks'),
+  body('taxNumber').optional().isString().withMessage('Nombor cukai mestilah teks'),
   handleValidationErrors
 ];
 
 const updateCustomerValidation = [
-  param('id').isString().withMessage('Invalid ID'),
+  param('id').isString().withMessage('ID tidak sah'),
   body('name').optional().custom((value) => {
     if (value !== undefined && value !== null && value.trim() === '') {
-      throw new Error('Customer name cannot be empty');
+      throw new Error('Nama pelanggan tidak boleh kosong');
     }
     return true;
   }),
   body('short').optional().custom((value) => {
     if (value !== undefined && value !== null && value.trim() === '') {
-      throw new Error('Short name cannot be empty');
+      throw new Error('Nama pendek tidak boleh kosong');
     }
     return true;
   }),
   body('email').optional().custom((value) => {
     if (value && value !== null && value.trim() !== '') {
-      return require('validator').isEmail(value);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        throw new Error('Format email tidak sah');
+      }
     }
     return true;
-  }).withMessage('Invalid email format'),
+  }),
   body('phone').optional().custom((value) => {
     if (value !== null) return true;
     return true;
@@ -79,7 +81,7 @@ router.get('/', async (req, res) => {
       prisma.customer.findMany({
         where,
         skip,
-        // take: parseInt(limit),
+        take: parseInt(limit),
         orderBy: { createdAt: 'desc' }
       }),
       prisma.customer.count({ where })
@@ -132,7 +134,7 @@ router.get('/:id', [
   }
 });
 
-// POST /api/v1/customers - Create new customer
+// POST /api/v1/customers - Cipta pelanggan baru
 router.post('/', createCustomerValidation, async (req, res) => {
   try {
     const { name, short, email, phone, mobile, address, attn, taxNumber } = req.body;
@@ -144,7 +146,7 @@ router.post('/', createCustomerValidation, async (req, res) => {
       });
 
       if (existingCustomer) {
-        return conflict(res, 'Customer with this email already exists');
+        return conflict(res, 'Pelanggan dengan email ini sudah wujud');
       }
     }
 
@@ -154,7 +156,7 @@ router.post('/', createCustomerValidation, async (req, res) => {
     });
 
     if (existingShortCustomer) {
-      return conflict(res, 'Customer with this short name already exists');
+      return conflict(res, 'Pelanggan dengan nama pendek ini sudah wujud');
     }
 
     const customer = await prisma.customer.create({
@@ -167,33 +169,31 @@ router.post('/', createCustomerValidation, async (req, res) => {
         address,
         attn,
         taxNumber,
-        tempId: Math.floor(Math.random() * 1000000) // Generate random tempId
+        tempId: Math.floor(Math.random() * 1000000)
       }
     });
 
-    success(res, customer, 'Customer created successfully', 201);
+    success(res, customer, 'Pelanggan berjaya dicipta', 201);
   } catch (err) {
     console.error('Error creating customer:', err);
-    error(res, 'Error creating customer');
+    error(res, 'Ralat mencipta pelanggan');
   }
 });
 
-// PUT /api/v1/customers/:id - Update customer
+// PUT /api/v1/customers/:id - Kemaskini pelanggan
 router.put('/:id', updateCustomerValidation, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, short, email, phone, mobile, address, attn, taxNumber } = req.body;
 
-    // Check if customer exists
     const existingCustomer = await prisma.customer.findUnique({
       where: { id }
     });
 
     if (!existingCustomer) {
-      return notFound(res, 'Customer not found');
+      return notFound(res, 'Pelanggan tidak ditemui');
     }
 
-    // Check if another customer with same email exists (excluding current customer)
     if (email && email !== existingCustomer.email) {
       const duplicateCustomer = await prisma.customer.findFirst({
         where: { 
@@ -203,11 +203,10 @@ router.put('/:id', updateCustomerValidation, async (req, res) => {
       });
 
       if (duplicateCustomer) {
-        return conflict(res, 'Customer with this email already exists');
+        return conflict(res, 'Pelanggan dengan email ini sudah wujud');
       }
     }
 
-    // Check if another customer with same short name exists (excluding current customer)
     if (short && short !== existingCustomer.short) {
       const duplicateShortCustomer = await prisma.customer.findFirst({
         where: { 
@@ -217,7 +216,7 @@ router.put('/:id', updateCustomerValidation, async (req, res) => {
       });
 
       if (duplicateShortCustomer) {
-        return conflict(res, 'Customer with this short name already exists');
+        return conflict(res, 'Pelanggan dengan nama pendek ini sudah wujud');
       }
     }
 
@@ -235,22 +234,21 @@ router.put('/:id', updateCustomerValidation, async (req, res) => {
       }
     });
 
-    success(res, customer, 'Customer updated successfully');
+    success(res, customer, 'Pelanggan berjaya dikemaskini');
   } catch (err) {
     console.error('Error updating customer:', err);
-    error(res, 'Error updating customer');
+    error(res, 'Ralat mengemaskini pelanggan');
   }
 });
 
-// DELETE /api/v1/customers/:id - Delete customer
+// DELETE /api/v1/customers/:id - Padam pelanggan
 router.delete('/:id', [
-  param('id').isString().withMessage('Invalid ID'),
+  param('id').isString().withMessage('ID tidak sah'),
   handleValidationErrors
 ], async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if customer exists
     const existingCustomer = await prisma.customer.findUnique({
       where: { id },
       include: {
@@ -263,10 +261,9 @@ router.delete('/:id', [
     });
 
     if (!existingCustomer) {
-      return notFound(res, 'Customer not found');
+      return notFound(res, 'Pelanggan tidak ditemui');
     }
 
-    // Check if customer has related records and count them
     const invoiceCount = existingCustomer.invoices.length;
     const receiptCount = existingCustomer.receipts.length;
     const quoteCount = existingCustomer.quotes.length;
@@ -276,26 +273,25 @@ router.delete('/:id', [
     const totalRelatedRecords = invoiceCount + receiptCount + quoteCount + paymentCount + debtorCount;
 
     if (totalRelatedRecords > 0) {
-      // Build detailed message with counts
-      let relatedDataMessage = `Cannot delete customer "${existingCustomer.name}". This customer is being used in:\n`;
+      let relatedDataMessage = `Tidak boleh padam pelanggan "${existingCustomer.name}". Pelanggan ini digunakan dalam:\n`;
       
       if (invoiceCount > 0) {
-        relatedDataMessage += `- ${invoiceCount} invoice(s)\n`;
+        relatedDataMessage += `- ${invoiceCount} invois\n`;
       }
       if (receiptCount > 0) {
-        relatedDataMessage += `- ${receiptCount} receipt(s)\n`;
+        relatedDataMessage += `- ${receiptCount} resit\n`;
       }
       if (quoteCount > 0) {
-        relatedDataMessage += `- ${quoteCount} quote(s)\n`;
+        relatedDataMessage += `- ${quoteCount} sebut harga\n`;
       }
       if (paymentCount > 0) {
-        relatedDataMessage += `- ${paymentCount} payment(s)\n`;
+        relatedDataMessage += `- ${paymentCount} pembayaran\n`;
       }
       if (debtorCount > 0) {
-        relatedDataMessage += `- ${debtorCount} debtor record(s)\n`;
+        relatedDataMessage += `- ${debtorCount} rekod hutang\n`;
       }
       
-      relatedDataMessage += `\nTotal: ${totalRelatedRecords} record(s). Please remove or reassign these records before deleting the customer.`;
+      relatedDataMessage += `\nJumlah: ${totalRelatedRecords} rekod. Sila buang atau pindahkan rekod ini sebelum memadam pelanggan.`;
       
       return badRequest(res, relatedDataMessage);
     }
@@ -304,10 +300,10 @@ router.delete('/:id', [
       where: { id }
     });
 
-    success(res, null, 'Customer deleted successfully');
+    success(res, null, 'Pelanggan berjaya dipadam');
   } catch (err) {
     console.error('Error deleting customer:', err);
-    error(res, 'Error deleting customer');
+    error(res, 'Ralat memadam pelanggan');
   }
 });
 
