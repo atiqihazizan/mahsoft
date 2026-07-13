@@ -301,7 +301,7 @@ const DocumentForm = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
           {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {/* Customer Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -565,6 +565,43 @@ const DocumentForm = ({
                 }}
               />
             </div>
+
+            {/* Totals Summary */}
+            <div>
+              <div className="bg-gray-50 rounded-lg p-4 h-full border border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-200">Summary</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal:</span>
+                    <span className="font-medium">
+                      <CurrencyFormat amount={formData.subtotal} />
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Tax ({formData.taxRate}%):</span>
+                    <span className="font-medium">
+                      <CurrencyFormat amount={formData.taxAmount} />
+                    </span>
+                  </div>
+                  {formData.discountAmount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Discount:</span>
+                      <span className="font-medium text-red-500">
+                        -<CurrencyFormat amount={formData.discountAmount} />
+                      </span>
+                    </div>
+                  )}
+                  <div className="border-t pt-2 mt-2">
+                    <div className="flex justify-between text-base font-bold">
+                      <span>Total:</span>
+                      <span className="text-blue-600">
+                        <CurrencyFormat amount={formData.total} />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Items - Card Layout */}
@@ -689,42 +726,6 @@ const DocumentForm = ({
                   <span className="text-xs text-gray-400">Click to add another item</span>
                 </div>
               </button>
-            </div>
-          </div>
-
-          {/* Totals */}
-          <div className="bg-gray-50 p-6 rounded-lg mb-8">
-            <div className="max-w-md ml-auto">
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">
-                    <CurrencyFormat amount={formData.subtotal} />
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tax ({formData.taxRate}%):</span>
-                  <span className="font-medium">
-                    <CurrencyFormat amount={formData.taxAmount} />
-                  </span>
-                </div>
-                {formData.discountAmount > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Discount:</span>
-                    <span className="font-medium text-red-500">
-                      -<CurrencyFormat amount={formData.discountAmount} />
-                    </span>
-                  </div>
-                )}
-                <div className="border-t pt-2">
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Total Amount:</span>
-                    <span className="text-blue-600">
-                      <CurrencyFormat amount={formData.total} />
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
