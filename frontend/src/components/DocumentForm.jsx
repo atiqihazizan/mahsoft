@@ -68,7 +68,7 @@ const DocumentForm = ({
 
   // State untuk customer creation modal
   const [showCustomerForm, setShowCustomerForm] = useState(false)
-  const [newCustomer, setNewCustomer] = useState({ name: '', short: '' })
+  const [newCustomer, setNewCustomer] = useState({ name: '', short: '', email: '', phone: '', mobile: '' })
   const [extraCustomers, setExtraCustomers] = useState([])
   const [customerCreating, setCustomerCreating] = useState(false)
   const [customerSearchInput, setCustomerSearchInput] = useState('')
@@ -175,14 +175,17 @@ const DocumentForm = ({
     try {
       const res = await customersAPI.create({
         name: newCustomer.name.trim(),
-        short: newCustomer.short.trim()
+        short: newCustomer.short.trim(),
+        email: newCustomer.email.trim(),
+        phone: newCustomer.phone.trim(),
+        mobile: newCustomer.mobile.trim()
       })
       if (res?.success) {
         const created = res.data
         setExtraCustomers(prev => [...prev, created])
         handleInputChange('customerId', created.id)
         setShowCustomerForm(false)
-        setNewCustomer({ name: '', short: '' })
+        setNewCustomer({ name: '', short: '', email: '', phone: '', mobile: '' })
       } else {
         alert(res?.message || 'Failed to create customer')
       }
@@ -436,11 +439,41 @@ const DocumentForm = ({
                                 className="w-full h-11 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 text-sm"
                               />
                             </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                              <input
+                                type="email"
+                                value={newCustomer.email}
+                                onChange={(e) => setNewCustomer(prev => ({ ...prev, email: e.target.value }))}
+                                placeholder="customer@email.com"
+                                className="w-full h-11 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                              <input
+                                type="tel"
+                                value={newCustomer.phone}
+                                onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
+                                placeholder="03-12345678"
+                                className="w-full h-11 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                              <input
+                                type="tel"
+                                value={newCustomer.mobile}
+                                onChange={(e) => setNewCustomer(prev => ({ ...prev, mobile: e.target.value }))}
+                                placeholder="012-3456789"
+                                className="w-full h-11 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 text-sm"
+                              />
+                            </div>
                           </div>
                           <div className="flex justify-end gap-3 mt-6">
                             <button
                               type="button"
-                              onClick={() => { setShowCustomerForm(false); setNewCustomer({ name: '', short: '' }) }}
+                              onClick={() => { setShowCustomerForm(false); setNewCustomer({ name: '', short: '', email: '', phone: '', mobile: '' }) }}
                               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
                             >
                               Cancel
