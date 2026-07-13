@@ -49,15 +49,13 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .ml-4 { margin-left: 1rem; }
 .mb-2 { margin-bottom: .5rem; }
 
-.letter-head table p { padding: 0; margin: 0; }
-.vtable { border: 0; border-collapse: collapse; border-spacing: 0; }
-.fwb td { font-weight: 600; }
-.letter-head table tr th, .letter-head table tr td { vertical-align: top; }
-.letter-head table, .clientinfo table, .issuence table, .footer-bottom table { width: 100%; border: 0; border-collapse: collapse; border-spacing: 0; }
-
-.letter-head table tr td:first-child { width: 80px; vertical-align: top; }
-.letter-head table tr td:nth-child(2) { width: auto; padding-left: 1rem; }
-.letter-head table tr td:last-child { width: 120px; text-align: right; vertical-align: top; }
+.print-header table { width: 100%; margin-bottom: 0; border: 0; border-collapse: collapse; border-spacing: 0; }
+.print-header table td { vertical-align: top; }
+.logo-cell { width: 73px; padding: 0; }
+.logo-cell img { width: 100%; margin-right: 1rem; display: block; }
+.logo-placeholder { width: 73px; height: 55px; margin-right: 1rem; }
+.company-cell { text-align: left; vertical-align: top; width: 70%; padding: 0; padding-left: 5px; }
+.doctype-cell { text-align: right; vertical-align: top; padding: 0; }
 
 .clientinfo table tr td:first-child { width: auto; vertical-align: top; }
 .clientinfo table tr td:last-child { width: 20%; vertical-align: top; }
@@ -70,27 +68,25 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .issuence .rowbody td { padding: 0.5rem 0.5rem 0.3rem; vertical-align: top; font-size: 0.7rem; line-height: 1.6; }
 .issuence .rowbody td div { line-height: 1.6; }
 
-.footer-bottom { width: 100%; }
-.bankinfo { float: right; border: 1px solid #e5e7eb; border-radius: 3px; padding: .6rem; }
-.bankinfo p { margin: 0; padding: 0; font-weight: bold; font-size: 8pt; }
+.footer-two-col {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-top: 0.4rem;
+}
+.footer-col { width: 48%; }
 
-.table-signature { width: 100%; border-collapse: collapse; }
-.table-signature tr { align-items: center; }
-.table-signature td:first-child { align-self: center; }
-.table-signature td:nth-child(2) { align-self: center; }
-
-.bank-info { display: grid; grid-template-columns: auto auto 1fr; column-gap: .5rem; align-items: center; }
-.bank-info td { white-space: nowrap; font-size: 9pt; }
-.bank-info td:first-child { width: 65px; }
-.bank-info td:nth-child(2) { width: 0px; text-align: center; }
-.bank-info td:last-child { width: auto; padding-left: 0.5rem; font-size: 0.7rem; }
-
-.inv-amt { border-collapse: collapse; }
-.inv-amt td { font-size: 0.7rem !important; padding: 0.25rem 0; }
-.inv-amt td:first-child { text-align: right; padding-right: 1rem; color: #374151; }
-.inv-amt td:last-child { text-align: right; min-width: 80px; }
-.inv-amt tr:last-child td { font-weight: 700; font-size: 0.8rem !important; padding-top: 0.4rem; }
-.inv-amt tr:last-child td:first-child { color: #000; }
+.pricing-table { width: 100%; border-collapse: collapse; }
+.pricing-table td { padding: 0.15rem 0; vertical-align: middle; }
+.pricing-table td:first-child { text-align: left; font-size: 0.7rem; color: #374151; }
+.pricing-table td:last-child { text-align: right; font-size: 0.7rem; min-width: 90px; }
+.pricing-table .sep td { height: 0.2rem; }
+.pricing-table .divider td { border-top: 1px solid #374151; padding-top: 0.3rem; }
+.pricing-table .grand td { font-weight: 700; font-size: 0.8rem !important; }
+.pricing-table .grand td:first-child { color: #000; }
+.pricing-table .positive { color: #000; }
+.pricing-table .negative { color: #dc2626; }
 
 .fra-body { min-height: 500px; }
 .issuedby { width: 13rem; display: inline-block; margin-top: 1rem; text-align: center; }
@@ -102,14 +98,10 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .company-info p { line-height: 1.5; font-size: 0.65rem; }
 .clientinfo-container { display: flex; flex-direction: row; justify-content: space-between; gap: 2rem; margin-top: 0.2rem; }
 .clientinfo ,.docinfo { display: flex; flex-direction: column; }
-.clientinfo { width: 50%; gap: 0.4rem; }
-.clientinfo p, .clientinfo table tr th, .clientinfo table tr td, .clientinfo span, .docinfo p { font-size: .7rem; }
-.clientinfo table tr th, .clientinfo table tr td, .table-signature th, .table-signature td { vertical-align: top; }
-.clientinfo p:nth-child(2) { line-height: 1.4; }
-.bank-info td, .sign-info td { white-space: nowrap; }
-.table-signature tr th, .table-signature tr td, .bank-info td, .sign-info td { font-size: 9pt; }
-
-.docinfo { gap: 0.35rem; }
+.clientinfo { width: 50%; gap: 0.3rem; }
+.clientinfo p, .docinfo p { font-size: .7rem; margin: 0; }
+.clientinfo p:first-child { font-weight: 900; }
+.docinfo { gap: 0.3rem; }
 .docinfo p { width: 100%; display: grid; grid-template-columns: 40px 10px 1fr; font-size: 0.7rem; margin: 0; }
 .docinfo p span { font-size: 0.7rem; margin: 0; }
 .docinfo p span:last-child { text-align: right; }
@@ -175,6 +167,7 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 
 .closing-section {
   margin-top: auto;
+  page-break-inside: avoid;
 }
 
 .page-footer {
@@ -288,15 +281,19 @@ const PrintA4 = ({
     }
   }
 
-  const renderHeader = () => (
+  const renderHeader = (companyLogo) => (
     <>
-      <table style={{ width: '100%', marginBottom: '0' }}>
+      <table className="print-header">
         <tbody>
           <tr>
-            <td style={{ textAlign: 'left', width: '73px', padding: 0 }}>
-              <img src={logoImage} alt="Mahsoft Logo" style={{ width: '100%', marginRight: '1rem' }} />
+            <td className="logo-cell">
+              {companyLogo ? (
+                <img src={companyLogo} alt="Logo" style={{ width: '100%', display: 'block' }} />
+              ) : (
+                <div className="logo-placeholder" />
+              )}
             </td>
-            <td style={{ textAlign: 'left', verticalAlign: 'top', width: '70%', padding: 0, paddingLeft: '5px' }}>
+            <td className="company-cell">
               <div>
                 <h1 style={{ fontFamily: 'Audiowide', fontSize: '1.1rem', margin: '0', padding: '0', color: '#333' }}>
                   {company.name}
@@ -313,7 +310,7 @@ const PrintA4 = ({
                 </p>
               </div>
             </td>
-            <td style={{ textAlign: 'right', verticalAlign: 'top', padding: 0 }}>
+            <td className="doctype-cell">
               <h1 style={{ fontFamily: 'Audiowide', fontSize: '1.1rem', margin: '0', color: '#333' }}>{documentType}</h1>
             </td>
           </tr>
@@ -396,86 +393,73 @@ const PrintA4 = ({
     </div>
   )
 
-  const renderClosingSection = () => (
-    <div className="closing-section">
-      <hr />
+  const renderClosingSection = () => {
+    const hasDiscount = Number(discountAmount) > 0
+    const hasTax = Number(tax) > 0
+    const showBreakdown = hasDiscount || hasTax
+    const isInvoice = documentType === 'INVOICE'
+    const hasBank = isInvoice && (bank?.accountNumber || bank?.bankName || bank?.accountHolder)
+    const issuedByName = issuedBy || company?.manager || ''
 
-      <div className="footer-bottom">
-        <table className="table-signature">
-          <tbody>
-            <tr style={{ display: 'flex' }}>
-              {(documentType === 'INVOICE' && (bank?.accountNumber || bank?.bankName || bank?.accountHolder)) ? (
-                <>
-                  <td style={{ alignSelf: 'center' }}>
-                    <div className="bank-info">
-                      <span>Acc No.</span><span>:</span><span>{bank.accountNumber}</span>
-                      <span>Acc Name</span><span>:</span><span>{bank.bankName}</span>
-                      <span>Acc Holder</span><span>:</span><span>{bank.accountHolder}</span>
-                    </div>
-                  </td>
-                  <td style={{ alignSelf: 'center', flex: 1 }}>
-                    <div style={{ margin: 'auto', width: '150px', textAlign: 'center' }}>
-                      <i>{issuedBy || company.manager}</i>
-                      <hr />
-                      Issued By
-                    </div>
-                  </td>
-                </>
-              ) : (
-                <td style={{ alignSelf: 'left', flex: 1 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', width: '150px', textAlign: 'left' }}>
-                    <span>Issued By,</span>
-                    <i>{issuedBy || company.manager}</i>
-                  </div>
-                </td>
-              )}
-              <td style={{ alignSelf: 'center' }}>
-                <table className="inv-amt">
-                  <tbody>
-                      {documentType === 'INVOICE' && (
-                        <>
-                          <tr>
-                            <td>Subtotal</td>
-                            <td><CurrencyFormat amount={subtotal} /></td>
-                          </tr>
-                          {discountAmount > 0 && (
-                            <tr>
-                              <td>{discountLabel || 'Discount'}{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
-                              <td><CurrencyFormat amount={-discountAmount} /></td>
-                            </tr>
-                          )}
-                          <tr>
-                            <td>Tax</td>
-                            <td><CurrencyFormat amount={tax} /></td>
-                          </tr>
-                        </>
-                      )}
-                      {discountAmount > 0 && documentType !== 'INVOICE' && (
-                        <tr>
-                          <td>{discountLabel || 'Discount'}{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
-                          <td><CurrencyFormat amount={-discountAmount} /></td>
-                        </tr>
-                      )}
+    return (
+      <div className="closing-section">
+        <hr />
+
+        <div className="footer-two-col">
+          <div className="footer-col">
+            {hasBank && (
+              <div style={{ marginBottom: '0.6rem' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 600, marginBottom: '0.2rem' }}>Bank Details</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'auto auto 1fr', columnGap: '.3rem', fontSize: '0.65rem', lineHeight: 1.6 }}>
+                  <span>Acc No.</span><span>:</span><span>{bank.accountNumber}</span>
+                  <span>Acc Name</span><span>:</span><span>{bank.bankName}</span>
+                  <span>Acc Holder</span><span>:</span><span>{bank.accountHolder}</span>
+                </div>
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <p style={{ fontSize: '0.7rem', color: '#374151', margin: 0 }}>Issued By,</p>
+              <p style={{ fontSize: '0.8rem', fontWeight: 600, margin: 0 }}>{issuedByName}</p>
+              <div style={{ marginTop: '0.6rem', width: '160px', borderTop: '1px solid #374151', paddingTop: '0.25rem', fontSize: '0.65rem', color: '#6b7280', textAlign: 'center' }}>
+                (Signature)
+              </div>
+            </div>
+          </div>
+
+          <div className="footer-col">
+            <table className="pricing-table">
+              <tbody>
+                {showBreakdown ? (
+                  <>
+                    <tr><td>Subtotal</td><td className="positive"><CurrencyFormat amount={subtotal} /></td></tr>
+                    {hasDiscount && (
                       <tr>
-                        <td>Total</td>
-                        <td><CurrencyFormat amount={total} /></td>
+                        <td>{discountLabel || 'Discount'}{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
+                        <td className="negative"><CurrencyFormat amount={-discountAmount} /></td>
                       </tr>
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {notes && (
-        <div style={{ marginTop: '1rem', fontSize: '0.8rem' }}>
-          <p><strong>Notes:</strong></p>
-          <div>{renderWhatsAppText(notes)}</div>
+                    )}
+                    {hasTax && (
+                      <tr><td>Tax</td><td className="positive"><CurrencyFormat amount={tax} /></td></tr>
+                    )}
+                    <tr className="divider grand"><td>Grand Total</td><td><CurrencyFormat amount={total} /></td></tr>
+                  </>
+                ) : (
+                  <tr className="grand"><td>Total</td><td><CurrencyFormat amount={total} /></td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      )}
-    </div>
-  )
+
+        {notes && (
+          <div className="notes-section" style={{ marginTop: '0.8rem', fontSize: '0.8rem' }}>
+            <p><strong>Notes:</strong></p>
+            <div>{renderWhatsAppText(notes)}</div>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   const renderFooter = (pageIndex, totalPages) => (
     <div className="page-footer">
@@ -505,7 +489,7 @@ const PrintA4 = ({
 
   const renderPage = (pageItems, pageIndex) => (
     <div key={pageIndex} className={`sheet padding-20mm ${visible ? 'sheet-page' : ''}`}>
-      {renderHeader()}
+      {renderHeader(company.logo)}
       {pageIndex > 0 && <p className="continuation-note">Continued from previous page...</p>}
       <div className="page-content">
         <div className="items-section">
