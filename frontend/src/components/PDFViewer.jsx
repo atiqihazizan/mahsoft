@@ -247,7 +247,7 @@ const PDFViewer = ({ pdfUrl, onLoad, onError }) => {
             ))}
           </div>
         )}
-        <div className="flex-1 overflow-auto bg-gray-200 flex items-start justify-center p-4">
+        <div className="flex-1 overflow-auto bg-gray-200 flex items-start justify-center p-4 h-[calc(100vh-304px)]">
           <canvas ref={canvasRef} className="shadow-xl bg-white" />
         </div>
       </div>
