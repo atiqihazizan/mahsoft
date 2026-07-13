@@ -201,7 +201,7 @@ const CustomersSettings = () => {
       label: 'Mobile (Optional)',
       type: 'tel',
       required: false,
-      placeholder: 'Enter mobile number'
+      placeholder: 'Enter mobile number (012-345 6789)'
     },
     {
       name: 'taxNumber',

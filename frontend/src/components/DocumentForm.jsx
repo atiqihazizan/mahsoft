@@ -455,17 +455,17 @@ const DocumentForm = ({
                                 type="tel"
                                 value={newCustomer.phone}
                                 onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
-                                placeholder="03-12345678"
+                                placeholder="03-1234 5678"
                                 className="w-full h-11 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 text-sm"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile (for WhatsApp)</label>
                               <input
                                 type="tel"
                                 value={newCustomer.mobile}
                                 onChange={(e) => setNewCustomer(prev => ({ ...prev, mobile: e.target.value }))}
-                                placeholder="012-3456789"
+                                placeholder="012-345 6789"
                                 className="w-full h-11 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 text-sm"
                               />
                             </div>
