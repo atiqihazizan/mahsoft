@@ -222,7 +222,7 @@ router.post('/', authenticateToken, createDeliveryOrderValidation, async (req, r
       };
     });
 
-    const { discountPercent, discountAmount } = req.body;
+    const { discountPercent, discountAmount, discountLabel } = req.body;
     const discPct = parseFloat(discountPercent || 0);
     const discAmt = parseFloat(discountAmount || 0);
     const calculatedDiscount = discPct > 0 ? subtotal * discPct / 100 : discAmt;
@@ -238,6 +238,7 @@ router.post('/', authenticateToken, createDeliveryOrderValidation, async (req, r
         subtotal,
         discountPercent: discPct,
         discountAmount: calculatedDiscount,
+        discountLabel: discountLabel || '',
         taxAmount,
         total,
         deliveryAddress,
@@ -290,7 +291,8 @@ router.put('/:id', authenticateToken, updateDeliveryOrderValidation, async (req,
       contactPhone,
       notes,
       discountPercent,
-      discountAmount
+      discountAmount,
+      discountLabel
     } = req.body;
 
     // Check if delivery order exists
@@ -322,6 +324,7 @@ router.put('/:id', authenticateToken, updateDeliveryOrderValidation, async (req,
       const calculatedDiscount = discPct > 0 ? sub * discPct / 100 : discAmt;
       updateData.discountPercent = discPct;
       updateData.discountAmount = calculatedDiscount;
+      if (discountLabel !== undefined) updateData.discountLabel = discountLabel;
       updateData.total = parseFloat((sub - calculatedDiscount + tax).toFixed(2));
     }
 

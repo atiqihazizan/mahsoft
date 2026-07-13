@@ -407,6 +407,7 @@ export const DescriptionField = ({
 export const DiscountInput = ({
   discountPercent = 0,
   discountAmount = 0,
+  discountLabel = '',
   subtotal = 0,
   onChange,
 }) => {
@@ -424,8 +425,19 @@ export const DiscountInput = ({
     onChange({ discountPercent: pct, discountAmount: Math.round(amount * 100) / 100 })
   }
 
+  const handleLabelChange = (e) => {
+    onChange({ discountLabel: e.target.value })
+  }
+
   return (
-    <div className="w-full">
+    <div className="w-full space-y-2">
+      <input
+        type="text"
+        value={discountLabel || ''}
+        onChange={handleLabelChange}
+        placeholder="Discount label (e.g. Less: One-Time Goodwill Discount)"
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+      />
       <div className="flex gap-2 mb-2">
         <button
           type="button"

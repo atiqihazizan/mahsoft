@@ -166,7 +166,7 @@ router.get('/:id', [
 // POST /api/v1/quotes - Cipta sebut harga baru
 router.post('/', createQuoteValidation, async (req, res) => {
   try {
-    const { companyId, userId, customerId, date, validUntil, subject, items, notes, discountPercent, discountAmount } = req.body;
+    const { companyId, userId, customerId, date, validUntil, subject, items, notes, discountPercent, discountAmount, discountLabel } = req.body;
 
     // Verify related records exist
     const [company, user, customer] = await Promise.all([
@@ -210,6 +210,7 @@ router.post('/', createQuoteValidation, async (req, res) => {
         subtotal: parseFloat(subtotal),
         discountPercent: discPct,
         discountAmount: discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt,
+        discountLabel: discountLabel || '',
         taxAmount: parseFloat(taxAmount),
         total: parseFloat(total),
         notes,
@@ -285,6 +286,7 @@ router.put('/:id', updateQuoteValidation, async (req, res) => {
         subtotal: parseFloat(subtotal),
         discountPercent: discPct,
         discountAmount: discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt,
+        ...(updateData.discountLabel !== undefined && { discountLabel: updateData.discountLabel }),
         taxAmount: parseFloat(taxAmount),
         total: parseFloat(total)
       };
@@ -301,6 +303,7 @@ router.put('/:id', updateQuoteValidation, async (req, res) => {
         ...recalculatedFields,
         discountPercent: discPct,
         discountAmount: parseFloat(calculatedDiscount.toFixed(2)),
+        ...(updateData.discountLabel !== undefined && { discountLabel: updateData.discountLabel }),
         total: parseFloat((sub - calculatedDiscount + tax).toFixed(2))
       };
     }
@@ -366,6 +369,7 @@ router.post('/:id/convert-to-invoice', [
         subtotal: quote.subtotal,
         discountPercent: quote.discountPercent,
         discountAmount: quote.discountAmount,
+        discountLabel: quote.discountLabel,
         taxAmount: quote.taxAmount,
         total: quote.total,
         notes: quote.notes,

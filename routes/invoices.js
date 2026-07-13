@@ -154,7 +154,7 @@ router.get('/:id', [
 // POST /api/v1/invoices - Cipta invois baru
 router.post('/', createInvoiceValidation, async (req, res) => {
   try {
-    const { companyId, userId, customerId, date, dueDate, subject, items, notes, quoteId, taxRate, discountPercent, discountAmount } = req.body;
+    const { companyId, userId, customerId, date, dueDate, subject, items, notes, quoteId, taxRate, discountPercent, discountAmount, discountLabel } = req.body;
 
     // Verify related records exist
     const [company, user, customer] = await Promise.all([
@@ -205,6 +205,7 @@ router.post('/', createInvoiceValidation, async (req, res) => {
         subtotal: parseFloat(subtotal),
         discountPercent: discPct,
         discountAmount: discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt,
+        discountLabel: discountLabel || '',
         taxAmount: parseFloat(taxAmount),
         total: parseFloat(total),
         notes,
@@ -289,6 +290,7 @@ router.put('/:id', updateInvoiceValidation, async (req, res) => {
       invoiceUpdateData.subtotal = parseFloat(subtotal);
       invoiceUpdateData.discountPercent = discPct;
       invoiceUpdateData.discountAmount = discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt;
+      if (updateData.discountLabel !== undefined) invoiceUpdateData.discountLabel = updateData.discountLabel;
       invoiceUpdateData.taxAmount = parseFloat(taxAmount);
       invoiceUpdateData.total = parseFloat(total);
 
@@ -316,6 +318,7 @@ router.put('/:id', updateInvoiceValidation, async (req, res) => {
       const calculatedDiscount = discPct > 0 ? sub * discPct / 100 : discAmt;
       invoiceUpdateData.discountPercent = discPct;
       invoiceUpdateData.discountAmount = parseFloat(calculatedDiscount.toFixed(2));
+      if (updateData.discountLabel !== undefined) invoiceUpdateData.discountLabel = updateData.discountLabel;
       invoiceUpdateData.total = parseFloat((sub - calculatedDiscount + tax).toFixed(2));
     }
 
@@ -472,6 +475,7 @@ router.post('/:id/convert-to-delivery-order', [
         subtotal: invoice.subtotal,
         discountPercent: invoice.discountPercent,
         discountAmount: invoice.discountAmount,
+        discountLabel: invoice.discountLabel,
         taxAmount: invoice.taxAmount,
         total: invoice.total,
         deliveryAddress: deliveryAddress || invoice.customer.address,

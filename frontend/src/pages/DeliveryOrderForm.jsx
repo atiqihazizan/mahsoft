@@ -73,6 +73,7 @@ const DeliveryOrderForm = () => {
               taxAmount: parseFloat(doData.taxAmount || 0),
               discountPercent: parseFloat(doData.discountPercent || 0),
               discountAmount: parseFloat(doData.discountAmount || 0),
+              discountLabel: doData.discountLabel || '',
               total: parseFloat(doData.total || 0)
             }
             
@@ -105,6 +106,7 @@ const DeliveryOrderForm = () => {
             taxAmount: 0,
             discountPercent: 0,
             discountAmount: 0,
+            discountLabel: '',
             total: 0
           }
           setInitialData(defaultData)
@@ -150,6 +152,7 @@ const DeliveryOrderForm = () => {
         })),
         discountPercent: formData.discountPercent || 0,
         discountAmount: formData.discountAmount || 0,
+        discountLabel: formData.discountLabel || '',
       }
 
       // Add userId for create mode

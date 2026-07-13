@@ -58,6 +58,7 @@ const ReceiptForm = () => {
       taxAmount: parseFloat(receipt.taxAmount) || 0,
       discountPercent: parseFloat(receipt.discountPercent) || 0,
       discountAmount: parseFloat(receipt.discountAmount) || 0,
+      discountLabel: receipt.discountLabel || '',
       total: parseFloat(receipt.total) || 0
     }
   }
@@ -145,6 +146,7 @@ const ReceiptForm = () => {
         notes: formData.notes,
         discountPercent: formData.discountPercent || 0,
         discountAmount: formData.discountAmount || 0,
+        discountLabel: formData.discountLabel || '',
         items: formData.items.map(item => ({
           description: item.description,
           quantity: item.quantity,

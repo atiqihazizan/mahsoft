@@ -145,7 +145,7 @@ router.get('/:id', [
 // POST /api/v1/receipts - Cipta resit baru
 router.post('/', createReceiptValidation, async (req, res) => {
   try {
-    const { companyId, userId, customerId, date, subject, items, notes, taxRate, discountPercent, discountAmount } = req.body;
+    const { companyId, userId, customerId, date, subject, items, notes, taxRate, discountPercent, discountAmount, discountLabel } = req.body;
 
     // Verify related records exist
     const [company, user, customer] = await Promise.all([
@@ -188,6 +188,7 @@ router.post('/', createReceiptValidation, async (req, res) => {
         subtotal: parseFloat(subtotal),
         discountPercent: discPct,
         discountAmount: discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt,
+        discountLabel: discountLabel || '',
         taxAmount: parseFloat(taxAmount),
         total: parseFloat(total),
         notes,
@@ -270,6 +271,7 @@ router.put('/:id', updateReceiptValidation, async (req, res) => {
         subtotal: parseFloat(subtotal),
         discountPercent: discPct,
         discountAmount: discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt,
+        ...(updateData.discountLabel !== undefined && { discountLabel: updateData.discountLabel }),
         taxAmount: parseFloat(taxAmount),
         total: parseFloat(total)
       };
@@ -286,6 +288,7 @@ router.put('/:id', updateReceiptValidation, async (req, res) => {
         ...recalculatedFields,
         discountPercent: discPct,
         discountAmount: parseFloat(calculatedDiscount.toFixed(2)),
+        ...(updateData.discountLabel !== undefined && { discountLabel: updateData.discountLabel }),
         total: parseFloat((sub - calculatedDiscount + tax).toFixed(2))
       };
     }

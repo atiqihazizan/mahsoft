@@ -240,6 +240,7 @@ const PrintA4 = ({
   subtotal = 0,
   discountPercent = 0,
   discountAmount = 0,
+  discountLabel = '',
   tax = 0,
   total = 0,
   company = {},
@@ -439,7 +440,7 @@ const PrintA4 = ({
                           </tr>
                           {discountAmount > 0 && (
                             <tr>
-                              <td>Discount{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
+                              <td>{discountLabel || 'Discount'}{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
                               <td><CurrencyFormat amount={-discountAmount} /></td>
                             </tr>
                           )}
@@ -451,7 +452,7 @@ const PrintA4 = ({
                       )}
                       {discountAmount > 0 && documentType !== 'INVOICE' && (
                         <tr>
-                          <td>Discount{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
+                          <td>{discountLabel || 'Discount'}{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
                           <td><CurrencyFormat amount={-discountAmount} /></td>
                         </tr>
                       )}

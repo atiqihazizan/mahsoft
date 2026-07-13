@@ -59,6 +59,7 @@ const QuoteForm = () => {
       taxAmount: parseFloat(quote.taxAmount) || 0,
       discountPercent: parseFloat(quote.discountPercent) || 0,
       discountAmount: parseFloat(quote.discountAmount) || 0,
+      discountLabel: quote.discountLabel || '',
       total: parseFloat(quote.total) || 0
     }
   }
@@ -147,6 +148,7 @@ const QuoteForm = () => {
         taxRate: typeof formData.taxRate === 'number' ? formData.taxRate : 0,
         discountPercent: formData.discountPercent || 0,
         discountAmount: formData.discountAmount || 0,
+        discountLabel: formData.discountLabel || '',
         items: formData.items.map(item => ({
           description: item.description,
           quantity: item.quantity,

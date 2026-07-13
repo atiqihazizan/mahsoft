@@ -57,6 +57,7 @@ const DocumentForm = ({
     taxAmount: 0,
     discountPercent: 0,
     discountAmount: 0,
+    discountLabel: '',
     total: 0
   })
 
@@ -556,10 +557,11 @@ const DocumentForm = ({
               <DiscountInput
                 discountPercent={formData.discountPercent}
                 discountAmount={formData.discountAmount}
+                discountLabel={formData.discountLabel}
                 subtotal={formData.subtotal}
-                onChange={({ discountPercent, discountAmount }) => {
+                onChange={({ discountPercent, discountAmount, discountLabel }) => {
                   setIsDirty(true)
-                  setFormData(prev => ({ ...prev, discountPercent, discountAmount }))
+                  setFormData(prev => ({ ...prev, discountPercent, discountAmount, discountLabel }))
                 }}
               />
             </div>
