@@ -321,11 +321,11 @@ export const invoicesAPI = {
   },
 
   sendEmail: async (id) => {
-    return apiClient.post(`/api/v1/invoices/${id}/email`)
+    return apiClient.post(`/api/v1/invoices/${id}/email`, {})
   },
 
   sendWhatsApp: async (id) => {
-    return apiClient.post(`/api/v1/invoices/${id}/whatsapp`)
+    return apiClient.post(`/api/v1/invoices/${id}/whatsapp`, {})
   }
 }
 
@@ -369,11 +369,11 @@ export const quotesAPI = {
   },
 
   sendEmail: async (id) => {
-    return apiClient.post(`/api/v1/quotes/${id}/email`)
+    return apiClient.post(`/api/v1/quotes/${id}/email`, {})
   },
 
   sendWhatsApp: async (id) => {
-    return apiClient.post(`/api/v1/quotes/${id}/whatsapp`)
+    return apiClient.post(`/api/v1/quotes/${id}/whatsapp`, {})
   }
 }
 
