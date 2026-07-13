@@ -87,6 +87,9 @@ hr { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid #080808; }
 .issuence table td.price-cell { text-align: right; white-space: nowrap; width: 1%; }
 .issuence table td div { line-height: 1.5; font-size: 0.8rem; }
 
+.info-section { margin-top: 1.5rem; page-break-inside: avoid; }
+.info-row { font-size: 0.7rem; line-height: 1.6; color: #374151; margin-bottom: 0.5rem; }
+
 .footer-two-col {
   display: flex;
   flex-direction: row;
@@ -165,7 +168,10 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
 
   const showQtyPrice = (items || []).some(needsQtyPrice)
 
-  const itemRows = (items || []).map(item => {
+  const billableItems = (items || []).filter(isBillable)
+  const infoItems = (items || []).filter(item => !isBillable(item))
+
+  const itemRows = billableItems.map(item => {
     const show = showQtyPrice && needsQtyPrice(item)
     const qtyUnit = show ? (() => {
       const qty = Number(item.quantity) || ''
@@ -181,6 +187,14 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
       <td class="amount-cell">${Number(item.amount) ? formatCurrency(item.amount) : ''}</td>
     </tr>`
   }).join('')
+
+  const infoHtml = infoItems.length > 0 ? `
+  <div class="info-section">
+    ${infoItems.map(item => `
+    <div class="info-row">${renderWhatsAppText(item.description || '')}</div>
+    `).join('')}
+  </div>
+` : ''
 
   const logoHtml = logoData
     ? `<img src="${logoData}" alt="Logo" />`
@@ -258,6 +272,7 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
     <div class="issuence">
       <table>${itemRows || `<tr><td style="text-align:center;color:#999;padding:2rem 0" colspan="${showQtyPrice ? 4 : 2}">No items</td></tr>`}</table>
     </div>
+    ${infoHtml}
   </div>
 
   <div class="closing-section">

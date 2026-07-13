@@ -385,6 +385,22 @@ const PrintA4 = ({
 
   const showQtyPrice = (items || []).some(needsQtyPrice)
 
+  const billableItems = useMemo(() => (items || []).filter(isBillable), [items])
+  const infoItems = useMemo(() => (items || []).filter(item => !isBillable(item)), [items])
+
+  const renderInfoSection = () => {
+    if (infoItems.length === 0) return null
+    return (
+      <div style={{ marginTop: '1.5rem' }}>
+        {infoItems.map((item, idx) => (
+          <div key={item.id || idx} style={{ marginBottom: '0.5rem', fontSize: '0.7rem', lineHeight: 1.6, color: '#374151' }}>
+            {renderWhatsAppText(item.description || '')}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   const renderItemsTable = (pageItems) => (
     <div className="issuence">
       <table className="rowbody">
@@ -494,9 +510,9 @@ const PrintA4 = ({
 
   const itemPages = useMemo(() => {
     const pages = []
-    if (items && items.length > 0) {
-      for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
-        pages.push(items.slice(i, i + ITEMS_PER_PAGE))
+    if (billableItems.length > 0) {
+      for (let i = 0; i < billableItems.length; i += ITEMS_PER_PAGE) {
+        pages.push(billableItems.slice(i, i + ITEMS_PER_PAGE))
       }
     } else {
       pages.push([])
@@ -508,7 +524,7 @@ const PrintA4 = ({
     }
 
     return pages
-  }, [items])
+  }, [billableItems])
 
   const totalPageCount = itemPages.length
 
@@ -519,6 +535,7 @@ const PrintA4 = ({
       <div className="page-content">
         <div className="items-section">
           {pageItems.length > 0 && renderItemsTable(pageItems)}
+          {pageIndex === totalPageCount - 1 && renderInfoSection()}
         </div>
         {pageIndex === totalPageCount - 1 && renderClosingSection()}
       </div>
