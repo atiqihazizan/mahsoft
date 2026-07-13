@@ -384,7 +384,7 @@ const PrintA4 = ({
                     {renderWhatsAppText(item.description || '')}
                   </div>
                 </td>
-                <td><CurrencyFormat amount={item.amount || 0} /></td>
+                <td>{Number(item.amount) ? <CurrencyFormat amount={item.amount} /> : ''}</td>
               </tr>
             </React.Fragment>
           ))}

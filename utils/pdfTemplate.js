@@ -155,7 +155,7 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
   const itemRows = (items || []).map(item => `
     <tr>
       <td><div>${renderWhatsAppText(item.description || '')}</div></td>
-      <td>${formatCurrency(item.amount || 0)}</td>
+      <td>${Number(item.amount) ? formatCurrency(item.amount) : ''}</td>
     </tr>
   `).join('')
 
