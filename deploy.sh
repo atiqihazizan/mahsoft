@@ -107,7 +107,7 @@ ssh $SERVER "mkdir -p $REMOTE_PATH"
 
 # Upload files
 echo "  📤 Mengupload fail-fail..."
-rsync -av --delete "$TEMP_DIR/" "$SERVER:$REMOTE_PATH/"
+rsync -av --delete --exclude='.env' "$TEMP_DIR/" "$SERVER:$REMOTE_PATH/"
 
 # Install dependencies di server
 echo -e "${YELLOW}📦 Menginstall dependencies di server...${NC}"
