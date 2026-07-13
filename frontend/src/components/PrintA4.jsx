@@ -41,7 +41,8 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .small, small { font-size: 80%; font-weight: 400; }
 .paper .sheet { margin: auto; font-size: .9rem; background-color: white; line-height: 1.65; color: #212529; text-align: left; }
 .paper .sheet table td { font-size: 0.7rem; font-weight: 300; }
-.sheet hr { margin: .8rem 0 1rem; border-bottom: 1px solid#080808; }
+.sheet .hr--major { margin: .8rem 0 1rem; border: none; border-bottom: 1px solid rgba(0,0,0,0.45); }
+.sheet .hr--minor { margin: .8rem 0 1rem; border: none; border-bottom: 1px solid rgba(0,0,0,0.08); }
 
 .font-audiowide { font-family: 'Audiowide', 'Roboto', system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif; }
 .w-100 { width: 100%; }
@@ -62,7 +63,7 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 
 .issuence { margin-top: 2rem; }
 .issuence table { width: 100%; border-collapse: collapse; }
-.issuence table th { text-align: left; font-weight: 600; font-size: 0.6rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.3rem 0.4rem; border-bottom: 1px solid #e5e7eb; }
+.issuence table th { text-align: left; font-weight: 600; font-size: 0.6rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.3rem 0.4rem; border-bottom: 1px solid rgba(0,0,0,0.08); }
 .issuence table th.amount-cell { text-align: right; }
 .issuence table th.qty-cell { text-align: center; }
 .issuence table th.price-cell { text-align: right; }
@@ -73,7 +74,7 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .issuence .rowbody td.qty-cell { text-align: center; white-space: nowrap; }
 .issuence .rowbody td.price-cell { text-align: right; white-space: nowrap; }
 .issuence .rowbody td div { line-height: 1.5; }
-.issuence .rowbody tr.last-billable td { border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+.issuence .rowbody tr.last-billable td { border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 0.5rem; }
 
 .footer-two-col {
   display: flex;
@@ -324,7 +325,7 @@ const PrintA4 = ({
         </tbody>
       </table>
 
-      <hr />
+      <hr className="hr--major" />
 
       <div className="clientinfo-container">
         <div className="clientinfo">
@@ -375,7 +376,7 @@ const PrintA4 = ({
         </div>
       </div>
 
-      <hr />
+      <hr className="hr--minor" />
     </>
   )
 
@@ -458,7 +459,7 @@ const PrintA4 = ({
 
     return (
       <div className="closing-section">
-        <hr />
+        <hr className="hr--major" />
 
         <div className="footer-two-col">
           <div className="footer-col">
