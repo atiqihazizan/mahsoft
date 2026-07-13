@@ -463,16 +463,7 @@ router.get('/:id/pdf', [
       await generatePdf('QUOTATION', id);
     }
 
-    const quote = await prisma.quote.findUnique({
-      where: { id },
-      select: { pdfPath: true }
-    });
-
-    if (!quote?.pdfPath) {
-      return notFound(res, 'PDF tidak ditemui');
-    }
-
-    const fullPath = path.join(__dirname, '..', quote.pdfPath);
+    const fullPath = getPdfPath('QUOTATION', id);
     res.sendFile(fullPath);
   } catch (err) {
     console.error('Error serving quote PDF:', err);

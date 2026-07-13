@@ -538,16 +538,7 @@ router.get('/:id/pdf', [
       await generatePdf('INVOICE', id);
     }
 
-    const invoice = await prisma.invoice.findUnique({
-      where: { id },
-      select: { pdfPath: true }
-    });
-
-    if (!invoice?.pdfPath) {
-      return notFound(res, 'PDF tidak ditemui');
-    }
-
-    const fullPath = path.join(__dirname, '..', invoice.pdfPath);
+    const fullPath = getPdfPath('INVOICE', id);
     res.sendFile(fullPath);
   } catch (err) {
     console.error('Error serving invoice PDF:', err);
