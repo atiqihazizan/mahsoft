@@ -320,12 +320,12 @@ export const invoicesAPI = {
     return `${baseURL}/api/v1/invoices/${id}/pdf`
   },
 
-  sendEmail: async (id) => {
-    return apiClient.post(`/api/v1/invoices/${id}/email`, {})
+  sendEmail: async (id, data = {}) => {
+    return apiClient.post(`/api/v1/invoices/${id}/email`, data)
   },
 
-  sendWhatsApp: async (id) => {
-    return apiClient.post(`/api/v1/invoices/${id}/whatsapp`, {})
+  sendWhatsApp: async (id, data = {}) => {
+    return apiClient.post(`/api/v1/invoices/${id}/whatsapp`, data)
   }
 }
 
@@ -368,12 +368,12 @@ export const quotesAPI = {
     return `${baseURL}/api/v1/quotes/${id}/pdf`
   },
 
-  sendEmail: async (id) => {
-    return apiClient.post(`/api/v1/quotes/${id}/email`, {})
+  sendEmail: async (id, data = {}) => {
+    return apiClient.post(`/api/v1/quotes/${id}/email`, data)
   },
 
-  sendWhatsApp: async (id) => {
-    return apiClient.post(`/api/v1/quotes/${id}/whatsapp`, {})
+  sendWhatsApp: async (id, data = {}) => {
+    return apiClient.post(`/api/v1/quotes/${id}/whatsapp`, data)
   }
 }
 

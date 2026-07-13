@@ -478,6 +478,7 @@ router.post('/:id/email', [
 ], async (req, res) => {
   try {
     const { id } = req.params;
+    const { to } = req.body;
 
     const quote = await prisma.quote.findUnique({
       where: { id },
@@ -485,7 +486,9 @@ router.post('/:id/email', [
     });
 
     if (!quote) return notFound(res, 'Sebut harga tidak ditemui');
-    if (!quote.customer?.email) return badRequest(res, 'Pelanggan tiada alamat emel');
+
+    const recipient = to || quote.customer?.email;
+    if (!recipient) return badRequest(res, 'Sila masukkan alamat emel penerima');
 
     const { generatePdf, getPdfPath } = require('../utils/pdfGenerator');
     const pdfPath = getPdfPath('QUOTATION', id);
@@ -498,9 +501,9 @@ router.post('/:id/email', [
     const pdfBuffer = require('fs').readFileSync(pdfPath);
 
     await sendEmail({
-      to: quote.customer.email,
+      to: recipient,
       subject: `Quotation ${quote.quoteNumber} from ${quote.company?.name || ''}`,
-      text: `Dear ${quote.customer.name},\n\nPlease find attached quotation ${quote.quoteNumber}.\n\nThank you.`,
+      text: `Dear ${quote.customer?.name || ''},\n\nPlease find attached quotation ${quote.quoteNumber}.\n\nThank you.`,
       attachments: [{ filename: `QUO-${quote.quoteNumber}.pdf`, content: pdfBuffer }]
     });
 
@@ -518,6 +521,7 @@ router.post('/:id/whatsapp', [
 ], async (req, res) => {
   try {
     const { id } = req.params;
+    const { phone: bodyPhone } = req.body;
 
     const quote = await prisma.quote.findUnique({
       where: { id },
@@ -526,13 +530,13 @@ router.post('/:id/whatsapp', [
 
     if (!quote) return notFound(res, 'Sebut harga tidak ditemui');
 
-    const phone = quote.customer?.mobile || quote.customer?.phone;
-    if (!phone) return badRequest(res, 'Pelanggan tiada nombor telefon');
+    const phone = bodyPhone || quote.customer?.mobile || quote.customer?.phone;
+    if (!phone) return badRequest(res, 'Sila masukkan nombor telefon penerima');
 
     const { generateWaLink } = require('../utils/whatsapp');
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const pdfUrl = `${baseUrl}/api/v1/quotes/${id}/pdf`;
-    const message = `Dear ${quote.customer.name},\nQuotation ${quote.quoteNumber} from ${quote.company?.name || ''}\n\nView: ${pdfUrl}`;
+    const message = `Dear ${quote.customer?.name || ''},\nQuotation ${quote.quoteNumber} from ${quote.company?.name || ''}\n\nView: ${pdfUrl}`;
     const waLink = generateWaLink(phone, message);
 
     if (!waLink) return badRequest(res, 'Nombor telefon tidak sah');

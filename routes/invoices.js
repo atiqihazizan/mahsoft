@@ -553,6 +553,7 @@ router.post('/:id/email', [
 ], async (req, res) => {
   try {
     const { id } = req.params;
+    const { to } = req.body;
 
     const invoice = await prisma.invoice.findUnique({
       where: { id },
@@ -560,7 +561,9 @@ router.post('/:id/email', [
     });
 
     if (!invoice) return notFound(res, 'Invois tidak ditemui');
-    if (!invoice.customer?.email) return badRequest(res, 'Pelanggan tiada alamat emel');
+
+    const recipient = to || invoice.customer?.email;
+    if (!recipient) return badRequest(res, 'Sila masukkan alamat emel penerima');
 
     const { generatePdf, getPdfPath } = require('../utils/pdfGenerator');
     const pdfPath = getPdfPath('INVOICE', id);
@@ -573,9 +576,9 @@ router.post('/:id/email', [
     const pdfBuffer = require('fs').readFileSync(pdfPath);
 
     await sendEmail({
-      to: invoice.customer.email,
+      to: recipient,
       subject: `Invoice ${invoice.invoiceNumber} from ${invoice.company?.name || ''}`,
-      text: `Dear ${invoice.customer.name},\n\nPlease find attached invoice ${invoice.invoiceNumber}.\n\nThank you.`,
+      text: `Dear ${invoice.customer?.name || ''},\n\nPlease find attached invoice ${invoice.invoiceNumber}.\n\nThank you.`,
       attachments: [{ filename: `INV-${invoice.invoiceNumber}.pdf`, content: pdfBuffer }]
     });
 
@@ -593,6 +596,7 @@ router.post('/:id/whatsapp', [
 ], async (req, res) => {
   try {
     const { id } = req.params;
+    const { phone: bodyPhone } = req.body;
 
     const invoice = await prisma.invoice.findUnique({
       where: { id },
@@ -601,13 +605,13 @@ router.post('/:id/whatsapp', [
 
     if (!invoice) return notFound(res, 'Invois tidak ditemui');
 
-    const phone = invoice.customer?.mobile || invoice.customer?.phone;
-    if (!phone) return badRequest(res, 'Pelanggan tiada nombor telefon');
+    const phone = bodyPhone || invoice.customer?.mobile || invoice.customer?.phone;
+    if (!phone) return badRequest(res, 'Sila masukkan nombor telefon penerima');
 
     const { generateWaLink } = require('../utils/whatsapp');
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const pdfUrl = `${baseUrl}/api/v1/invoices/${id}/pdf`;
-    const message = `Dear ${invoice.customer.name},\nInvoice ${invoice.invoiceNumber} from ${invoice.company?.name || ''}\n\nView: ${pdfUrl}`;
+    const message = `Dear ${invoice.customer?.name || ''},\nInvoice ${invoice.invoiceNumber} from ${invoice.company?.name || ''}\n\nView: ${pdfUrl}`;
     const waLink = generateWaLink(phone, message);
 
     if (!waLink) return badRequest(res, 'Nombor telefon tidak sah');
