@@ -416,17 +416,17 @@ export const DiscountInput = ({
   const handlePercentChange = (e) => {
     const pct = parseFloat(e.target.value) || 0
     const amount = subtotal > 0 ? Math.round(pct * subtotal * 100 / 100) / 100 : 0
-    onChange({ discountPercent: Math.round(pct * 100) / 100, discountAmount: amount })
+    onChange({ discountPercent: Math.round(pct * 100) / 100, discountAmount: amount, discountLabel })
   }
 
   const handleAmountChange = (e) => {
     const amount = parseFloat(e.target.value) || 0
     const pct = subtotal > 0 ? Math.round(amount / subtotal * 100 * 100) / 100 : 0
-    onChange({ discountPercent: pct, discountAmount: Math.round(amount * 100) / 100 })
+    onChange({ discountPercent: pct, discountAmount: Math.round(amount * 100) / 100, discountLabel })
   }
 
   const handleLabelChange = (e) => {
-    onChange({ discountLabel: e.target.value })
+    onChange({ discountPercent, discountAmount, discountLabel: e.target.value })
   }
 
   return (

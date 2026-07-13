@@ -368,6 +368,31 @@ const PrintA4 = ({
               </p>
             ) : null
           )}
+          <hr style={{ margin: '0.4rem 0', borderColor: '#e5e7eb' }} />
+          <table className="inv-amt" style={{ width: '100%' }}>
+            <tbody>
+              <tr>
+                <td>Subtotal</td>
+                <td><CurrencyFormat amount={subtotal} /></td>
+              </tr>
+              {discountAmount > 0 && (
+                <tr>
+                  <td>{discountLabel || 'Discount'}{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
+                  <td><CurrencyFormat amount={-discountAmount} /></td>
+                </tr>
+              )}
+              {tax > 0 && (
+                <tr>
+                  <td>Tax</td>
+                  <td><CurrencyFormat amount={tax} /></td>
+                </tr>
+              )}
+              <tr style={{ fontWeight: 700, fontSize: '0.8rem' }}>
+                <td>Total</td>
+                <td><CurrencyFormat amount={total} /></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -429,40 +454,6 @@ const PrintA4 = ({
                   </div>
                 </td>
               )}
-              <td style={{ alignSelf: 'center' }}>
-                <table className="inv-amt">
-                  <tbody>
-                      {documentType === 'INVOICE' && (
-                        <>
-                          <tr>
-                            <td>Subtotal</td>
-                            <td><CurrencyFormat amount={subtotal} /></td>
-                          </tr>
-                          {discountAmount > 0 && (
-                            <tr>
-                              <td>{discountLabel || 'Discount'}{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
-                              <td><CurrencyFormat amount={-discountAmount} /></td>
-                            </tr>
-                          )}
-                          <tr>
-                            <td>Tax</td>
-                            <td><CurrencyFormat amount={tax} /></td>
-                          </tr>
-                        </>
-                      )}
-                      {discountAmount > 0 && documentType !== 'INVOICE' && (
-                        <tr>
-                          <td>{discountLabel || 'Discount'}{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
-                          <td><CurrencyFormat amount={-discountAmount} /></td>
-                        </tr>
-                      )}
-                      <tr>
-                        <td>Total</td>
-                        <td><CurrencyFormat amount={total} /></td>
-                      </tr>
-                  </tbody>
-                </table>
-              </td>
             </tr>
           </tbody>
         </table>

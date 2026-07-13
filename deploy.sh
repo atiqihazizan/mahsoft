@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 
 # Konfigurasi
 SERVER="mahsites"
-REMOTE_PATH="/var/www/mahsoft/html/v3"
+REMOTE_PATH="/var/www/mahsoft/html"
 LOCAL_PATH="$(pwd)"
 PROJECT_NAME="mahsoft-v1"
 
