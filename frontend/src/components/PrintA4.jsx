@@ -238,6 +238,8 @@ const PrintA4 = ({
   validUntil = '',
   items = [],
   subtotal = 0,
+  discountPercent = 0,
+  discountAmount = 0,
   tax = 0,
   total = 0,
   company = {},
@@ -429,22 +431,34 @@ const PrintA4 = ({
               <td style={{ alignSelf: 'center' }}>
                 <table className="inv-amt">
                   <tbody>
-                    {documentType === 'INVOICE' && (
-                      <>
+                      {documentType === 'INVOICE' && (
+                        <>
+                          <tr>
+                            <td>Subtotal</td>
+                            <td><CurrencyFormat amount={subtotal} /></td>
+                          </tr>
+                          {discountAmount > 0 && (
+                            <tr>
+                              <td>Discount{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
+                              <td><CurrencyFormat amount={-discountAmount} /></td>
+                            </tr>
+                          )}
+                          <tr>
+                            <td>Tax</td>
+                            <td><CurrencyFormat amount={tax} /></td>
+                          </tr>
+                        </>
+                      )}
+                      {discountAmount > 0 && documentType !== 'INVOICE' && (
                         <tr>
-                          <td>Subtotal</td>
-                          <td><CurrencyFormat amount={subtotal} /></td>
+                          <td>Discount{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</td>
+                          <td><CurrencyFormat amount={-discountAmount} /></td>
                         </tr>
-                        <tr>
-                          <td>Tax</td>
-                          <td><CurrencyFormat amount={tax} /></td>
-                        </tr>
-                      </>
-                    )}
-                    <tr>
-                      <td>Total</td>
-                      <td><CurrencyFormat amount={total} /></td>
-                    </tr>
+                      )}
+                      <tr>
+                        <td>Total</td>
+                        <td><CurrencyFormat amount={total} /></td>
+                      </tr>
                   </tbody>
                 </table>
               </td>

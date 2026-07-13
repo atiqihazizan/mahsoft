@@ -37,10 +37,13 @@ const updateReceiptValidation = [
 // Helper function to generate receipt number is imported from utils/numberGenerator
 
 // Helper function to calculate totals
-const calculateTotals = (items, taxRate = 0.06) => {
+const calculateTotals = (items, taxRate = 0.06, discountPercent = 0, discountAmount = 0) => {
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity) * parseFloat(item.unitPrice)), 0);
   const taxAmount = subtotal * taxRate;
-  const total = subtotal + taxAmount;
+  const discPct = parseFloat(discountPercent) || 0;
+  const discAmt = parseFloat(discountAmount) || 0;
+  const calculatedDiscount = discPct > 0 ? subtotal * discPct / 100 : discAmt;
+  const total = subtotal - calculatedDiscount + taxAmount;
   
   return {
     subtotal: subtotal.toFixed(2),
@@ -142,7 +145,7 @@ router.get('/:id', [
 // POST /api/v1/receipts - Cipta resit baru
 router.post('/', createReceiptValidation, async (req, res) => {
   try {
-    const { companyId, userId, customerId, date, subject, items, notes, taxRate } = req.body;
+    const { companyId, userId, customerId, date, subject, items, notes, taxRate, discountPercent, discountAmount } = req.body;
 
     // Verify related records exist
     const [company, user, customer] = await Promise.all([
@@ -160,7 +163,9 @@ router.post('/', createReceiptValidation, async (req, res) => {
 
     // Calculate totals dengan taxRate dari request (peratus → decimal). Default 0.06 jika tidak diberi.
     const normalizedTaxRate = (taxRate !== undefined && taxRate !== null) ? (parseFloat(taxRate) / 100) : 0.06;
-    const { subtotal, taxAmount, total } = calculateTotals(items, normalizedTaxRate);
+    const discPct = parseFloat(discountPercent || 0);
+    const discAmt = parseFloat(discountAmount || 0);
+    const { subtotal, taxAmount, total } = calculateTotals(items, normalizedTaxRate, discPct, discAmt);
 
     // Prepare items data with calculated amounts
     const itemsWithAmounts = items.map(item => ({
@@ -181,6 +186,8 @@ router.post('/', createReceiptValidation, async (req, res) => {
         date: new Date(date),
         subject,
         subtotal: parseFloat(subtotal),
+        discountPercent: discPct,
+        discountAmount: discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt,
         taxAmount: parseFloat(taxAmount),
         total: parseFloat(total),
         notes,
@@ -255,12 +262,31 @@ router.put('/:id', updateReceiptValidation, async (req, res) => {
       const normalizedTaxRate = (updateData.taxRate !== undefined && updateData.taxRate !== null)
         ? (parseFloat(updateData.taxRate) / 100)
         : 0.06;
-      const { subtotal, taxAmount, total } = calculateTotals(itemsWithAmounts, normalizedTaxRate);
+      const discPct = parseFloat(updateData.discountPercent || 0);
+      const discAmt = parseFloat(updateData.discountAmount || 0);
+      const { subtotal, taxAmount, total } = calculateTotals(itemsWithAmounts, normalizedTaxRate, discPct, discAmt);
       recalculatedFields = {
         items: itemsWithAmounts,
         subtotal: parseFloat(subtotal),
+        discountPercent: discPct,
+        discountAmount: discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt,
         taxAmount: parseFloat(taxAmount),
         total: parseFloat(total)
+      };
+    }
+
+    // Handle discount update when items are not provided
+    if (!Array.isArray(updateData.items) && (updateData.discountPercent !== undefined || updateData.discountAmount !== undefined)) {
+      const sub = existingReceipt.subtotal;
+      const tax = existingReceipt.taxAmount;
+      const discPct = parseFloat(updateData.discountPercent ?? existingReceipt.discountPercent ?? 0);
+      const discAmt = parseFloat(updateData.discountAmount ?? existingReceipt.discountAmount ?? 0);
+      const calculatedDiscount = discPct > 0 ? sub * discPct / 100 : discAmt;
+      recalculatedFields = {
+        ...recalculatedFields,
+        discountPercent: discPct,
+        discountAmount: parseFloat(calculatedDiscount.toFixed(2)),
+        total: parseFloat((sub - calculatedDiscount + tax).toFixed(2))
       };
     }
 

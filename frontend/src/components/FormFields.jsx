@@ -402,3 +402,90 @@ export const DescriptionField = ({
     </div>
   )
 }
+
+// Discount Input component with percentage/fixed toggle
+export const DiscountInput = ({
+  discountPercent = 0,
+  discountAmount = 0,
+  subtotal = 0,
+  onChange,
+}) => {
+  const [mode, setMode] = useState('percentage') // 'percentage' | 'fixed'
+
+  const handlePercentChange = (e) => {
+    const pct = parseFloat(e.target.value) || 0
+    const amount = subtotal > 0 ? Math.round(pct * subtotal * 100 / 100) / 100 : 0
+    onChange({ discountPercent: Math.round(pct * 100) / 100, discountAmount: amount })
+  }
+
+  const handleAmountChange = (e) => {
+    const amount = parseFloat(e.target.value) || 0
+    const pct = subtotal > 0 ? Math.round(amount / subtotal * 100 * 100) / 100 : 0
+    onChange({ discountPercent: pct, discountAmount: Math.round(amount * 100) / 100 })
+  }
+
+  return (
+    <div className="w-full">
+      <div className="flex gap-2 mb-2">
+        <button
+          type="button"
+          onClick={() => setMode('percentage')}
+          className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+            mode === 'percentage'
+              ? 'bg-green-600 text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          Percentage (%)
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('fixed')}
+          className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+            mode === 'fixed'
+              ? 'bg-green-600 text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          Fixed (RM)
+        </button>
+      </div>
+      {mode === 'percentage' ? (
+        <div className="w-full">
+          <input
+            type="number"
+            value={discountPercent || ''}
+            onChange={handlePercentChange}
+            min={0}
+            max={100}
+            step="0.01"
+            placeholder="Discount %"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          {discountAmount > 0 && (
+            <p className="mt-1 text-xs text-gray-500">
+              RM {discountAmount.toFixed(2)}
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="w-full">
+          <input
+            type="number"
+            value={discountAmount || ''}
+            onChange={handleAmountChange}
+            min={0}
+            step="0.01"
+            placeholder="Discount RM"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          {discountPercent > 0 && (
+            <p className="mt-1 text-xs text-gray-500">
+              {discountPercent.toFixed(2)}% off
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

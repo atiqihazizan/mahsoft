@@ -222,8 +222,12 @@ router.post('/', authenticateToken, createDeliveryOrderValidation, async (req, r
       };
     });
 
+    const { discountPercent, discountAmount } = req.body;
+    const discPct = parseFloat(discountPercent || 0);
+    const discAmt = parseFloat(discountAmount || 0);
+    const calculatedDiscount = discPct > 0 ? subtotal * discPct / 100 : discAmt;
     const taxAmount = subtotal * 0.06; // 6% tax
-    const total = subtotal + taxAmount;
+    const total = subtotal - calculatedDiscount + taxAmount;
 
     // Create delivery order with details
     const deliveryOrder = await prisma.deliveryOrder.create({
@@ -232,6 +236,8 @@ router.post('/', authenticateToken, createDeliveryOrderValidation, async (req, r
         date: new Date(date),
         deliveryDate: new Date(deliveryDate),
         subtotal,
+        discountPercent: discPct,
+        discountAmount: calculatedDiscount,
         taxAmount,
         total,
         deliveryAddress,
@@ -282,7 +288,9 @@ router.put('/:id', authenticateToken, updateDeliveryOrderValidation, async (req,
       deliveryAddress,
       contactPerson,
       contactPhone,
-      notes
+      notes,
+      discountPercent,
+      discountAmount
     } = req.body;
 
     // Check if delivery order exists
@@ -294,17 +302,32 @@ router.put('/:id', authenticateToken, updateDeliveryOrderValidation, async (req,
       return notFound(res, 'Delivery order tidak dijumpai');
     }
 
+    // Build update data
+    const updateData = {
+      ...(date && { date: new Date(date) }),
+      ...(deliveryDate && { deliveryDate: new Date(deliveryDate) }),
+      ...(status && { status }),
+      ...(deliveryAddress !== undefined && { deliveryAddress }),
+      ...(contactPerson !== undefined && { contactPerson }),
+      ...(contactPhone !== undefined && { contactPhone }),
+      ...(notes !== undefined && { notes })
+    };
+
+    // Handle discount update and recalculate total
+    if (discountPercent !== undefined || discountAmount !== undefined) {
+      const sub = existingDeliveryOrder.subtotal;
+      const tax = existingDeliveryOrder.taxAmount;
+      const discPct = parseFloat(discountPercent ?? existingDeliveryOrder.discountPercent ?? 0);
+      const discAmt = parseFloat(discountAmount ?? existingDeliveryOrder.discountAmount ?? 0);
+      const calculatedDiscount = discPct > 0 ? sub * discPct / 100 : discAmt;
+      updateData.discountPercent = discPct;
+      updateData.discountAmount = calculatedDiscount;
+      updateData.total = parseFloat((sub - calculatedDiscount + tax).toFixed(2));
+    }
+
     const deliveryOrder = await prisma.deliveryOrder.update({
       where: { id },
-      data: {
-        ...(date && { date: new Date(date) }),
-        ...(deliveryDate && { deliveryDate: new Date(deliveryDate) }),
-        ...(status && { status }),
-        ...(deliveryAddress !== undefined && { deliveryAddress }),
-        ...(contactPerson !== undefined && { contactPerson }),
-        ...(contactPhone !== undefined && { contactPhone }),
-        ...(notes !== undefined && { notes })
-      },
+      data: updateData,
       include: {
         company: {
           select: { name: true, label: true }

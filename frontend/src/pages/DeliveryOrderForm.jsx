@@ -71,6 +71,8 @@ const DeliveryOrderForm = () => {
               })) || [],
               subtotal: parseFloat(doData.subtotal || 0),
               taxAmount: parseFloat(doData.taxAmount || 0),
+              discountPercent: parseFloat(doData.discountPercent || 0),
+              discountAmount: parseFloat(doData.discountAmount || 0),
               total: parseFloat(doData.total || 0)
             }
             
@@ -101,6 +103,8 @@ const DeliveryOrderForm = () => {
             subtotal: 0,
             taxRate: 6,
             taxAmount: 0,
+            discountPercent: 0,
+            discountAmount: 0,
             total: 0
           }
           setInitialData(defaultData)
@@ -143,7 +147,9 @@ const DeliveryOrderForm = () => {
           unitPrice: item.unitPrice,
           amount: item.quantity * item.unitPrice,
           deliveredQty: item.deliveredQty || 0
-        }))
+        })),
+        discountPercent: formData.discountPercent || 0,
+        discountAmount: formData.discountAmount || 0,
       }
 
       // Add userId for create mode

@@ -74,6 +74,8 @@ export const createDocumentData = (data, type) => {
     customer: createCustomerData(data.customer),
     items: createItemsData(data.items),
     subtotal: data.subtotal != null ? parseFloat(data.subtotal) : 0,
+    discountPercent: data.discountPercent != null ? parseFloat(data.discountPercent) : 0,
+    discountAmount: data.discountAmount != null ? parseFloat(data.discountAmount) : 0,
     tax: data.taxAmount != null ? parseFloat(data.taxAmount) : 0,
     total: data.total != null ? parseFloat(data.total) : 0,
     bank: createBankData(data.company),

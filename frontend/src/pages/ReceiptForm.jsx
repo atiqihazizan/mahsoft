@@ -56,6 +56,8 @@ const ReceiptForm = () => {
       taxRate: receipt.taxAmount && receipt.subtotal ? 
         ((parseFloat(receipt.taxAmount) / parseFloat(receipt.subtotal)) * 100) : 0,
       taxAmount: parseFloat(receipt.taxAmount) || 0,
+      discountPercent: parseFloat(receipt.discountPercent) || 0,
+      discountAmount: parseFloat(receipt.discountAmount) || 0,
       total: parseFloat(receipt.total) || 0
     }
   }
@@ -141,6 +143,8 @@ const ReceiptForm = () => {
         subject: formData.subject,
         taxRate: typeof formData.taxRate === 'number' ? formData.taxRate : 0,
         notes: formData.notes,
+        discountPercent: formData.discountPercent || 0,
+        discountAmount: formData.discountAmount || 0,
         items: formData.items.map(item => ({
           description: item.description,
           quantity: item.quantity,

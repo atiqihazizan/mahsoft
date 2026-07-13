@@ -65,13 +65,16 @@ const generateQuoteNumberLegacy = async () => {
 };
 
 // Helper function to calculate totals
-const calculateTotals = (items, taxRate = 0) => {
+const calculateTotals = (items, taxRate = 0, discountPercent = 0, discountAmount = 0) => {
   const subtotal = items.reduce((sum, item) => {
     return sum + (parseFloat(item.quantity) * parseFloat(item.unitPrice));
   }, 0);
   
   const taxAmount = subtotal * taxRate;
-  const total = subtotal + taxAmount;
+  const discPct = parseFloat(discountPercent) || 0;
+  const discAmt = parseFloat(discountAmount) || 0;
+  const calculatedDiscount = discPct > 0 ? subtotal * discPct / 100 : discAmt;
+  const total = subtotal - calculatedDiscount + taxAmount;
   
   return {
     subtotal: subtotal.toFixed(2),
@@ -163,7 +166,7 @@ router.get('/:id', [
 // POST /api/v1/quotes - Cipta sebut harga baru
 router.post('/', createQuoteValidation, async (req, res) => {
   try {
-    const { companyId, userId, customerId, date, validUntil, subject, items, notes } = req.body;
+    const { companyId, userId, customerId, date, validUntil, subject, items, notes, discountPercent, discountAmount } = req.body;
 
     // Verify related records exist
     const [company, user, customer] = await Promise.all([
@@ -181,7 +184,9 @@ router.post('/', createQuoteValidation, async (req, res) => {
 
     // Calculate totals (respect client taxRate if provided; else default 0.06)
   const inputTaxRate = typeof req.body.taxRate === 'number' ? (req.body.taxRate / 100) : 0.06;
-    const { subtotal, taxAmount, total } = calculateTotals(items, inputTaxRate);
+  const discPct = parseFloat(discountPercent || 0);
+  const discAmt = parseFloat(discountAmount || 0);
+    const { subtotal, taxAmount, total } = calculateTotals(items, inputTaxRate, discPct, discAmt);
 
     // Prepare items data with calculated amounts
   const itemsWithAmounts = items.map(item => ({
@@ -203,6 +208,8 @@ router.post('/', createQuoteValidation, async (req, res) => {
         validUntil: new Date(validUntil),
         subject,
         subtotal: parseFloat(subtotal),
+        discountPercent: discPct,
+        discountAmount: discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt,
         taxAmount: parseFloat(taxAmount),
         total: parseFloat(total),
         notes,
@@ -270,12 +277,31 @@ router.put('/:id', updateQuoteValidation, async (req, res) => {
         ...(item.unit && { unit: item.unit })
       }));
       const updateTaxRate = typeof updateData.taxRate === 'number' ? (updateData.taxRate / 100) : 0;
-      const { subtotal, taxAmount, total } = calculateTotals(itemsWithAmounts, updateTaxRate);
+      const discPct = parseFloat(updateData.discountPercent || 0);
+      const discAmt = parseFloat(updateData.discountAmount || 0);
+      const { subtotal, taxAmount, total } = calculateTotals(itemsWithAmounts, updateTaxRate, discPct, discAmt);
       recalculatedFields = {
         items: itemsWithAmounts,
         subtotal: parseFloat(subtotal),
+        discountPercent: discPct,
+        discountAmount: discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt,
         taxAmount: parseFloat(taxAmount),
         total: parseFloat(total)
+      };
+    }
+
+    // Handle discount update when items are not provided
+    if (!Array.isArray(updateData.items) && (updateData.discountPercent !== undefined || updateData.discountAmount !== undefined)) {
+      const sub = existingQuote.subtotal;
+      const tax = existingQuote.taxAmount;
+      const discPct = parseFloat(updateData.discountPercent ?? existingQuote.discountPercent ?? 0);
+      const discAmt = parseFloat(updateData.discountAmount ?? existingQuote.discountAmount ?? 0);
+      const calculatedDiscount = discPct > 0 ? sub * discPct / 100 : discAmt;
+      recalculatedFields = {
+        ...recalculatedFields,
+        discountPercent: discPct,
+        discountAmount: parseFloat(calculatedDiscount.toFixed(2)),
+        total: parseFloat((sub - calculatedDiscount + tax).toFixed(2))
       };
     }
 
@@ -338,6 +364,8 @@ router.post('/:id/convert-to-invoice', [
         date: new Date(),
         dueDate: new Date(dueDate || Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days
         subtotal: quote.subtotal,
+        discountPercent: quote.discountPercent,
+        discountAmount: quote.discountAmount,
         taxAmount: quote.taxAmount,
         total: quote.total,
         notes: quote.notes,

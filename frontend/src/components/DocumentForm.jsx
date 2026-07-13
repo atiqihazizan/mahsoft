@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Select from 'react-select'
 import { CurrencyFormat, DateFormat } from './index'
-import { DescriptionField } from './FormFields'
+import { DescriptionField, DiscountInput } from './FormFields'
 import { customersAPI } from '../utils/apiClient'
 
 const autoShort = (name) => {
@@ -55,6 +55,8 @@ const DocumentForm = ({
     subtotal: 0,
     taxRate: 0, // Default 0% tax
     taxAmount: 0,
+    discountPercent: 0,
+    discountAmount: 0,
     total: 0
   })
 
@@ -96,12 +98,12 @@ const DocumentForm = ({
   // Calculate totals whenever items change
   useEffect(() => {
     calculateTotals()
-  }, [formData.items, formData.taxRate])
+  }, [formData.items, formData.taxRate, formData.discountAmount])
 
   const calculateTotals = () => {
     const subtotal = formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
     const taxAmount = (subtotal * formData.taxRate) / 100
-    const total = subtotal + taxAmount
+    const total = subtotal + taxAmount - (formData.discountAmount || 0)
 
     setFormData(prev => ({
       ...prev,
@@ -545,6 +547,22 @@ const DocumentForm = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
+            {/* Discount */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Discount
+              </label>
+              <DiscountInput
+                discountPercent={formData.discountPercent}
+                discountAmount={formData.discountAmount}
+                subtotal={formData.subtotal}
+                onChange={({ discountPercent, discountAmount }) => {
+                  setIsDirty(true)
+                  setFormData(prev => ({ ...prev, discountPercent, discountAmount }))
+                }}
+              />
+            </div>
           </div>
 
           {/* Items - Card Layout */}
@@ -688,6 +706,14 @@ const DocumentForm = ({
                     <CurrencyFormat amount={formData.taxAmount} />
                   </span>
                 </div>
+                {formData.discountAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Discount:</span>
+                    <span className="font-medium text-red-500">
+                      -<CurrencyFormat amount={formData.discountAmount} />
+                    </span>
+                  </div>
+                )}
                 <div className="border-t pt-2">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total Amount:</span>

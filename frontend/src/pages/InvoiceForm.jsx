@@ -57,6 +57,8 @@ const InvoiceForm = () => {
       taxRate: invoice.taxAmount && invoice.subtotal ? 
         ((parseFloat(invoice.taxAmount) / parseFloat(invoice.subtotal)) * 100) : 0,
       taxAmount: parseFloat(invoice.taxAmount) || 0,
+      discountPercent: parseFloat(invoice.discountPercent) || 0,
+      discountAmount: parseFloat(invoice.discountAmount) || 0,
       total: parseFloat(invoice.total) || 0
     }
   }
@@ -143,6 +145,8 @@ const InvoiceForm = () => {
         subject: formData.subject,
         taxRate: typeof formData.taxRate === 'number' ? formData.taxRate : 0,
         notes: formData.notes,
+        discountPercent: formData.discountPercent || 0,
+        discountAmount: formData.discountAmount || 0,
         items: formData.items.map(item => ({
           description: item.description,
           quantity: item.quantity,

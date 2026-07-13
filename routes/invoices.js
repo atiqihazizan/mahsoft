@@ -44,10 +44,13 @@ const updateInvoiceValidation = [
 // Helper function to generate invoice number is imported from utils/numberGenerator
 
 // Helper function to calculate totals
-const calculateTotals = (items, taxRate = 0.06) => {
+const calculateTotals = (items, taxRate = 0.06, discountPercent = 0, discountAmount = 0) => {
   const subtotal = items.reduce((sum, item) =>  sum + (parseFloat(item.quantity) * parseFloat(item.unitPrice)), 0);
   const taxAmount = subtotal * taxRate;
-  const total = subtotal + taxAmount;
+  const discPct = parseFloat(discountPercent) || 0;
+  const discAmt = parseFloat(discountAmount) || 0;
+  const calculatedDiscount = discPct > 0 ? subtotal * discPct / 100 : discAmt;
+  const total = subtotal - calculatedDiscount + taxAmount;
   
   return {
     subtotal: subtotal.toFixed(2),
@@ -151,7 +154,7 @@ router.get('/:id', [
 // POST /api/v1/invoices - Cipta invois baru
 router.post('/', createInvoiceValidation, async (req, res) => {
   try {
-    const { companyId, userId, customerId, date, dueDate, subject, items, notes, quoteId, taxRate } = req.body;
+    const { companyId, userId, customerId, date, dueDate, subject, items, notes, quoteId, taxRate, discountPercent, discountAmount } = req.body;
 
     // Verify related records exist
     const [company, user, customer] = await Promise.all([
@@ -175,7 +178,9 @@ router.post('/', createInvoiceValidation, async (req, res) => {
 
     // Calculate totals - taxRate dari frontend dalam peratus (contoh 6), normalize ke decimal
     const normalizedTaxRate = (taxRate !== undefined && taxRate !== null) ? (parseFloat(taxRate) / 100) : 0.06;
-    const { subtotal, taxAmount, total } = calculateTotals(items, normalizedTaxRate);
+    const discPct = parseFloat(discountPercent || 0);
+    const discAmt = parseFloat(discountAmount || 0);
+    const { subtotal, taxAmount, total } = calculateTotals(items, normalizedTaxRate, discPct, discAmt);
 
     // Prepare items data with calculated amounts
     const itemsWithAmounts = items.map(item => ({
@@ -198,6 +203,8 @@ router.post('/', createInvoiceValidation, async (req, res) => {
         dueDate: new Date(dueDate),
         subject,
         subtotal: parseFloat(subtotal),
+        discountPercent: discPct,
+        discountAmount: discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt,
         taxAmount: parseFloat(taxAmount),
         total: parseFloat(total),
         notes,
@@ -276,8 +283,12 @@ router.put('/:id', updateInvoiceValidation, async (req, res) => {
       const normalizedTaxRate = (updateData.taxRate !== undefined && updateData.taxRate !== null)
         ? (parseFloat(updateData.taxRate) / 100)
         : 0.06;
-      const { subtotal, taxAmount, total } = calculateTotals(updateData.items, normalizedTaxRate);
+      const discPct = parseFloat(updateData.discountPercent || 0);
+      const discAmt = parseFloat(updateData.discountAmount || 0);
+      const { subtotal, taxAmount, total } = calculateTotals(updateData.items, normalizedTaxRate, discPct, discAmt);
       invoiceUpdateData.subtotal = parseFloat(subtotal);
+      invoiceUpdateData.discountPercent = discPct;
+      invoiceUpdateData.discountAmount = discPct > 0 ? parseFloat(subtotal) * discPct / 100 : discAmt;
       invoiceUpdateData.taxAmount = parseFloat(taxAmount);
       invoiceUpdateData.total = parseFloat(total);
 
@@ -294,6 +305,18 @@ router.put('/:id', updateInvoiceValidation, async (req, res) => {
       }));
 
       invoiceUpdateData.items = itemsWithAmounts;
+    }
+
+    // Handle discount update when items are not provided
+    if (!Array.isArray(updateData.items) && (updateData.discountPercent !== undefined || updateData.discountAmount !== undefined)) {
+      const sub = existingInvoice.subtotal;
+      const tax = existingInvoice.taxAmount;
+      const discPct = parseFloat(updateData.discountPercent ?? existingInvoice.discountPercent ?? 0);
+      const discAmt = parseFloat(updateData.discountAmount ?? existingInvoice.discountAmount ?? 0);
+      const calculatedDiscount = discPct > 0 ? sub * discPct / 100 : discAmt;
+      invoiceUpdateData.discountPercent = discPct;
+      invoiceUpdateData.discountAmount = parseFloat(calculatedDiscount.toFixed(2));
+      invoiceUpdateData.total = parseFloat((sub - calculatedDiscount + tax).toFixed(2));
     }
 
     // Update invoice
@@ -447,6 +470,8 @@ router.post('/:id/convert-to-delivery-order', [
         date: new Date(),
         deliveryDate: new Date(deliveryDate || Date.now() + 7 * 24 * 60 * 60 * 1000), // Default 7 hari
         subtotal: invoice.subtotal,
+        discountPercent: invoice.discountPercent,
+        discountAmount: invoice.discountAmount,
         taxAmount: invoice.taxAmount,
         total: invoice.total,
         deliveryAddress: deliveryAddress || invoice.customer.address,
