@@ -310,6 +310,14 @@ export const invoicesAPI = {
 
   convertToDeliveryOrder: async (id, deliveryData = {}) => {
     return apiClient.post(`/api/v1/invoices/${id}/convert-to-delivery-order`, deliveryData)
+  },
+
+  generatePdf: async (id) => {
+    return apiClient.post(`/api/v1/invoices/${id}/pdf`)
+  },
+
+  getPdfUrl: (id) => {
+    return `${baseURL}/api/v1/invoices/${id}/pdf`
   }
 }
 
@@ -342,6 +350,14 @@ export const quotesAPI = {
 
   updateStatus: async (id, status) => {
     return apiClient.put(`/api/v1/quotes/${id}`, { status })
+  },
+
+  generatePdf: async (id) => {
+    return apiClient.post(`/api/v1/quotes/${id}/pdf`)
+  },
+
+  getPdfUrl: (id) => {
+    return `${baseURL}/api/v1/quotes/${id}/pdf`
   }
 }
 

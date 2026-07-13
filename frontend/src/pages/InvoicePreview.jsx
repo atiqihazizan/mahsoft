@@ -12,6 +12,8 @@ const InvoicePreview = () => {
       backPath="/invoices"
       editPath={(docId) => `/invoices/${docId}/edit`}
       apiGetById={invoicesAPI.getById}
+      apiGeneratePdf={invoicesAPI.generatePdf}
+      apiGetPdfUrl={invoicesAPI.getPdfUrl}
     />
   )
 }

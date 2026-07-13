@@ -62,6 +62,9 @@ app.use(express.static('public'));
 // Serve static files from public directory with /public/ prefix
 app.use('/public', express.static('public'));
 
+// Serve generated PDFs from storage directory
+app.use('/storage', express.static(path.join(__dirname, 'storage', 'app', 'public')));
+
 // Health check
 app.get('/health', (req, res) => {
   res.status(200).json({

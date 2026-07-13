@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const { body, param } = require('express-validator');
 const router = express.Router();
 const prisma = require('../utils/prisma');
@@ -503,6 +504,54 @@ router.post('/:id/convert-to-delivery-order', [
   } catch (err) {
     console.error('Error converting invoice to delivery order:', err);
     error(res, 'Ralat menukar invois kepada delivery order');
+  }
+});
+
+// POST /api/v1/invoices/:id/pdf - Generate PDF untuk invoice
+router.post('/:id/pdf', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { generatePdf } = require('../utils/pdfGenerator');
+    const pdfPath = await generatePdf('INVOICE', id);
+    success(res, { pdfPath }, 'PDF berjaya dijana');
+  } catch (err) {
+    console.error('Error generating invoice PDF:', err);
+    error(res, 'Ralat menjana PDF');
+  }
+});
+
+// GET /api/v1/invoices/:id/pdf - Serve PDF untuk invoice
+router.get('/:id/pdf', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { generatePdf, needsRegeneration, getPdfPath } = require('../utils/pdfGenerator');
+
+    const needsGen = await needsRegeneration('INVOICE', id);
+
+    if (needsGen) {
+      await generatePdf('INVOICE', id);
+    }
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      select: { pdfPath: true }
+    });
+
+    if (!invoice?.pdfPath) {
+      return notFound(res, 'PDF tidak ditemui');
+    }
+
+    const fullPath = path.join(__dirname, '..', invoice.pdfPath);
+    res.sendFile(fullPath);
+  } catch (err) {
+    console.error('Error serving invoice PDF:', err);
+    error(res, 'Ralat mendapatkan PDF');
   }
 });
 

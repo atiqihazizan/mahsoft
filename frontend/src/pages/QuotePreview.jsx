@@ -12,6 +12,8 @@ const QuotePreview = () => {
       backPath="/quotes"
       editPath={(docId) => `/quotes/${docId}/edit`}
       apiGetById={quotesAPI.getById}
+      apiGeneratePdf={quotesAPI.generatePdf}
+      apiGetPdfUrl={quotesAPI.getPdfUrl}
     />
   )
 }

@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const { body, param } = require('express-validator');
 const router = express.Router();
 const prisma = require('../utils/prisma');
@@ -428,6 +429,54 @@ router.delete('/:id', [
   } catch (err) {
     console.error('Error deleting quote:', err);
     error(res, 'Ralat memadam sebut harga');
+  }
+});
+
+// POST /api/v1/quotes/:id/pdf - Generate PDF untuk quotation
+router.post('/:id/pdf', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { generatePdf } = require('../utils/pdfGenerator');
+    const pdfPath = await generatePdf('QUOTATION', id);
+    success(res, { pdfPath }, 'PDF berjaya dijana');
+  } catch (err) {
+    console.error('Error generating quote PDF:', err);
+    error(res, 'Ralat menjana PDF');
+  }
+});
+
+// GET /api/v1/quotes/:id/pdf - Serve PDF untuk quotation
+router.get('/:id/pdf', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { generatePdf, needsRegeneration, getPdfPath } = require('../utils/pdfGenerator');
+
+    const needsGen = await needsRegeneration('QUOTATION', id);
+
+    if (needsGen) {
+      await generatePdf('QUOTATION', id);
+    }
+
+    const quote = await prisma.quote.findUnique({
+      where: { id },
+      select: { pdfPath: true }
+    });
+
+    if (!quote?.pdfPath) {
+      return notFound(res, 'PDF tidak ditemui');
+    }
+
+    const fullPath = path.join(__dirname, '..', quote.pdfPath);
+    res.sendFile(fullPath);
+  } catch (err) {
+    console.error('Error serving quote PDF:', err);
+    error(res, 'Ralat mendapatkan PDF');
   }
 });
 
