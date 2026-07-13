@@ -12,9 +12,28 @@ const formatCurrency = (amount) => {
 
 const renderWhatsAppText = (text) => {
   if (!text) return ''
-  return text
-    .replace(/\n/g, '<br />')
-    .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
+
+  const patterns = [
+    { regex: /\*\*([^*]+)\*\*/g, wrap: '<strong>$1</strong>' },
+    { regex: /\*([^*]+)\*/g, wrap: '<em>$1</em>' },
+    { regex: /~~([^~]+)~~/g, wrap: '<del>$1</del>' },
+    { regex: /`([^`]+)`/g, wrap: '<code>$1</code>' }
+  ]
+
+  return text.split('\n').map(line => {
+    if (line.trim() === '') return '<div style="height:16px"></div>'
+
+    let html = escapeHtml(line)
+    patterns.forEach(({ regex, wrap }) => {
+      html = html.replace(regex, wrap)
+    })
+
+    return `<div style="margin-bottom:0.25rem">${html}</div>`
+  }).join('')
+}
+
+const escapeHtml = (str) => {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 const css = `
@@ -73,7 +92,7 @@ hr { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid #080808; }
   gap: 2rem;
   margin-top: 0.4rem;
 }
-.footer-col { width: 48%; }
+.footer-col { width: 50%; }
 
 .pricing-table { width: 100%; border-collapse: collapse; }
 .pricing-table td { padding: 0.15rem 0; vertical-align: middle; }
@@ -89,12 +108,12 @@ hr { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid #080808; }
 .issuedby-section {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.1rem;
 }
 .issuedby-section .label { font-size: 0.7rem; color: #374151; }
 .issuedby-section .name { font-size: 0.8rem; font-weight: 600; margin: 0; }
 .issuedby-section .signature-line {
-  margin-top: 0.6rem;
+  margin-top: 0.0rem;
   width: 160px;
   border-top: 1px solid #374151;
   padding-top: 0.25rem;
@@ -125,7 +144,7 @@ hr { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid #080808; }
 }
 `
 
-const generateHTML = ({ documentType, company, customer, documentNumber, date, validUntil, items, subtotal, discountPercent, discountAmount, discountLabel, tax, total, bank, issuedBy, notes }) => {
+const generateHTML = ({ documentType, company, customer, documentNumber, date, validUntil, items, subtotal, discountPercent, discountAmount, discountLabel, tax, total, bank, issuedBy, notes, logoData }) => {
   const isInvoice = documentType === 'INVOICE'
   const hasDiscount = Number(discountAmount) > 0
   const hasTax = Number(tax) > 0 || (isInvoice && Number(tax) !== 0)
@@ -140,8 +159,8 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
     </tr>
   `).join('')
 
-  const logoHtml = company?.logo
-    ? `<img src="${company.logo}" alt="Logo" />`
+  const logoHtml = logoData
+    ? `<img src="${logoData}" alt="Logo" />`
     : `<div class="logo-placeholder"></div>`
 
   let pricingRows = ''
@@ -151,14 +170,14 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
     if (hasDiscount) {
       const label = discountLabel || 'Discount'
       const pct = discountPercent > 0 ? ` (${discountPercent}%)` : ''
-      pricingRows += `<tr><td>${label}${pct}</td><td class="negative">${formatCurrency(-discountAmount)}</td></tr>`
+      pricingRows += `<tr><td style="white-space: nowrap;">${label}${pct}</td><td class="negative">${formatCurrency(-discountAmount)}</td></tr>`
     }
 
     if (hasTax) {
       pricingRows += `<tr><td>Tax</td><td class="positive">${formatCurrency(tax)}</td></tr>`
     }
 
-    pricingRows += `<tr class="divider grand"><td>Grand Total</td><td>${formatCurrency(total)}</td></tr>`
+    pricingRows += `<tr class="divider1 grand"><td>Grand Total</td><td>${formatCurrency(total)}</td></tr>`
   } else {
     pricingRows += `<tr class="grand"><td>Total</td><td>${formatCurrency(total)}</td></tr>`
   }
@@ -235,7 +254,7 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
         ` : ''}
         <div class="issuedby-section">
           <p class="label">Issued By,</p>
-          <p class="name">${issuedByName}</p>
+          <p class="name" style="font-style: italic; margin-top:0.5rem; padding-bottom:1px">${issuedByName}</p>
           <div class="signature-line">(Signature)</div>
         </div>
       </div>

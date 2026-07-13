@@ -18,6 +18,7 @@ const PDFViewer = ({ pdfUrl, onLoad, onError }) => {
   const thumbnailContainerRef = useRef(null)
   const [thumbnails, setThumbnails] = useState([])
   const renderTaskRef = useRef(null)
+  const thumbRenderTaskRef = useRef(null)
 
   useEffect(() => {
     if (!pdfUrl) return
@@ -47,11 +48,12 @@ const PDFViewer = ({ pdfUrl, onLoad, onError }) => {
     loadPdf()
   }, [pdfUrl])
 
-  const renderPage = useCallback(async (pdfDoc, pageNum, canvas, scaleVal) => {
+  const renderPage = useCallback(async (pdfDoc, pageNum, canvas, scaleVal, renderRef) => {
     if (!pdfDoc || !canvas) return
+    const ref = renderRef || renderTaskRef
     try {
-      if (renderTaskRef.current) {
-        await renderTaskRef.current.cancelled()
+      if (ref.current) {
+        ref.current.cancel()
       }
       const page = await pdfDoc.getPage(pageNum)
       const viewport = page.getViewport({ scale: scaleVal })
@@ -59,7 +61,7 @@ const PDFViewer = ({ pdfUrl, onLoad, onError }) => {
       canvas.height = viewport.height
       canvas.width = viewport.width
       const renderTask = page.render({ canvasContext: ctx, viewport })
-      renderTaskRef.current = renderTask
+      ref.current = renderTask
       await renderTask.promise
     } catch (err) {
       if (err?.name !== 'RenderingCancelledException') throw err
@@ -68,7 +70,7 @@ const PDFViewer = ({ pdfUrl, onLoad, onError }) => {
 
   useEffect(() => {
     if (pdf && canvasRef.current) {
-      renderPage(pdf, currentPage, canvasRef.current, scale)
+      renderPage(pdf, currentPage, canvasRef.current, scale, renderTaskRef)
     }
   }, [pdf, currentPage, scale, renderPage])
 
@@ -78,7 +80,7 @@ const PDFViewer = ({ pdfUrl, onLoad, onError }) => {
       const thumbs = []
       for (let i = 1; i <= Math.min(pdf.numPages, 20); i++) {
         const canvas = document.createElement('canvas')
-        await renderPage(pdf, i, canvas, 0.3)
+        await renderPage(pdf, i, canvas, 0.3, thumbRenderTaskRef)
         thumbs.push({ pageNum: i, dataUrl: canvas.toDataURL() })
       }
       setThumbnails(thumbs)

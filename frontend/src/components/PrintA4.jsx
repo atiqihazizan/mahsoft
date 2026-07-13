@@ -489,7 +489,7 @@ const PrintA4 = ({
 
   const renderPage = (pageItems, pageIndex) => (
     <div key={pageIndex} className={`sheet padding-20mm ${visible ? 'sheet-page' : ''}`}>
-      {renderHeader(company.logo)}
+      {renderHeader(logoImage)}
       {pageIndex > 0 && <p className="continuation-note">Continued from previous page...</p>}
       <div className="page-content">
         <div className="items-section">

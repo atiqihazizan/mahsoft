@@ -99,7 +99,7 @@ const DocumentPreview = ({
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
+    <div className="h-[calc(100vh-199px)] flex flex-col bg-gray-100">
       <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">

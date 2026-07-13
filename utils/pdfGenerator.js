@@ -6,6 +6,7 @@ const prisma = require('./prisma')
 const { generateHTML } = require('./pdfTemplate')
 
 const STORAGE_DIR = path.join(__dirname, '..', 'storage', 'app', 'public')
+const LOGO_PATH = path.join(__dirname, '..', 'public', 'logo', 'logo.png')
 
 const getDocDir = (docType) => {
   const dir = docType === 'INVOICE' ? 'invoices' : 'quotes'
@@ -57,9 +58,21 @@ const generatePdf = async (docType, id) => {
 
   const bank = doc.company?.bank || {}
 
+  let logoData = ''
+  try {
+    if (fs.existsSync(LOGO_PATH)) {
+      const ext = path.extname(LOGO_PATH).slice(1)
+      const base64 = fs.readFileSync(LOGO_PATH).toString('base64')
+      logoData = `data:image/${ext};base64,${base64}`
+    }
+  } catch (e) {
+    // logo non-critical
+  }
+
   const html = generateHTML({
     documentType: docType,
     company: doc.company,
+    logoData,
     customer: doc.customer,
     documentNumber: docType === 'INVOICE' ? doc.invoiceNumber : doc.quoteNumber,
     date: doc.date,
