@@ -80,12 +80,14 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 hr { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid #080808; }
 
 .issuence table { width: 100%; border-collapse: collapse; }
+.issuence table th { text-align: left; font-weight: 600; font-size: 0.6rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.3rem 0.4rem; border-bottom: 1px solid #e5e7eb; }
 .issuence table td { padding: 0.4rem 0.3rem 0.2rem; vertical-align: top; font-size: 0.7rem; line-height: 1.5; }
 .issuence table td:first-child { text-align: left; }
-.issuence table td.amount-cell { text-align: right; white-space: nowrap; font-weight: 600; width: 1%; }
-.issuence table td.qty-cell { text-align: center; white-space: nowrap; width: 1%; }
-.issuence table td.price-cell { text-align: right; white-space: nowrap; width: 1%; }
+.issuence table th.amount-cell, .issuence table td.amount-cell { text-align: right; white-space: nowrap; font-weight: 600; width: 1%; }
+.issuence table th.qty-cell, .issuence table td.qty-cell { text-align: center; white-space: nowrap; width: 1%; }
+.issuence table th.price-cell, .issuence table td.price-cell { text-align: right; white-space: nowrap; width: 1%; }
 .issuence table td div { line-height: 1.5; font-size: 0.8rem; }
+.issuence table tr.last-billable td { border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
 
 .info-section { margin-top: 1.5rem; page-break-inside: avoid; }
 .info-row { font-size: 0.7rem; line-height: 1.6; color: #374151; margin-bottom: 0.5rem; }
@@ -171,7 +173,9 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
   const billableItems = (items || []).filter(isBillable)
   const infoItems = (items || []).filter(item => !isBillable(item))
 
-  const itemRows = billableItems.map(item => {
+  const billableCount = billableItems.length
+  const itemRows = billableItems.map((item, i) => {
+    const isLast = i === billableCount - 1
     const show = showQtyPrice && needsQtyPrice(item)
     const qtyUnit = show ? (() => {
       const qty = Number(item.quantity) || ''
@@ -180,7 +184,7 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
     })() : ''
     const priceVal = show && Number(item.unitPrice) ? formatCurrency(item.unitPrice) : ''
     return `
-    <tr>
+    <tr${isLast ? ' class="last-billable"' : ''}>
       <td><div>${renderWhatsAppText(item.description || '')}</div></td>
       ${showQtyPrice ? `<td class="qty-cell">${qtyUnit}</td>` : ''}
       ${showQtyPrice ? `<td class="price-cell">${priceVal}</td>` : ''}
@@ -270,7 +274,18 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
     <hr />
 
     <div class="issuence">
-      <table>${itemRows || `<tr><td style="text-align:center;color:#999;padding:2rem 0" colspan="${showQtyPrice ? 4 : 2}">No items</td></tr>`}</table>
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            ${showQtyPrice ? '<th class="qty-cell">Qty</th><th class="price-cell">Price</th>' : ''}
+            <th class="amount-cell">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemRows || `<tr><td style="text-align:center;color:#999;padding:2rem 0" colspan="${showQtyPrice ? 4 : 2}">No items</td></tr>`}
+        </tbody>
+      </table>
     </div>
     ${infoHtml}
   </div>

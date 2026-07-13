@@ -62,6 +62,10 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 
 .issuence { margin-top: 2rem; }
 .issuence table { width: 100%; border-collapse: collapse; }
+.issuence table th { text-align: left; font-weight: 600; font-size: 0.6rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.3rem 0.4rem; border-bottom: 1px solid #e5e7eb; }
+.issuence table th.amount-cell { text-align: right; }
+.issuence table th.qty-cell { text-align: center; }
+.issuence table th.price-cell { text-align: right; }
 .issuence .rowbody { width: 100%; border-collapse: collapse; }
 .issuence .rowbody td { padding: 0.4rem 0.3rem 0.2rem; vertical-align: top; font-size: 0.7rem; line-height: 1.5; }
 .issuence .rowbody td:first-child { text-align: left; }
@@ -69,6 +73,7 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .issuence .rowbody td.qty-cell { text-align: center; white-space: nowrap; }
 .issuence .rowbody td.price-cell { text-align: right; white-space: nowrap; }
 .issuence .rowbody td div { line-height: 1.5; }
+.issuence .rowbody tr.last-billable td { border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
 
 .footer-two-col {
   display: flex;
@@ -401,11 +406,20 @@ const PrintA4 = ({
     )
   }
 
-  const renderItemsTable = (pageItems) => (
+  const renderItemsTable = (pageItems, isLastPage) => (
     <div className="issuence">
-      <table className="rowbody">
-        <tbody>
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            {showQtyPrice && <th className="qty-cell">Qty</th>}
+            {showQtyPrice && <th className="price-cell">Price</th>}
+            <th className="amount-cell">Amount</th>
+          </tr>
+        </thead>
+        <tbody className="rowbody">
           {pageItems.map((item, index) => {
+            const isLast = isLastPage && index === pageItems.length - 1
             const need = showQtyPrice && needsQtyPrice(item)
             const qtyNum = need ? Number(item.quantity) : ''
             const qtyUnit = need ? (
@@ -416,7 +430,7 @@ const PrintA4 = ({
             const priceVal = need && Number(item.unitPrice) ? <CurrencyFormat amount={item.unitPrice} /> : ''
             return (
               <React.Fragment key={item.id || index}>
-                <tr>
+                <tr className={isLast ? 'last-billable' : ''}>
                   <td>
                     <div style={{ fontSize: '0.8rem' }}>
                       {renderWhatsAppText(item.description || '')}
@@ -534,7 +548,7 @@ const PrintA4 = ({
       {pageIndex > 0 && <p className="continuation-note">Continued from previous page...</p>}
       <div className="page-content">
         <div className="items-section">
-          {pageItems.length > 0 && renderItemsTable(pageItems)}
+          {pageItems.length > 0 && renderItemsTable(pageItems, pageIndex === totalPageCount - 1)}
           {pageIndex === totalPageCount - 1 && renderInfoSection()}
         </div>
         {pageIndex === totalPageCount - 1 && renderClosingSection()}
