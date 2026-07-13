@@ -80,10 +80,12 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 hr { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid #080808; }
 
 .issuence table { width: 100%; border-collapse: collapse; }
-.issuence table td { padding: 0.4rem 0.5rem 0.25rem; vertical-align: top; font-size: 0.7rem; line-height: 1.6; }
+.issuence table td { padding: 0.4rem 0.3rem 0.2rem; vertical-align: top; font-size: 0.7rem; line-height: 1.5; }
 .issuence table td:first-child { text-align: left; }
-.issuence table td:last-child { text-align: right; width: 130px; font-weight: 600; }
-.issuence table td div { line-height: 1.6; font-size: 0.8rem; }
+.issuence table td.amount-cell { text-align: right; white-space: nowrap; font-weight: 600; width: 1%; }
+.issuence table td.qty-cell { text-align: center; white-space: nowrap; width: 1%; }
+.issuence table td.price-cell { text-align: right; white-space: nowrap; width: 1%; }
+.issuence table td div { line-height: 1.5; font-size: 0.8rem; }
 
 .footer-two-col {
   display: flex;
@@ -152,12 +154,33 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
 
   const hasBank = isInvoice && (bank?.accountNumber || bank?.bankName || bank?.accountHolder)
 
-  const itemRows = (items || []).map(item => `
+  const isBillable = (item) => Number(item.amount) > 0
+
+  const needsQtyPrice = (item) => {
+    if (!isBillable(item)) return false
+    const qty = Number(item.quantity)
+    const price = Number(item.unitPrice)
+    return qty > 1 || (qty && price && Number(item.amount) !== price * qty)
+  }
+
+  const showQtyPrice = (items || []).some(needsQtyPrice)
+
+  const itemRows = (items || []).map(item => {
+    const show = showQtyPrice && needsQtyPrice(item)
+    const qtyUnit = show ? (() => {
+      const qty = Number(item.quantity) || ''
+      const unit = item.unit || ''
+      return unit ? `${qty}<br><span style="font-size:0.6rem;color:#666;display:inline-block">${unit}</span>` : qty
+    })() : ''
+    const priceVal = show && Number(item.unitPrice) ? formatCurrency(item.unitPrice) : ''
+    return `
     <tr>
       <td><div>${renderWhatsAppText(item.description || '')}</div></td>
-      <td>${Number(item.amount) ? formatCurrency(item.amount) : ''}</td>
-    </tr>
-  `).join('')
+      ${showQtyPrice ? `<td class="qty-cell">${qtyUnit}</td>` : ''}
+      ${showQtyPrice ? `<td class="price-cell">${priceVal}</td>` : ''}
+      <td class="amount-cell">${Number(item.amount) ? formatCurrency(item.amount) : ''}</td>
+    </tr>`
+  }).join('')
 
   const logoHtml = logoData
     ? `<img src="${logoData}" alt="Logo" />`
@@ -233,7 +256,7 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
     <hr />
 
     <div class="issuence">
-      <table>${itemRows || '<tr><td style="text-align:center;color:#999;padding:2rem 0">No items</td></tr>'}</table>
+      <table>${itemRows || `<tr><td style="text-align:center;color:#999;padding:2rem 0" colspan="${showQtyPrice ? 4 : 2}">No items</td></tr>`}</table>
     </div>
   </div>
 

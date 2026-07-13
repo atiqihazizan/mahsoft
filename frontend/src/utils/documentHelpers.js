@@ -28,6 +28,7 @@ export const createItemsData = (items) => {
         parseFloat(item.quantity ?? 0) * parseFloat(item.unitPrice ?? item.price ?? 0)
       )
     ),
+    unit: item.unit || '',
     variant: item.variant || 'structured',
     listType: item.listType || undefined,
     spacing: item.spacing || undefined

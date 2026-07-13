@@ -62,11 +62,13 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 
 .issuence { margin-top: 2rem; }
 .issuence table { width: 100%; border-collapse: collapse; }
-.issuence .rowbody td:nth-child(1) { text-align: left; width: auto; }
-.issuence .rowbody td:nth-child(2) { text-align: right; width: 130px; font-weight: 600; }
 .issuence .rowbody { width: 100%; border-collapse: collapse; }
-.issuence .rowbody td { padding: 0.5rem 0.5rem 0.3rem; vertical-align: top; font-size: 0.7rem; line-height: 1.6; }
-.issuence .rowbody td div { line-height: 1.6; }
+.issuence .rowbody td { padding: 0.4rem 0.3rem 0.2rem; vertical-align: top; font-size: 0.7rem; line-height: 1.5; }
+.issuence .rowbody td:first-child { text-align: left; }
+.issuence .rowbody td.amount-cell { text-align: right; white-space: nowrap; font-weight: 600; }
+.issuence .rowbody td.qty-cell { text-align: center; white-space: nowrap; }
+.issuence .rowbody td.price-cell { text-align: right; white-space: nowrap; }
+.issuence .rowbody td div { line-height: 1.5; }
 
 .footer-two-col {
   display: flex;
@@ -372,22 +374,45 @@ const PrintA4 = ({
     </>
   )
 
+  const isBillable = (item) => Number(item.amount) > 0
+
+  const needsQtyPrice = (item) => {
+    if (!isBillable(item)) return false
+    const qty = Number(item.quantity)
+    const price = Number(item.unitPrice)
+    return qty > 1 || (qty && price && Number(item.amount) !== price * qty)
+  }
+
+  const showQtyPrice = (items || []).some(needsQtyPrice)
+
   const renderItemsTable = (pageItems) => (
     <div className="issuence">
       <table className="rowbody">
         <tbody>
-          {pageItems.map((item, index) => (
-            <React.Fragment key={item.id || index}>
-              <tr>
-                <td>
-                  <div style={{ fontSize: '0.8rem' }}>
-                    {renderWhatsAppText(item.description || '')}
-                  </div>
-                </td>
-                <td>{Number(item.amount) ? <CurrencyFormat amount={item.amount} /> : ''}</td>
-              </tr>
-            </React.Fragment>
-          ))}
+          {pageItems.map((item, index) => {
+            const need = showQtyPrice && needsQtyPrice(item)
+            const qtyNum = need ? Number(item.quantity) : ''
+            const qtyUnit = need ? (
+              item.unit
+                ? <>{qtyNum}<br /><span style={{ fontSize: '0.6rem', color: '#666', display: 'inline-block' }}>{item.unit}</span></>
+                : qtyNum
+            ) : ''
+            const priceVal = need && Number(item.unitPrice) ? <CurrencyFormat amount={item.unitPrice} /> : ''
+            return (
+              <React.Fragment key={item.id || index}>
+                <tr>
+                  <td>
+                    <div style={{ fontSize: '0.8rem' }}>
+                      {renderWhatsAppText(item.description || '')}
+                    </div>
+                  </td>
+                  {showQtyPrice && <td className="qty-cell">{qtyUnit}</td>}
+                  {showQtyPrice && <td className="price-cell">{priceVal}</td>}
+                  <td className="amount-cell">{Number(item.amount) ? <CurrencyFormat amount={item.amount} /> : ''}</td>
+                </tr>
+              </React.Fragment>
+            )
+          })}
         </tbody>
       </table>
     </div>
