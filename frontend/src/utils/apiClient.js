@@ -573,5 +573,12 @@ export const dashboardAPI = {
   }
 }
 
+// WhatsApp API methods
+export const whatsAppAPI = {
+  getStatus: async () => {
+    return apiClient.get('/api/v1/whatsapp/status')
+  }
+}
+
 // Export default API client
 export default apiClient

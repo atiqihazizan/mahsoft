@@ -514,14 +514,16 @@ router.post('/:id/email', [
   }
 });
 
-// POST /api/v1/quotes/:id/whatsapp - WhatsApp link quotation
+// POST /api/v1/quotes/:id/whatsapp - Send PDF quotation via WhatsApp
 router.post('/:id/whatsapp', [
   param('id').isString().withMessage('ID tidak sah'),
   handleValidationErrors
 ], async (req, res) => {
   try {
     const { id } = req.params;
-    const { phone: bodyPhone } = req.body;
+    const { phone } = req.body;
+
+    if (!phone) return badRequest(res, 'Sila masukkan nombor telefon penerima');
 
     const quote = await prisma.quote.findUnique({
       where: { id },
@@ -530,21 +532,30 @@ router.post('/:id/whatsapp', [
 
     if (!quote) return notFound(res, 'Sebut harga tidak ditemui');
 
-    const phone = bodyPhone || quote.customer?.mobile || quote.customer?.phone;
-    if (!phone) return badRequest(res, 'Sila masukkan nombor telefon penerima');
+    const { generatePdf, getPdfPath } = require('../utils/pdfGenerator');
+    const pdfPath = getPdfPath('QUOTATION', id);
+    const { existsSync } = require('fs');
+    if (!existsSync(pdfPath)) {
+      await generatePdf('QUOTATION', id);
+    }
 
-    const { generateWaLink } = require('../utils/whatsapp');
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const pdfUrl = `${baseUrl}/api/v1/quotes/${id}/pdf`;
-    const message = `Dear ${quote.customer?.name || ''},\nQuotation ${quote.quoteNumber} from ${quote.company?.name || ''}\n\nView: ${pdfUrl}`;
-    const waLink = generateWaLink(phone, message);
+    const { getStatus, sendPdf } = require('../utils/whatsappClient');
+    const status = getStatus();
+    if (!status.ready) {
+      return res.json({
+        success: false,
+        needsAuth: true,
+        data: status,
+        message: 'WhatsApp belum sedia. Sila imbas QR code.'
+      });
+    }
 
-    if (!waLink) return badRequest(res, 'Nombor telefon tidak sah');
+    await sendPdf(phone, pdfPath, `Quotation ${quote.quoteNumber} from ${quote.company?.name || ''}`);
 
-    success(res, { url: waLink }, 'Pautan WhatsApp berjaya dijana');
+    success(res, null, 'PDF berjaya dihantar melalui WhatsApp');
   } catch (err) {
-    console.error('Error generating WhatsApp link:', err);
-    error(res, 'Ralat menjana pautan WhatsApp');
+    console.error('Error sending quote via WhatsApp:', err);
+    error(res, err.message || 'Ralat menghantar melalui WhatsApp');
   }
 });
 

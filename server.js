@@ -55,6 +55,7 @@ app.use('/api/v1/debtors', require('./routes/debtors'));
 app.use('/api/v1/delivery-orders', require('./routes/deliveryOrders'));
 app.use('/api/v1/outstanding', require('./routes/outstanding'));
 app.use('/api/v1/dashboard', require('./routes/dashboard'));
+app.use('/api/v1/whatsapp', require('./routes/whatsapp'));
 
 // Serve static files from public directory
 app.use(express.static('public'));
