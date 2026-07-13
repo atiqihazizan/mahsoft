@@ -313,7 +313,7 @@ export const invoicesAPI = {
   },
 
   generatePdf: async (id) => {
-    return apiClient.post(`/api/v1/invoices/${id}/pdf`)
+    return apiClient.post(`/api/v1/invoices/${id}/pdf`, {})
   },
 
   getPdfUrl: (id) => {
@@ -353,7 +353,7 @@ export const quotesAPI = {
   },
 
   generatePdf: async (id) => {
-    return apiClient.post(`/api/v1/quotes/${id}/pdf`)
+    return apiClient.post(`/api/v1/quotes/${id}/pdf`, {})
   },
 
   getPdfUrl: (id) => {
