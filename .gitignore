@@ -60,3 +60,5 @@ jspm_packages/
 
 # Prisma
 prisma/migrations/storage/app/public/
+.bak
+prisma/migrations/
