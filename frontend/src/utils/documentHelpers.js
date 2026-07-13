@@ -10,6 +10,7 @@ export const createCompanyData = (company) => ({
 export const createCustomerData = (customer) => ({
   name: customer?.name || '',
   address: customer?.address || '',
+  email: customer?.email || '',
   phone: customer?.phone || '',
   mobile: customer?.mobile || '',
   attn: customer?.attn || customer?.attention || ''

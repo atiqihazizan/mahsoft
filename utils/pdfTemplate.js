@@ -137,7 +137,7 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 
 .print-header table { width: 100%; margin-bottom: 0; }
 .print-header table td { vertical-align: top; }
-.logo-cell { width: 83px; padding: 0; }
+.logo-cell { width: 73px; padding: 0; }
 .logo-cell img { width: 100%; margin-right: 1rem; display: block; }
 .logo-placeholder { width: 73px; height: 55px; margin-right: 1rem; }
 .company-cell { text-align: left; vertical-align: top; width: 70%; padding: 0; padding-left: 5px; }

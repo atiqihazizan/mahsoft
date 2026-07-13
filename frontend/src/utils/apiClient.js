@@ -318,6 +318,14 @@ export const invoicesAPI = {
 
   getPdfUrl: (id) => {
     return `${baseURL}/api/v1/invoices/${id}/pdf`
+  },
+
+  sendEmail: async (id) => {
+    return apiClient.post(`/api/v1/invoices/${id}/email`)
+  },
+
+  sendWhatsApp: async (id) => {
+    return apiClient.post(`/api/v1/invoices/${id}/whatsapp`)
   }
 }
 
@@ -358,6 +366,14 @@ export const quotesAPI = {
 
   getPdfUrl: (id) => {
     return `${baseURL}/api/v1/quotes/${id}/pdf`
+  },
+
+  sendEmail: async (id) => {
+    return apiClient.post(`/api/v1/quotes/${id}/email`)
+  },
+
+  sendWhatsApp: async (id) => {
+    return apiClient.post(`/api/v1/quotes/${id}/whatsapp`)
   }
 }
 

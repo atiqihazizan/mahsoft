@@ -471,4 +471,77 @@ router.get('/:id/pdf', [
   }
 });
 
+// POST /api/v1/quotes/:id/email - Email PDF quotation
+router.post('/:id/email', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const quote = await prisma.quote.findUnique({
+      where: { id },
+      include: { company: true, customer: true }
+    });
+
+    if (!quote) return notFound(res, 'Sebut harga tidak ditemui');
+    if (!quote.customer?.email) return badRequest(res, 'Pelanggan tiada alamat emel');
+
+    const { generatePdf, getPdfPath } = require('../utils/pdfGenerator');
+    const pdfPath = getPdfPath('QUOTATION', id);
+    const { existsSync } = require('fs');
+    if (!existsSync(pdfPath)) {
+      await generatePdf('QUOTATION', id);
+    }
+
+    const { sendEmail } = require('../utils/email');
+    const pdfBuffer = require('fs').readFileSync(pdfPath);
+
+    await sendEmail({
+      to: quote.customer.email,
+      subject: `Quotation ${quote.quoteNumber} from ${quote.company?.name || ''}`,
+      text: `Dear ${quote.customer.name},\n\nPlease find attached quotation ${quote.quoteNumber}.\n\nThank you.`,
+      attachments: [{ filename: `QUO-${quote.quoteNumber}.pdf`, content: pdfBuffer }]
+    });
+
+    success(res, null, 'Emel berjaya dihantar');
+  } catch (err) {
+    console.error('Error emailing quote:', err);
+    error(res, 'Ralat menghantar emel');
+  }
+});
+
+// POST /api/v1/quotes/:id/whatsapp - WhatsApp link quotation
+router.post('/:id/whatsapp', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const quote = await prisma.quote.findUnique({
+      where: { id },
+      include: { company: true, customer: true }
+    });
+
+    if (!quote) return notFound(res, 'Sebut harga tidak ditemui');
+
+    const phone = quote.customer?.mobile || quote.customer?.phone;
+    if (!phone) return badRequest(res, 'Pelanggan tiada nombor telefon');
+
+    const { generateWaLink } = require('../utils/whatsapp');
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const pdfUrl = `${baseUrl}/api/v1/quotes/${id}/pdf`;
+    const message = `Dear ${quote.customer.name},\nQuotation ${quote.quoteNumber} from ${quote.company?.name || ''}\n\nView: ${pdfUrl}`;
+    const waLink = generateWaLink(phone, message);
+
+    if (!waLink) return badRequest(res, 'Nombor telefon tidak sah');
+
+    success(res, { url: waLink }, 'Pautan WhatsApp berjaya dijana');
+  } catch (err) {
+    console.error('Error generating WhatsApp link:', err);
+    error(res, 'Ralat menjana pautan WhatsApp');
+  }
+});
+
 module.exports = router;

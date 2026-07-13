@@ -546,4 +546,77 @@ router.get('/:id/pdf', [
   }
 });
 
+// POST /api/v1/invoices/:id/email - Email PDF invoice
+router.post('/:id/email', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      include: { company: true, customer: true }
+    });
+
+    if (!invoice) return notFound(res, 'Invois tidak ditemui');
+    if (!invoice.customer?.email) return badRequest(res, 'Pelanggan tiada alamat emel');
+
+    const { generatePdf, getPdfPath } = require('../utils/pdfGenerator');
+    const pdfPath = getPdfPath('INVOICE', id);
+    const { existsSync } = require('fs');
+    if (!existsSync(pdfPath)) {
+      await generatePdf('INVOICE', id);
+    }
+
+    const { sendEmail } = require('../utils/email');
+    const pdfBuffer = require('fs').readFileSync(pdfPath);
+
+    await sendEmail({
+      to: invoice.customer.email,
+      subject: `Invoice ${invoice.invoiceNumber} from ${invoice.company?.name || ''}`,
+      text: `Dear ${invoice.customer.name},\n\nPlease find attached invoice ${invoice.invoiceNumber}.\n\nThank you.`,
+      attachments: [{ filename: `INV-${invoice.invoiceNumber}.pdf`, content: pdfBuffer }]
+    });
+
+    success(res, null, 'Emel berjaya dihantar');
+  } catch (err) {
+    console.error('Error emailing invoice:', err);
+    error(res, 'Ralat menghantar emel');
+  }
+});
+
+// POST /api/v1/invoices/:id/whatsapp - WhatsApp link invoice
+router.post('/:id/whatsapp', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      include: { company: true, customer: true }
+    });
+
+    if (!invoice) return notFound(res, 'Invois tidak ditemui');
+
+    const phone = invoice.customer?.mobile || invoice.customer?.phone;
+    if (!phone) return badRequest(res, 'Pelanggan tiada nombor telefon');
+
+    const { generateWaLink } = require('../utils/whatsapp');
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const pdfUrl = `${baseUrl}/api/v1/invoices/${id}/pdf`;
+    const message = `Dear ${invoice.customer.name},\nInvoice ${invoice.invoiceNumber} from ${invoice.company?.name || ''}\n\nView: ${pdfUrl}`;
+    const waLink = generateWaLink(phone, message);
+
+    if (!waLink) return badRequest(res, 'Nombor telefon tidak sah');
+
+    success(res, { url: waLink }, 'Pautan WhatsApp berjaya dijana');
+  } catch (err) {
+    console.error('Error generating WhatsApp link:', err);
+    error(res, 'Ralat menjana pautan WhatsApp');
+  }
+});
+
 module.exports = router;
