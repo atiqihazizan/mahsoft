@@ -237,7 +237,7 @@ const DocumentPreview = ({
                   </a>
                   <a
                     href={pdfUrl}
-                    download
+                    download={`${documentType === 'INVOICE' ? 'INV' : documentType === 'QUOTATION' ? 'QUO' : documentType === 'RECEIPT' ? 'RES' : 'DO'}-${doc?.documentNumber || 'document'}.pdf`}
                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
