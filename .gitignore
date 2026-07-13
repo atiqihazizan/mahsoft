@@ -59,4 +59,4 @@ jspm_packages/
 .yarn-integrity
 
 # Prisma
-prisma/migrations/
+prisma/migrations/storage/app/public/
