@@ -1,31 +1,30 @@
 const path = require('path')
 const fs = require('fs')
-const Pdfmake = require('pdfmake')
+const { exec } = require('child_process')
+const { promisify } = require('util')
+const os = require('os')
 const prisma = require('./prisma')
-const { generateDocDefinition } = require('./pdfTemplate')
+const { generateHTML } = require('./pdfTemplate')
+
+const execAsync = promisify(exec)
 
 const STORAGE_DIR = path.join(__dirname, '..', 'storage', 'app', 'public')
-const FONTS_PATH = path.join(__dirname, '..', 'public', 'fonts')
 const LOGO_PATH = path.join(__dirname, '..', 'public', 'logo', 'logo.png')
 
-const initPdfmake = () => {
-  pdfmake.fonts = {
-    Roboto: {
-      normal: path.join(FONTS_PATH, 'Roboto-Regular.ttf'),
-      bold: path.join(FONTS_PATH, 'Roboto-Regular.ttf'),
-      italics: path.join(FONTS_PATH, 'Roboto-Regular.ttf'),
-      bolditalics: path.join(FONTS_PATH, 'Roboto-Regular.ttf')
-    },
-    Audiowide: {
-      normal: path.join(FONTS_PATH, 'Audiowide-Regular.ttf'),
-      bold: path.join(FONTS_PATH, 'Audiowide-Regular.ttf'),
-      italics: path.join(FONTS_PATH, 'Audiowide-Regular.ttf'),
-      bolditalics: path.join(FONTS_PATH, 'Audiowide-Regular.ttf')
-    }
+const WKHTMLTOPDF = (() => {
+  const candidates = [
+    'wkhtmltopdf',
+    '/usr/local/bin/wkhtmltopdf',
+    path.join(os.homedir(), '.local', 'bin', 'wkhtmltopdf'),
+    '/usr/bin/wkhtmltopdf'
+  ]
+  for (const c of candidates) {
+    try {
+      if (fs.existsSync(c) || c === 'wkhtmltopdf') return c
+    } catch (e) {}
   }
-  pdfmake.setLocalAccessPolicy(() => true)
-  pdfmake.setUrlAccessPolicy(() => true)
-}
+  return 'wkhtmltopdf'
+})()
 
 const getDocDir = (docType) => {
   const dir = docType === 'INVOICE' ? 'invoices' : 'quotes'
@@ -82,7 +81,10 @@ const generatePdf = async (docType, id) => {
   } catch (e) {
   }
 
-  const docDefinition = generateDocDefinition({
+  const FONTS_PATH = path.join(__dirname, '..', 'public', 'fonts')
+  const fontPath = path.join(FONTS_PATH, 'Audiowide-Regular.ttf')
+
+  const html = generateHTML({
     documentType: docType,
     company: doc.company,
     logoData,
@@ -99,7 +101,8 @@ const generatePdf = async (docType, id) => {
     total: Number(doc.total) || 0,
     bank,
     issuedBy: doc.issuedBy,
-    notes: doc.notes
+    notes: doc.notes,
+    audiowideFontPath: fs.existsSync(fontPath) ? fontPath : ''
   })
 
   const pdfDir = getDocDir(docType)
@@ -108,10 +111,29 @@ const generatePdf = async (docType, id) => {
   }
 
   const pdfPath = getPdfPath(docType, id)
-  initPdfmake()
-  const pdfDoc = pdfmake.createPdf(docDefinition)
-  const buffer = await pdfDoc.getBuffer()
-  fs.writeFileSync(pdfPath, buffer)
+
+  const tmpHtml = path.join(os.tmpdir(), `pdfgen-${id}.html`)
+  fs.writeFileSync(tmpHtml, html, 'utf-8')
+
+  try {
+    await execAsync(
+      `"${WKHTMLTOPDF}" ` +
+      `--encoding UTF-8 ` +
+      `--page-size A4 ` +
+      `--margin-top 0mm ` +
+      `--margin-bottom 0mm ` +
+      `--margin-left 0mm ` +
+      `--margin-right 0mm ` +
+      `--dpi 96 ` +
+      `--zoom 1.0 ` +
+      `--disable-smart-shrinking ` +
+      `--enable-local-file-access ` +
+      `"${tmpHtml}" "${pdfPath}"`,
+      { timeout: 30000 }
+    )
+  } finally {
+    try { fs.unlinkSync(tmpHtml) } catch (e) {}
+  }
 
   const relativePath = getPdfRelativePath(docType, id)
   await prisma[model].update({

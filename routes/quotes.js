@@ -448,13 +448,57 @@ router.post('/:id/pdf', [
   }
 });
 
-// GET /api/v1/quotes/:id/pdf - Serve PDF untuk quotation
+// GET /api/v1/quotes/:id/pdf - Serve PDF untuk quotation (?preview=html untuk preview)
 router.get('/:id/pdf', [
   param('id').isString().withMessage('ID tidak sah'),
   handleValidationErrors
 ], async (req, res) => {
   try {
     const { id } = req.params;
+    const prisma = require('../utils/prisma');
+
+    const quote = await prisma.quote.findUnique({
+      where: { id },
+      include: { company: true, customer: true }
+    });
+
+    if (!quote) return notFound(res, 'Sebut harga tidak ditemui');
+
+    if (req.query.preview === 'html') {
+      const { generateHTML } = require('../utils/pdfTemplate');
+      const path = require('path');
+      const fs = require('fs');
+      const bank = quote.company?.bank || {};
+      let logoData = '';
+      const logoPath = path.join(__dirname, '..', 'public', 'logo', 'logo.png');
+      try {
+        if (fs.existsSync(logoPath)) {
+          const ext = path.extname(logoPath).slice(1);
+          logoData = `data:image/${ext};base64,${fs.readFileSync(logoPath).toString('base64')}`;
+        }
+      } catch (e) {}
+      const html = generateHTML({
+        documentType: 'QUOTATION',
+        company: quote.company,
+        logoData,
+        customer: quote.customer,
+        documentNumber: quote.quoteNumber,
+        date: quote.date,
+        validUntil: quote.validUntil,
+        items: quote.items || [],
+        subtotal: Number(quote.subtotal) || 0,
+        discountPercent: Number(quote.discountPercent) || 0,
+        discountAmount: Number(quote.discountAmount) || 0,
+        discountLabel: quote.discountLabel,
+        tax: Number(quote.taxAmount) || 0,
+        total: Number(quote.total) || 0,
+        bank,
+        issuedBy: quote.issuedBy,
+        notes: quote.notes
+      });
+      return res.send(html);
+    }
+
     const { generatePdf, needsRegeneration, getPdfPath } = require('../utils/pdfGenerator');
 
     const needsGen = await needsRegeneration('QUOTATION', id);
