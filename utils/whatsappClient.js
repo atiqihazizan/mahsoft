@@ -22,7 +22,15 @@ const getClient = () => {
     authStrategy: new LocalAuth({ dataPath: SESSION_DIR }),
     puppeteer: {
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--memory-pressure-off',
+        '--single-process',
+        '--disable-gpu',
+        '--disable-software-rasterizer'
+      ]
     }
   })
 
