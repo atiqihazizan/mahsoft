@@ -87,6 +87,8 @@ rsync -av --exclude='node_modules' \
           --exclude='*.log' \
           --exclude='.DS_Store' \
           --exclude='Thumbs.db' \
+          --exclude='.wwebjs_auth' \
+          --exclude='.wwebjs_cache' \
           "$LOCAL_PATH/" "$TEMP_DIR/"
 
 # Copy .env untuk production (jika wujud)
