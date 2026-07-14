@@ -1,12 +1,31 @@
-const puppeteer = require('puppeteer')
 const path = require('path')
 const fs = require('fs')
-const { PDFDocument } = require('pdf-lib')
+const Pdfmake = require('pdfmake')
 const prisma = require('./prisma')
-const { generateHTML } = require('./pdfTemplate')
+const { generateDocDefinition } = require('./pdfTemplate')
 
 const STORAGE_DIR = path.join(__dirname, '..', 'storage', 'app', 'public')
+const FONTS_PATH = path.join(__dirname, '..', 'public', 'fonts')
 const LOGO_PATH = path.join(__dirname, '..', 'public', 'logo', 'logo.png')
+
+const initPdfmake = () => {
+  pdfmake.fonts = {
+    Roboto: {
+      normal: path.join(FONTS_PATH, 'Roboto-Regular.ttf'),
+      bold: path.join(FONTS_PATH, 'Roboto-Regular.ttf'),
+      italics: path.join(FONTS_PATH, 'Roboto-Regular.ttf'),
+      bolditalics: path.join(FONTS_PATH, 'Roboto-Regular.ttf')
+    },
+    Audiowide: {
+      normal: path.join(FONTS_PATH, 'Audiowide-Regular.ttf'),
+      bold: path.join(FONTS_PATH, 'Audiowide-Regular.ttf'),
+      italics: path.join(FONTS_PATH, 'Audiowide-Regular.ttf'),
+      bolditalics: path.join(FONTS_PATH, 'Audiowide-Regular.ttf')
+    }
+  }
+  pdfmake.setLocalAccessPolicy(() => true)
+  pdfmake.setUrlAccessPolicy(() => true)
+}
 
 const getDocDir = (docType) => {
   const dir = docType === 'INVOICE' ? 'invoices' : 'quotes'
@@ -37,11 +56,6 @@ const needsRegeneration = async (docType, id) => {
   return new Date(doc.updatedAt) > new Date(doc.pdfGeneratedAt)
 }
 
-const countPdfPages = async (pdfBuffer) => {
-  const doc = await PDFDocument.load(pdfBuffer)
-  return doc.getPageCount()
-}
-
 const generatePdf = async (docType, id) => {
   const model = docType === 'INVOICE' ? 'invoice' : 'quote'
   const include = {
@@ -66,10 +80,9 @@ const generatePdf = async (docType, id) => {
       logoData = `data:image/${ext};base64,${base64}`
     }
   } catch (e) {
-    // logo non-critical
   }
 
-  const html = generateHTML({
+  const docDefinition = generateDocDefinition({
     documentType: docType,
     company: doc.company,
     logoData,
@@ -95,44 +108,10 @@ const generatePdf = async (docType, id) => {
   }
 
   const pdfPath = getPdfPath(docType, id)
-
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-  })
-
-  try {
-    const page = await browser.newPage()
-    await page.setContent(html, { waitUntil: 'networkidle0' })
-
-    // First pass: render without footer to determine page count
-    const firstPassPdf = await page.pdf({
-      format: 'A4',
-      margin: { top: 0, right: 0, bottom: 0, left: 0 },
-      printBackground: true,
-      displayHeaderFooter: false
-    })
-
-    const totalPages = await countPdfPages(firstPassPdf)
-
-    if (totalPages > 1) {
-      // Multi-page: render with page number footer using Puppeteer
-      await page.pdf({
-        path: pdfPath,
-        format: 'A4',
-        margin: { top: 0, right: 0, bottom: 0, left: 0 },
-        printBackground: true,
-        displayHeaderFooter: true,
-        headerTemplate: '<span></span>',
-        footerTemplate: `<div style="width:100%;font-size:9px;color:#666;font-family:ui-sans-serif,system-ui,sans-serif;padding:0 20mm;text-align:center">Page <span class="pageNumber"></span> of ${totalPages}</div>`
-      })
-    } else {
-      // Single page: save without page numbers
-      fs.writeFileSync(pdfPath, firstPassPdf)
-    }
-  } finally {
-    await browser.close()
-  }
+  initPdfmake()
+  const pdfDoc = pdfmake.createPdf(docDefinition)
+  const buffer = await pdfDoc.getBuffer()
+  fs.writeFileSync(pdfPath, buffer)
 
   const relativePath = getPdfRelativePath(docType, id)
   await prisma[model].update({
