@@ -54,8 +54,9 @@ const getClient = () => {
     await resetClient()
   })
 
-  client.initialize().catch((err) => {
+  client.initialize().catch(async (err) => {
     console.error('WhatsApp client failed to initialize:', err)
+    await resetClient()
   })
 
   return client
