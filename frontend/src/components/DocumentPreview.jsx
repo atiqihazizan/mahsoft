@@ -114,13 +114,13 @@ const DocumentPreview = ({
     try {
       const api = documentType === 'INVOICE' ? invoicesAPI : quotesAPI
       const res = await api.sendWhatsApp(id, { phone: whatsAppPhone.trim() })
-      if (res?.success) {
-        setShowWhatsAppDialog(false)
-        alert('PDF berjaya dihantar melalui WhatsApp')
-      } else if (res?.data?.needsAuth) {
+      if (res?.data?.needsAuth) {
         setWhatsAppQr(res.data.qrCode)
         setWhatsAppAuthing(true)
         startWhatsAppPoll()
+      } else if (res?.success) {
+        setShowWhatsAppDialog(false)
+        alert('PDF berjaya dihantar melalui WhatsApp')
       } else {
         alert(res?.message || 'Ralat menghantar melalui WhatsApp')
       }
@@ -403,13 +403,17 @@ const DocumentPreview = ({
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-gray-200">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Hantar WhatsApp</h3>
-                      {whatsAppQr ? (
+                      {whatsAppAuthing ? (
                         <div className="text-center space-y-4">
                           <p className="text-sm text-gray-600">Imbas QR code ini dengan WhatsApp anda untuk menghantar fail terus.</p>
-                          <img src={whatsAppQr} alt="QR Code" className="mx-auto w-64 h-64" />
-                          {whatsAppAuthing && (
-                            <p className="text-sm text-green-600 animate-pulse">Menunggu imbasan...</p>
+                          {whatsAppQr ? (
+                            <img src={whatsAppQr} alt="QR Code" className="mx-auto w-64 h-64" />
+                          ) : (
+                            <div className="mx-auto w-64 h-64 bg-gray-100 rounded-xl flex items-center justify-center">
+                              <p className="text-sm text-gray-400 animate-pulse">Sedang menjana QR code...</p>
+                            </div>
                           )}
+                          <p className="text-sm text-green-600 animate-pulse">Menunggu imbasan...</p>
                           <button
                             onClick={() => { setShowWhatsAppDialog(false); if (whatsAppPollRef.current) clearInterval(whatsAppPollRef.current) }}
                             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"

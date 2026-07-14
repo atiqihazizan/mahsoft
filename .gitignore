@@ -58,7 +58,14 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
+# WhatsApp session
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Generated PDFs
+storage/app/public/invoices/
+storage/app/public/quotes/
+
 # Prisma
-prisma/migrations/storage/app/public/
 .bak
 prisma/migrations/

@@ -42,22 +42,40 @@ const getClient = () => {
     authListeners.forEach(fn => fn('authenticated'))
   })
 
-  client.on('auth_failure', () => {
+  client.on('auth_failure', async () => {
     clientReady = false
     authListeners.forEach(fn => fn('auth_failure'))
+    await resetClient()
   })
 
-  client.on('disconnected', (reason) => {
+  client.on('disconnected', async (reason) => {
     clientReady = false
     authListeners.forEach(fn => fn('disconnected', reason))
+    await resetClient()
   })
 
-  client.initialize()
+  client.initialize().catch((err) => {
+    console.error('WhatsApp client failed to initialize:', err)
+  })
 
   return client
 }
 
+const resetClient = async () => {
+  const dead = client
+  client = null
+  qrCodeBase64 = null
+  if (dead) {
+    try {
+      await dead.destroy()
+    } catch (e) {
+      // ignore teardown errors from an already-broken client
+    }
+  }
+}
+
 const getStatus = () => {
+  getClient()
   return {
     ready: clientReady,
     hasQr: !!qrCodeBase64,
@@ -69,11 +87,42 @@ const onAuthEvent = (fn) => {
   authListeners.push(fn)
 }
 
+const waitForQrCode = (timeoutMs = 25000) => {
+  return new Promise((resolve) => {
+    if (qrCodeBase64) return resolve(qrCodeBase64)
+    if (clientReady) return resolve(null)
+
+    const timer = setTimeout(() => {
+      cleanup()
+      resolve(qrCodeBase64)
+    }, timeoutMs)
+
+    const cleanup = () => {
+      clearTimeout(timer)
+      const idx = authListeners.indexOf(handler)
+      if (idx !== -1) authListeners.splice(idx, 1)
+    }
+
+    const handler = (event, data) => {
+      if (event === 'qr') {
+        cleanup()
+        resolve(data)
+      } else if (event === 'ready') {
+        cleanup()
+        resolve(null)
+      }
+    }
+
+    authListeners.push(handler)
+  })
+}
+
 const sendPdf = async (phone, pdfPath, caption) => {
   const c = getClient()
   if (!clientReady) throw new Error('WhatsApp client not ready')
 
-  const cleaned = phone.replace(/[^0-9]/g, '')
+  let cleaned = phone.replace(/[^0-9]/g, '')
+  if (cleaned.startsWith('0')) cleaned = '60' + cleaned.slice(1)
   const chatId = `${cleaned}@c.us`
 
   const media = require('whatsapp-web.js').MessageMedia
@@ -84,4 +133,4 @@ const sendPdf = async (phone, pdfPath, caption) => {
   await c.sendMessage(chatId, document, { caption: caption || '' })
 }
 
-module.exports = { getClient, getStatus, onAuthEvent, sendPdf }
+module.exports = { getClient, getStatus, onAuthEvent, sendPdf, waitForQrCode }

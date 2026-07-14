@@ -103,7 +103,7 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 }
 .footer-col { width: 50%; }
 
-.pricing-table { width: 100%; border-collapse: collapse; }
+.pricing-table { border-collapse: collapse; margin-left: auto; }
 .pricing-table td { padding: 0.15rem 0; vertical-align: middle; }
 .pricing-table td:first-child { text-align: left; font-size: 0.7rem; color: #374151; }
 .pricing-table td:last-child { text-align: right; font-size: 0.7rem; min-width: 90px; white-space: nowrap; }

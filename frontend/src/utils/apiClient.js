@@ -90,9 +90,10 @@ class ApiClient {
       const data = response.data
 
       return {
-        success: true,
-        data: data.data || data,
+        success: data.success !== undefined ? data.success : true,
+        data: data.data !== undefined ? data.data : data,
         message: data.message || 'Success',
+        needsAuth: data.needsAuth,
         status: response.status
       }
     } catch (error) {

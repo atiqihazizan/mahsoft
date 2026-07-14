@@ -539,15 +539,16 @@ router.post('/:id/whatsapp', [
       await generatePdf('QUOTATION', id);
     }
 
-    const { getStatus, sendPdf } = require('../utils/whatsappClient');
+    const { getStatus, sendPdf, waitForQrCode } = require('../utils/whatsappClient');
     const status = getStatus();
     if (!status.ready) {
-      return res.json({
-        success: false,
-        needsAuth: true,
-        data: status,
-        message: 'WhatsApp belum sedia. Sila imbas QR code.'
-      });
+      await waitForQrCode();
+      const updatedStatus = getStatus();
+      if (updatedStatus.ready) {
+        await sendPdf(phone, pdfPath, `Quotation ${quote.quoteNumber} from ${quote.company?.name || ''}`);
+        return success(res, null, 'PDF berjaya dihantar melalui WhatsApp');
+      }
+      return success(res, { needsAuth: true, ...updatedStatus }, 'WhatsApp belum sedia. Sila imbas QR code.');
     }
 
     await sendPdf(phone, pdfPath, `Quotation ${quote.quoteNumber} from ${quote.company?.name || ''}`);
