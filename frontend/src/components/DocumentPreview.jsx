@@ -190,6 +190,11 @@ const DocumentPreview = ({
     )
   }
 
+  // Ansuran/partial payment - invois yang ada bayaran tapi belum settle penuh
+  const paidAmount = Number(doc.paidAmount) || 0
+  const outstandingBalance = Math.max(Number(doc.total) - paidAmount, 0)
+  const isPartiallyPaid = documentType === 'INVOICE' && paidAmount > 0 && outstandingBalance > 0.005
+
   return (
     // <div className="h-[calc(100vh-199px)] flex flex-col bg-gray-100">
     <div className="h-[calc(100vh-199px)] flex flex-col bg-gray-100">
@@ -208,6 +213,11 @@ const DocumentPreview = ({
             <div className="w-px h-6 bg-gray-200" />
             <div className="flex items-center gap-2">
               <StatusBadge status={doc.status || doc.documentStatus} />
+              {isPartiallyPaid && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                  Sebahagian Dibayar
+                </span>
+              )}
               <span className="text-sm font-medium text-gray-700">
                 {doc.documentNumber || doc.quoteNumber || doc.invoiceNumber}
               </span>
@@ -312,6 +322,18 @@ const DocumentPreview = ({
                       <span className="text-gray-700">Total</span>
                       <span className="text-gray-900"><CurrencyFormat amount={doc.total} /></span>
                     </div>
+                    {isPartiallyPaid && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Telah Dibayar</span>
+                          <span className="text-green-700"><CurrencyFormat amount={paidAmount} /></span>
+                        </div>
+                        <div className="border-t border-amber-200 pt-1.5 flex justify-between text-sm font-semibold">
+                          <span className="text-amber-700">Baki Tertunggak</span>
+                          <span className="text-amber-700"><CurrencyFormat amount={outstandingBalance} /></span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 

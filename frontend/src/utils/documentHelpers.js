@@ -81,6 +81,7 @@ export const createDocumentData = (data, type) => {
     discountLabel: data.discountLabel || '',
     tax: data.taxAmount != null ? parseFloat(data.taxAmount) : 0,
     total: data.total != null ? parseFloat(data.total) : 0,
+    paidAmount: data.paidAmount != null ? parseFloat(data.paidAmount) : 0,
     bank: createBankData(data.company),
     issuedBy: data.company?.manager || '',
     notes: data.notes || ''

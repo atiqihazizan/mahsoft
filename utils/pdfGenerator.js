@@ -98,6 +98,7 @@ const generatePdf = async (docType, id) => {
     discountLabel: doc.discountLabel,
     tax: Number(doc.taxAmount) || 0,
     total: Number(doc.total) || 0,
+    paidAmount: docType === 'INVOICE' ? (Number(doc.paidAmount) || 0) : 0,
     bank,
     issuedBy: doc.issuedBy,
     notes: doc.notes,

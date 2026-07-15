@@ -109,6 +109,9 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .pricing-table .grand td:first-child { color: #000; }
 .pricing-table .positive { color: #000; }
 .pricing-table .negative { color: #dc2626; }
+.pricing-table .paid td { color: #15803d; }
+.pricing-table .balance-due td { font-weight: 700; font-size: 0.8rem !important; color: #b45309; border-top: 1px solid #f59e0b; padding-top: 0.3rem; }
+.pricing-table .balance-due td:first-child { color: #b45309; }
 
 .issuedby-section { margin-top: 0.8rem; page-break-inside: avoid; }
 .issuedby-section .label { font-size: 0.7rem; color: #374151; }
@@ -148,11 +151,16 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 }
 `
 
-const generateHTML = ({ documentType, company, customer, documentNumber, date, validUntil, items, subtotal, discountPercent, discountAmount, discountLabel, tax, total, bank, issuedBy, notes, logoData, audiowideFontPath }) => {
+const generateHTML = ({ documentType, company, customer, documentNumber, date, validUntil, items, subtotal, discountPercent, discountAmount, discountLabel, tax, total, bank, issuedBy, notes, logoData, audiowideFontPath, paidAmount }) => {
   const isInvoice = documentType === 'INVOICE'
   const hasDiscount = Number(discountAmount) > 0
   const hasTax = Number(tax) > 0 || (isInvoice && Number(tax) !== 0)
   const showBreakdown = hasDiscount || hasTax
+
+  // Ansuran/partial payment - papar baki tertunggak jika ada bayaran tapi belum settle penuh
+  const paid = Number(paidAmount) || 0
+  const balanceDue = Math.max(Number(total) - paid, 0)
+  const showBalanceDue = isInvoice && paid > 0 && balanceDue > 0.005
 
   const hasBank = isInvoice && (bank?.accountNumber || bank?.bankName || bank?.accountHolder)
 
@@ -218,6 +226,11 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
     pricingRows += `<tr class="divider1 grand"><td>Grand Total</td><td>${formatCurrency(total)}</td></tr>`
   } else {
     pricingRows += `<tr class="grand"><td>Total</td><td>${formatCurrency(total)}</td></tr>`
+  }
+
+  if (showBalanceDue) {
+    pricingRows += `<tr class="paid"><td>Telah Dibayar (Paid)</td><td>${formatCurrency(paid)}</td></tr>`
+    pricingRows += `<tr class="balance-due"><td>Baki (Amount Due)</td><td>${formatCurrency(balanceDue)}</td></tr>`
   }
 
   const issuedByName = issuedBy || company?.manager || ''
