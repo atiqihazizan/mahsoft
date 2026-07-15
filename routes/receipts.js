@@ -378,4 +378,132 @@ router.delete('/:id', [
   }
 });
 
+// POST /api/v1/receipts/:id/pdf - Generate PDF untuk resit (saiz A5)
+router.post('/:id/pdf', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { generatePdf } = require('../utils/pdfGenerator');
+    const pdfPath = await generatePdf('RECEIPT', id);
+    success(res, { pdfPath }, 'PDF berjaya dijana');
+  } catch (err) {
+    console.error('Error generating receipt PDF:', err);
+    error(res, 'Ralat menjana PDF');
+  }
+});
+
+// GET /api/v1/receipts/:id/pdf - Serve PDF untuk resit
+router.get('/:id/pdf', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { generatePdf, needsRegeneration, getPdfPath } = require('../utils/pdfGenerator');
+
+    const needsGen = await needsRegeneration('RECEIPT', id);
+
+    if (needsGen) {
+      await generatePdf('RECEIPT', id);
+    }
+
+    const fullPath = getPdfPath('RECEIPT', id);
+    res.sendFile(fullPath);
+  } catch (err) {
+    console.error('Error serving receipt PDF:', err);
+    error(res, 'Ralat mendapatkan PDF');
+  }
+});
+
+// POST /api/v1/receipts/:id/email - Email PDF resit
+router.post('/:id/email', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { to } = req.body;
+
+    const receipt = await prisma.receipt.findUnique({
+      where: { id },
+      include: { company: true, customer: true }
+    });
+
+    if (!receipt) return notFound(res, 'Resit tidak ditemui');
+
+    const recipient = to || receipt.customer?.email;
+    if (!recipient) return badRequest(res, 'Sila masukkan alamat emel penerima');
+
+    const { generatePdf, getPdfPath } = require('../utils/pdfGenerator');
+    const pdfPath = getPdfPath('RECEIPT', id);
+    const { existsSync } = require('fs');
+    if (!existsSync(pdfPath)) {
+      await generatePdf('RECEIPT', id);
+    }
+
+    const { sendEmail } = require('../utils/email');
+    const pdfBuffer = require('fs').readFileSync(pdfPath);
+
+    await sendEmail({
+      to: recipient,
+      subject: `Receipt ${receipt.receiptNumber} from ${receipt.company?.name || ''}`,
+      text: `Dear ${receipt.customer?.name || ''},\n\nPlease find attached receipt ${receipt.receiptNumber}.\n\nThank you.`,
+      attachments: [{ filename: `RES-${receipt.receiptNumber}.pdf`, content: pdfBuffer }]
+    });
+
+    success(res, null, 'Emel berjaya dihantar');
+  } catch (err) {
+    console.error('Error emailing receipt:', err);
+    error(res, 'Ralat menghantar emel');
+  }
+});
+
+// POST /api/v1/receipts/:id/whatsapp - Send PDF resit via WhatsApp
+router.post('/:id/whatsapp', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { phone } = req.body;
+
+    if (!phone) return badRequest(res, 'Sila masukkan nombor telefon penerima');
+
+    const receipt = await prisma.receipt.findUnique({
+      where: { id },
+      include: { company: true, customer: true }
+    });
+
+    if (!receipt) return notFound(res, 'Resit tidak ditemui');
+
+    const { generatePdf, getPdfPath } = require('../utils/pdfGenerator');
+    const pdfPath = getPdfPath('RECEIPT', id);
+    const { existsSync } = require('fs');
+    if (!existsSync(pdfPath)) {
+      await generatePdf('RECEIPT', id);
+    }
+
+    const { getStatus, sendPdf, waitForQrCode } = require('../utils/whatsappClient');
+    const status = getStatus();
+    if (!status.ready) {
+      await waitForQrCode();
+      const updatedStatus = getStatus();
+      if (updatedStatus.ready) {
+        await sendPdf(phone, pdfPath, `Receipt ${receipt.receiptNumber} from ${receipt.company?.name || ''}`);
+        return success(res, null, 'PDF berjaya dihantar melalui WhatsApp');
+      }
+      return success(res, { needsAuth: true, ...updatedStatus }, 'WhatsApp belum sedia. Sila imbas QR code.');
+    }
+
+    await sendPdf(phone, pdfPath, `Receipt ${receipt.receiptNumber} from ${receipt.company?.name || ''}`);
+
+    success(res, null, 'PDF berjaya dihantar melalui WhatsApp');
+  } catch (err) {
+    console.error('Error sending receipt via WhatsApp:', err);
+    error(res, err.message || 'Ralat menghantar melalui WhatsApp');
+  }
+});
+
 module.exports = router;

@@ -213,10 +213,12 @@ model Receipt {
   taxAmount       Decimal       @default(0) @map("tax_amount") @db.Decimal(10, 2)
   total           Decimal       @default(0) @db.Decimal(10, 2)
   notes           String?       @db.Text
-  
+  pdfPath         String?       @map("pdf_path")
+  pdfGeneratedAt  DateTime?     @map("pdf_generated_at")
+
   // Detail fields - JSON untuk menyimpan array of items
   items           Json?         // Array of {description, quantity, unitPrice, amount}
-  
+
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 

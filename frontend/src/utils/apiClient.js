@@ -399,6 +399,22 @@ export const receiptsAPI = {
 
   delete: async (id) => {
     return apiClient.delete(`/api/v1/receipts/${id}`)
+  },
+
+  generatePdf: async (id) => {
+    return apiClient.post(`/api/v1/receipts/${id}/pdf`, {})
+  },
+
+  getPdfUrl: (id) => {
+    return `${baseURL}/api/v1/receipts/${id}/pdf`
+  },
+
+  sendEmail: async (id, data = {}) => {
+    return apiClient.post(`/api/v1/receipts/${id}/email`, data)
+  },
+
+  sendWhatsApp: async (id, data = {}) => {
+    return apiClient.post(`/api/v1/receipts/${id}/whatsapp`, data)
   }
 }
 

@@ -12,6 +12,8 @@ const ReceiptPreview = () => {
       backPath="/receipts"
       editPath={(docId) => `/receipts/${docId}/edit`}
       apiGetById={receiptsAPI.getById}
+      apiGeneratePdf={receiptsAPI.generatePdf}
+      apiGetPdfUrl={receiptsAPI.getPdfUrl}
     />
   )
 }

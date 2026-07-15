@@ -4,7 +4,7 @@ const { exec } = require('child_process')
 const { promisify } = require('util')
 const os = require('os')
 const prisma = require('./prisma')
-const { generateHTML } = require('./pdfTemplate')
+const { generateHTML, generateReceiptHTML } = require('./pdfTemplate')
 
 const execAsync = promisify(exec)
 
@@ -26,9 +26,21 @@ const WKHTMLTOPDF = (() => {
   return 'wkhtmltopdf'
 })()
 
+// Konfigurasi setiap jenis dokumen: model Prisma, folder storage & saiz kertas wkhtmltopdf
+const DOC_CONFIG = {
+  INVOICE: { model: 'invoice', dir: 'invoices', pageSize: 'A4' },
+  QUOTATION: { model: 'quote', dir: 'quotes', pageSize: 'A4' },
+  RECEIPT: { model: 'receipt', dir: 'receipts', pageSize: 'A5' }
+}
+
+const getDocConfig = (docType) => {
+  const config = DOC_CONFIG[docType]
+  if (!config) throw new Error(`Unsupported document type: ${docType}`)
+  return config
+}
+
 const getDocDir = (docType) => {
-  const dir = docType === 'INVOICE' ? 'invoices' : 'quotes'
-  return path.join(STORAGE_DIR, dir)
+  return path.join(STORAGE_DIR, getDocConfig(docType).dir)
 }
 
 const getPdfPath = (docType, id) => {
@@ -36,12 +48,11 @@ const getPdfPath = (docType, id) => {
 }
 
 const getPdfRelativePath = (docType, id) => {
-  const dir = docType === 'INVOICE' ? 'invoices' : 'quotes'
-  return `/storage/${dir}/${id}.pdf`
+  return `/storage/${getDocConfig(docType).dir}/${id}.pdf`
 }
 
 const needsRegeneration = async (docType, id) => {
-  const model = docType === 'INVOICE' ? 'invoice' : 'quote'
+  const { model } = getDocConfig(docType)
   const doc = await prisma[model].findUnique({
     where: { id },
     select: { updatedAt: true, pdfGeneratedAt: true, pdfPath: true }
@@ -55,12 +66,23 @@ const needsRegeneration = async (docType, id) => {
   return new Date(doc.updatedAt) > new Date(doc.pdfGeneratedAt)
 }
 
+const loadLogoData = () => {
+  try {
+    if (fs.existsSync(LOGO_PATH)) {
+      const ext = path.extname(LOGO_PATH).slice(1)
+      const base64 = fs.readFileSync(LOGO_PATH).toString('base64')
+      return `data:image/${ext};base64,${base64}`
+    }
+  } catch (e) {}
+  return ''
+}
+
 const generatePdf = async (docType, id) => {
-  const model = docType === 'INVOICE' ? 'invoice' : 'quote'
-  const include = {
-    company: true,
-    customer: true
-  }
+  const { model, pageSize } = getDocConfig(docType)
+
+  const include = docType === 'RECEIPT'
+    ? { company: true, customer: true, payments: { orderBy: { createdAt: 'desc' } } }
+    : { company: true, customer: true }
 
   let doc = await prisma[model].findUnique({
     where: { id },
@@ -70,40 +92,52 @@ const generatePdf = async (docType, id) => {
   if (!doc) throw new Error(`${docType} not found`)
 
   const bank = doc.company?.bank || {}
-
-  let logoData = ''
-  try {
-    if (fs.existsSync(LOGO_PATH)) {
-      const ext = path.extname(LOGO_PATH).slice(1)
-      const base64 = fs.readFileSync(LOGO_PATH).toString('base64')
-      logoData = `data:image/${ext};base64,${base64}`
-    }
-  } catch (e) {
-  }
+  const logoData = loadLogoData()
 
   const FONTS_PATH = path.join(__dirname, '..', 'public', 'fonts')
   const fontPath = path.join(FONTS_PATH, 'Audiowide-Regular.ttf')
-  const html = generateHTML({
-    documentType: docType,
-    company: { ...doc.company, registration: doc.company?.ssm },
-    logoData,
-    customer: doc.customer,
-    documentNumber: docType === 'INVOICE' ? doc.invoiceNumber : doc.quoteNumber,
-    date: doc.date,
-    validUntil: docType === 'INVOICE' ? doc.dueDate : doc.validUntil,
-    items: doc.items || [],
-    subtotal: Number(doc.subtotal) || 0,
-    discountPercent: Number(doc.discountPercent) || 0,
-    discountAmount: Number(doc.discountAmount) || 0,
-    discountLabel: doc.discountLabel,
-    tax: Number(doc.taxAmount) || 0,
-    total: Number(doc.total) || 0,
-    paidAmount: docType === 'INVOICE' ? (Number(doc.paidAmount) || 0) : 0,
-    bank,
-    issuedBy: doc.issuedBy,
-    notes: doc.notes,
-    audiowideFontPath: fs.existsSync(fontPath) ? fontPath : ''
-  })
+  const audiowideFontPath = fs.existsSync(fontPath) ? fontPath : ''
+
+  const html = docType === 'RECEIPT'
+    ? generateReceiptHTML({
+        company: { ...doc.company, registration: doc.company?.ssm },
+        logoData,
+        customer: doc.customer,
+        documentNumber: doc.receiptNumber,
+        date: doc.date,
+        items: doc.items || [],
+        subtotal: Number(doc.subtotal) || 0,
+        discountPercent: Number(doc.discountPercent) || 0,
+        discountAmount: Number(doc.discountAmount) || 0,
+        discountLabel: doc.discountLabel,
+        tax: Number(doc.taxAmount) || 0,
+        total: Number(doc.total) || 0,
+        payments: doc.payments || [],
+        issuedBy: doc.issuedBy,
+        notes: doc.notes,
+        audiowideFontPath
+      })
+    : generateHTML({
+        documentType: docType,
+        company: { ...doc.company, registration: doc.company?.ssm },
+        logoData,
+        customer: doc.customer,
+        documentNumber: docType === 'INVOICE' ? doc.invoiceNumber : doc.quoteNumber,
+        date: doc.date,
+        validUntil: docType === 'INVOICE' ? doc.dueDate : doc.validUntil,
+        items: doc.items || [],
+        subtotal: Number(doc.subtotal) || 0,
+        discountPercent: Number(doc.discountPercent) || 0,
+        discountAmount: Number(doc.discountAmount) || 0,
+        discountLabel: doc.discountLabel,
+        tax: Number(doc.taxAmount) || 0,
+        total: Number(doc.total) || 0,
+        paidAmount: docType === 'INVOICE' ? (Number(doc.paidAmount) || 0) : 0,
+        bank,
+        issuedBy: doc.issuedBy,
+        notes: doc.notes,
+        audiowideFontPath
+      })
 
   const pdfDir = getDocDir(docType)
   if (!fs.existsSync(pdfDir)) {
@@ -115,15 +149,20 @@ const generatePdf = async (docType, id) => {
   const tmpHtml = path.join(os.tmpdir(), `pdfgen-${id}.html`)
   fs.writeFileSync(tmpHtml, html, 'utf-8')
 
+  // Resit guna saiz A5 (lebih ringkas berbanding invois/quotation A4) dengan margin lebih kecil
+  const margins = pageSize === 'A5'
+    ? { top: '10mm', bottom: '10mm', left: '12mm', right: '12mm' }
+    : { top: '15mm', bottom: '15mm', left: '20mm', right: '20mm' }
+
   try {
     await execAsync(
       `"${WKHTMLTOPDF}" ` +
       `--encoding UTF-8 ` +
-      `--page-size A4 ` +
-      `--margin-top 15mm ` +
-      `--margin-bottom 15mm ` +
-      `--margin-left 20mm ` +
-      `--margin-right 20mm ` +
+      `--page-size ${pageSize} ` +
+      `--margin-top ${margins.top} ` +
+      `--margin-bottom ${margins.bottom} ` +
+      `--margin-left ${margins.left} ` +
+      `--margin-right ${margins.right} ` +
       `--dpi 96 ` +
       `--zoom 1.0 ` +
       `--disable-smart-shrinking ` +

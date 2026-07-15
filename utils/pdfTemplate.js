@@ -149,6 +149,17 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 @media print {
   .sheet { margin: 0; box-shadow: none; }
 }
+
+/* Receipt (A5) - resit lazimnya ringkas, jadi ruang lebih padat berbanding invois/quotation A4 */
+.receipt-sheet { font-size: 0.85rem; }
+.receipt-sheet .clientinfo p, .receipt-sheet .docinfo p { font-size: 0.68rem; }
+.receipt-sheet .issuence table th, .receipt-sheet .issuence table td { font-size: 0.68rem; }
+.payment-info { margin-top: 0.6rem; padding: 0.5rem 0.6rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; page-break-inside: avoid; }
+.payment-info table { width: 100%; border-collapse: collapse; }
+.payment-info table td { font-size: 0.68rem; padding: 1px 0; vertical-align: top; }
+.payment-info table td:first-child { color: #6b7280; white-space: nowrap; padding-right: 6px; }
+.payment-info table td:nth-child(2) { padding-right: 6px; }
+.payment-info .paid-amount td { font-weight: 700; font-size: 0.85rem !important; color: #15803d; padding-top: 0.3rem; }
 `
 
 const generateHTML = ({ documentType, company, customer, documentNumber, date, validUntil, items, subtotal, discountPercent, discountAmount, discountLabel, tax, total, bank, issuedBy, notes, logoData, audiowideFontPath, paidAmount }) => {
@@ -345,4 +356,183 @@ ${fontFace}
 </html>`
 }
 
-module.exports = { generateHTML }
+const PAYMENT_METHOD_LABELS = {
+  CASH: 'Tunai',
+  BANK_TRANSFER: 'Pindahan Bank',
+  CHEQUE: 'Cek',
+  CREDIT_CARD: 'Kad Kredit',
+  DEBIT_CARD: 'Kad Debit',
+  EWALLET: 'E-Dompet'
+}
+
+// Template PDF Resit (Receipt) - saiz A5, ringkas berbanding invois/quotation A4.
+const generateReceiptHTML = ({ company, customer, documentNumber, date, items, subtotal, discountPercent, discountAmount, discountLabel, tax, total, payments, notes, logoData, audiowideFontPath, issuedBy }) => {
+  const hasDiscount = Number(discountAmount) > 0
+  const hasTax = Number(tax) > 0
+  const showBreakdown = hasDiscount || hasTax
+
+  const isBillable = (item) => Number(item.amount) > 0
+  const needsQtyPrice = (item) => {
+    if (!isBillable(item)) return false
+    const qty = Number(item.quantity)
+    const price = Number(item.unitPrice)
+    return qty > 1 || (qty && price && Number(item.amount) !== price * qty)
+  }
+  const billableItems = (items || []).filter(isBillable)
+  const showQtyPrice = billableItems.some(needsQtyPrice)
+
+  const itemRows = billableItems.map((item) => {
+    const show = showQtyPrice && needsQtyPrice(item)
+    const qtyUnit = show ? (() => {
+      const qty = Number(item.quantity) || ''
+      const unit = item.unit || ''
+      return unit ? `${qty}<br><span style="font-size:0.55rem;color:#666;display:inline-block">${unit}</span>` : qty
+    })() : ''
+    const priceVal = show && Number(item.unitPrice) ? formatCurrency(item.unitPrice) : ''
+    return `
+    <tr>
+      <td><div>${renderWhatsAppText(item.description || '')}</div></td>
+      ${showQtyPrice ? `<td class="qty-cell">${qtyUnit}</td>` : ''}
+      ${showQtyPrice ? `<td class="price-cell">${priceVal}</td>` : ''}
+      <td class="amount-cell">${Number(item.amount) ? formatCurrency(item.amount) : ''}</td>
+    </tr>`
+  }).join('')
+
+  const logoHtml = logoData
+    ? `<img src="${logoData}" alt="Logo" />`
+    : `<div class="logo-placeholder"></div>`
+
+  let pricingRows = ''
+  if (showBreakdown) {
+    pricingRows += `<tr><td>Subtotal</td><td class="positive">${formatCurrency(subtotal)}</td></tr>`
+    if (hasDiscount) {
+      const label = discountLabel || 'Discount'
+      const pct = discountPercent > 0 ? ` (${discountPercent}%)` : ''
+      pricingRows += `<tr><td style="white-space: nowrap;">${label}${pct}</td><td class="negative">${formatCurrency(-discountAmount)}</td></tr>`
+    }
+    if (hasTax) {
+      pricingRows += `<tr><td>Tax</td><td class="positive">${formatCurrency(tax)}</td></tr>`
+    }
+    pricingRows += `<tr class="divider1 grand"><td>Grand Total</td><td>${formatCurrency(total)}</td></tr>`
+  } else {
+    pricingRows += `<tr class="grand"><td>Total</td><td>${formatCurrency(total)}</td></tr>`
+  }
+
+  // Maklumat bayaran - guna rekod Payment yang berkaitan jika ada, jika tiada anggap resit
+  // ini merekodkan bayaran penuh sejumlah `total` (resit = bukti bayaran diterima)
+  const paymentList = (payments || []).filter(p => p && Number(p.amount) > 0)
+  const totalPaid = paymentList.length > 0
+    ? paymentList.reduce((sum, p) => sum + Number(p.amount), 0)
+    : Number(total) || 0
+  const methodLine = paymentList.length > 0
+    ? paymentList.map(p => PAYMENT_METHOD_LABELS[p.method] || p.method).join(', ')
+    : ''
+  const referenceLine = paymentList.length > 0
+    ? paymentList.map(p => p.reference).filter(Boolean).join(', ')
+    : ''
+
+  const issuedByName = issuedBy || company?.manager || ''
+
+  const fontFace = audiowideFontPath
+    ? `<style>@font-face{font-family:'Audiowide';src:url('file://${audiowideFontPath}') format('truetype');}</style>`
+    : `<link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">`
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+${fontFace}
+<style>${css}</style></head>
+<body>
+<div class="sheet receipt-sheet">
+  <div class="main-content">
+    <table class="print-header" style="width:100% !important;">
+      <tr>
+        <td class="logo-cell">${logoHtml}</td>
+        <td class="company-cell">
+          <div>
+            <h1 class="audiowide-regular" style="font-size:0.95rem;font-weight:700;margin:0;padding:0;color:#333;">
+              ${company?.name || ''}
+              <span style="font-family: ui-sans-serif, system-ui, sans-serif; font-weight:400; font-size:0.55rem;padding-left:.2rem;color:#666">${company?.registration || ''}</span>
+            </h1>
+          </div>
+          <div class="company-info">
+            <p>${company?.address || ''}</p>
+            <p>Email: ${company?.email || ''}  Phone: ${company?.phone || ''}</p>
+          </div>
+        </td>
+        <td class="doctype-cell" align="right">
+          <h1 class="audiowide-regular" style="font-size:0.9rem;font-weight:700;margin:0;text-align:center !important;width:100%;color:#333">RECEIPT</h1>
+        </td>
+      </tr>
+    </table>
+
+    <hr class="hr--major" />
+
+    <table class="clientinfo-container">
+      <tr>
+        <td class="clientinfo">
+          <p>${customer?.name || ''}</p>
+          <p>${customer?.address || ''}</p>
+          ${(customer?.phone || customer?.mobile) ? `<p style="margin-top:8px">${customer.phone ? `Tel: ${customer.phone}` : ''}${customer.mobile ? `  Mobile: ${customer.mobile}` : ''}</p>` : ''}
+        </td>
+        <td class="docinfo">
+          <table>
+            <tr><td style="font-weight:900">No</td><td>:</td><td>${documentNumber}</td></tr>
+            <tr><td style="color:#666">Date</td><td style="color:#666">:</td><td style="color:#666">${formatDate(date)}</td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <div class="issuence">
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            ${showQtyPrice ? '<th class="qty-cell">Qty</th><th class="price-cell">Price</th>' : ''}
+            <th class="amount-cell">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemRows || `<tr><td style="text-align:center;color:#999;padding:1.5rem 0" colspan="${showQtyPrice ? 4 : 2}">No items</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="closing-section">
+    <hr class="hr--major" />
+
+    <table class="footer-table">
+      <tr>
+        <td>
+          <div class="payment-info">
+            <table>
+              ${methodLine ? `<tr><td>Kaedah Bayaran</td><td>:</td><td>${methodLine}</td></tr>` : ''}
+              ${referenceLine ? `<tr><td>Rujukan</td><td>:</td><td>${referenceLine}</td></tr>` : ''}
+              <tr class="paid-amount"><td colspan="3">Jumlah Dibayar: ${formatCurrency(totalPaid)}</td></tr>
+            </table>
+          </div>
+        </td>
+        <td>
+          <table class="pricing-table">
+            ${pricingRows}
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    ${notes ? `<div class="notes-section"><p><strong>Notes:</strong></p><div>${renderWhatsAppText(notes)}</div></div>` : ''}
+
+    <div class="issuedby-section">
+      <p class="label">Received By,</p>
+      <p class="name" style="font-style: italic; margin-top:0.5rem; padding-bottom:1px">${issuedByName}</p>
+      <div class="signature-line">(Signature)</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`
+}
+
+module.exports = { generateHTML, generateReceiptHTML }

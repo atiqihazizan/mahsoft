@@ -5,7 +5,14 @@ import CurrencyFormat from './CurrencyFormat'
 import DateFormat from './DateFormat'
 import StatusBadge from './StatusBadge'
 import { createDocumentData } from '../utils/documentHelpers'
-import { invoicesAPI, quotesAPI, whatsAppAPI } from '../utils/apiClient'
+import { invoicesAPI, quotesAPI, receiptsAPI, whatsAppAPI } from '../utils/apiClient'
+
+// Pilih apiClient yang sepadan dengan jenis dokumen untuk hantar email/WhatsApp
+const SEND_API_BY_TYPE = {
+  INVOICE: invoicesAPI,
+  QUOTATION: quotesAPI,
+  RECEIPT: receiptsAPI
+}
 
 const DocumentPreview = ({
   id,
@@ -137,7 +144,7 @@ const DocumentPreview = ({
     setSending('email')
     setShowEmailDialog(false)
     try {
-      const api = documentType === 'INVOICE' ? invoicesAPI : quotesAPI
+      const api = SEND_API_BY_TYPE[documentType] || quotesAPI
       const res = await api.sendEmail(id, { to: emailTo.trim() })
       if (res?.success) {
         alert('Emel berjaya dihantar')
@@ -155,7 +162,7 @@ const DocumentPreview = ({
     if (!whatsAppPhone.trim() || sending) return
     setSending('whatsapp')
     try {
-      const api = documentType === 'INVOICE' ? invoicesAPI : quotesAPI
+      const api = SEND_API_BY_TYPE[documentType] || quotesAPI
       const res = await api.sendWhatsApp(id, { phone: whatsAppPhone.trim() })
       if (res?.data?.needsAuth) {
         setWhatsAppQr(res.data.qrCode)

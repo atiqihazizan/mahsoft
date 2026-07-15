@@ -65,6 +65,7 @@ jspm_packages/
 # Generated PDFs
 storage/app/public/invoices/
 storage/app/public/quotes/
+storage/app/public/receipts/
 
 # Prisma
 .bak
