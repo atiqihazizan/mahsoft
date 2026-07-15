@@ -80,10 +80,10 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .company-info { margin-top: 0.3rem; }
 .company-info p { line-height: 1.5; font-size: 0.65rem; margin: 0; white-space: nowrap; }
 .hr--major { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid #8c8c8c; }
-.hr--minor { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid rgba(0,0,0,0.08); }
+.hr--minor { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid #ebebeb; }
 
 .issuence table { width: 100%; border-collapse: collapse; }
-.issuence table th { text-align: left; font-weight: 600; font-size: 0.6rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.3rem 0.4rem; border-bottom: 1px solid rgba(0,0,0,0.10);border-top: 1px solid #8c8c8c; }
+.issuence table th { text-align: left; font-weight: 600; font-size: 0.6rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.3rem 0.4rem; border-bottom: 1px solid #e6e6e6;border-top: 1px solid #8c8c8c; }
 .issuence table td { padding: 0.4rem 0.3rem 0.2rem; vertical-align: top; font-size: 0.7rem; line-height: 1.5; }
 .issuence table td:first-child { text-align: left; }
 .issuence table th.amount-cell, .issuence table td.amount-cell { text-align: right; white-space: nowrap; font-weight: 600; width: 1%; }
@@ -154,6 +154,8 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .receipt-sheet { font-size: 0.85rem; }
 .receipt-sheet .clientinfo p, .receipt-sheet .docinfo p { font-size: 0.68rem; }
 .receipt-sheet .issuence table th, .receipt-sheet .issuence table td { font-size: 0.68rem; }
+.receipt-sheet .company-info p { white-space: normal; font-size: 0.6rem; }
+.receipt-sheet .company-cell { width: 60%; }
 .payment-info { margin-top: 0.6rem; padding: 0.5rem 0.6rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; page-break-inside: avoid; }
 .payment-info table { width: 100%; border-collapse: collapse; }
 .payment-info table td { font-size: 0.68rem; padding: 1px 0; vertical-align: top; }
