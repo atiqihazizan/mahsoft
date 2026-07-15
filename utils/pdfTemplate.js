@@ -79,11 +79,11 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .docinfo table td:last-child { text-align: right; }
 .company-info { margin-top: 0.3rem; }
 .company-info p { line-height: 1.5; font-size: 0.65rem; margin: 0; white-space: nowrap; }
-.hr--major { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid rgba(0,0,0,0.45); }
+.hr--major { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid #8c8c8c; }
 .hr--minor { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid rgba(0,0,0,0.08); }
 
 .issuence table { width: 100%; border-collapse: collapse; }
-.issuence table th { text-align: left; font-weight: 600; font-size: 0.6rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.3rem 0.4rem; border-bottom: 1px solid rgba(0,0,0,0.10);border-top: 1px solid rgba(0,0,0,0.45); }
+.issuence table th { text-align: left; font-weight: 600; font-size: 0.6rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.3rem 0.4rem; border-bottom: 1px solid rgba(0,0,0,0.10);border-top: 1px solid #8c8c8c; }
 .issuence table td { padding: 0.4rem 0.3rem 0.2rem; vertical-align: top; font-size: 0.7rem; line-height: 1.5; }
 .issuence table td:first-child { text-align: left; }
 .issuence table th.amount-cell, .issuence table td.amount-cell { text-align: right; white-space: nowrap; font-weight: 600; width: 1%; }
@@ -241,7 +241,7 @@ ${fontFace}
           <div>
             <h1 class="audiowide-regular" style="font-size:1.1rem;font-weight:700;margin:0;padding:0;color:#333;">
               ${company?.name || ''}
-              <span style="font-size:0.7rem;padding-left:.5rem;color:#666">${company?.registration || ''}</span>
+              <span style="font-family: ui-sans-serif, system-ui, sans-serif; font-weight:400; font-size:0.6rem;padding-left:.2rem;color:#666">${company?.registration || ''}</span>
             </h1>
           </div>
           <div class="company-info">

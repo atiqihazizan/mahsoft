@@ -85,7 +85,7 @@ const generatePdf = async (docType, id) => {
   const fontPath = path.join(FONTS_PATH, 'Audiowide-Regular.ttf')
   const html = generateHTML({
     documentType: docType,
-    company: doc.company,
+    company: { ...doc.company, registration: doc.company?.ssm },
     logoData,
     customer: doc.customer,
     documentNumber: docType === 'INVOICE' ? doc.invoiceNumber : doc.quoteNumber,
