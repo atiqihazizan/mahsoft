@@ -127,6 +127,8 @@ const generatePdf = async (docType, id) => {
       `--zoom 1.0 ` +
       `--disable-smart-shrinking ` +
       `--enable-local-file-access ` +
+      `--javascript-delay 500 ` +
+      `--no-stop-slow-scripts ` +
       `"${tmpHtml}" "${pdfPath}"`,
       { timeout: 30000 }
     )

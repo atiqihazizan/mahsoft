@@ -110,7 +110,7 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .pricing-table .positive { color: #000; }
 .pricing-table .negative { color: #dc2626; }
 
-.issuedby-section { }
+.issuedby-section { margin-top: 0.8rem; page-break-inside: avoid; }
 .issuedby-section .label { font-size: 0.7rem; color: #374151; }
 .issuedby-section .name { font-size: 0.8rem; font-weight: 600; margin: 0; }
 .issuedby-section .signature-line {
@@ -310,11 +310,6 @@ ${fontFace}
               </table>
             </div>
           ` : ''}
-          <div class="issuedby-section">
-            <p class="label">Issued By,</p>
-            <p class="name" style="font-style: italic; margin-top:0.5rem; padding-bottom:1px">${issuedByName}</p>
-            <div class="signature-line">(Signature)</div>
-          </div>
         </td>
         <td>
           <table class="pricing-table">
@@ -325,6 +320,12 @@ ${fontFace}
     </table>
 
     ${notes ? `<div class="notes-section"><p><strong>Notes:</strong></p><div>${renderWhatsAppText(notes)}</div></div>` : ''}
+
+    <div class="issuedby-section">
+      <p class="label">Issued By,</p>
+      <p class="name" style="font-style: italic; margin-top:0.5rem; padding-bottom:1px">${issuedByName}</p>
+      <div class="signature-line">(Signature)</div>
+    </div>
   </div>
 </div>
 </body>
