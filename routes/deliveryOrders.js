@@ -12,6 +12,7 @@ const createDeliveryOrderValidation = [
   body('companyId').notEmpty().withMessage('Company ID diperlukan'),
   body('userId').notEmpty().withMessage('User ID diperlukan'),
   body('customerId').notEmpty().withMessage('Customer ID diperlukan'),
+  body('doNumber').optional().isString().trim().notEmpty().withMessage('Nombor DO tidak boleh kosong'),
   body('date').isISO8601().withMessage('Format tarikh tidak sah'),
   body('deliveryDate').isISO8601().withMessage('Format tarikh penghantaran tidak sah'),
   body('deliveryAddress').optional().isString().withMessage('Alamat penghantaran mestilah teks'),
@@ -26,6 +27,7 @@ const createDeliveryOrderValidation = [
 
 const updateDeliveryOrderValidation = [
   param('id').isString().withMessage('ID tidak sah'),
+  body('doNumber').optional().isString().trim().notEmpty().withMessage('Nombor DO tidak boleh kosong'),
   body('date').optional().isISO8601().withMessage('Format tarikh tidak sah'),
   body('deliveryDate').optional().isISO8601().withMessage('Format tarikh penghantaran tidak sah'),
   body('status').optional().isIn(['DRAFT', 'CONFIRMED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED']).withMessage('Status tidak sah'),
@@ -162,6 +164,7 @@ router.post('/', authenticateToken, createDeliveryOrderValidation, async (req, r
       userId,
       customerId,
       invoiceId,
+      doNumber: customDoNumber,
       date,
       deliveryDate,
       deliveryAddress,
@@ -205,8 +208,15 @@ router.post('/', authenticateToken, createDeliveryOrderValidation, async (req, r
       }
     }
 
-    // Generate delivery order number
-    const doNumber = await generateDeliveryOrderNumber(companyId);
+    // Guna nombor custom jika diberi, jika tidak generate ikut sequence syarikat
+    let doNumber;
+    if (customDoNumber) {
+      const existing = await prisma.deliveryOrder.findUnique({ where: { doNumber: customDoNumber } });
+      if (existing) return badRequest(res, 'Nombor DO ini sudah digunakan');
+      doNumber = customDoNumber;
+    } else {
+      doNumber = await generateDeliveryOrderNumber(companyId);
+    }
 
     // Calculate totals
     let subtotal = 0;
@@ -283,6 +293,7 @@ router.put('/:id', authenticateToken, updateDeliveryOrderValidation, async (req,
   try {
     const { id } = req.params;
     const {
+      doNumber,
       date,
       deliveryDate,
       status,
@@ -304,8 +315,15 @@ router.put('/:id', authenticateToken, updateDeliveryOrderValidation, async (req,
       return notFound(res, 'Delivery order tidak dijumpai');
     }
 
+    // Semak keunikan nombor DO jika ditukar
+    if (doNumber && doNumber !== existingDeliveryOrder.doNumber) {
+      const clash = await prisma.deliveryOrder.findUnique({ where: { doNumber } });
+      if (clash) return badRequest(res, 'Nombor DO ini sudah digunakan');
+    }
+
     // Build update data
     const updateData = {
+      ...(doNumber && { doNumber }),
       ...(date && { date: new Date(date) }),
       ...(deliveryDate && { deliveryDate: new Date(deliveryDate) }),
       ...(status && { status }),

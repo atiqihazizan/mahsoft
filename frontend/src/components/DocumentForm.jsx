@@ -24,11 +24,20 @@ const DocumentForm = ({
   customers = [],
   companies = []
 }) => {
+  // Konfigurasi label/nombor dokumen ikut jenis
+  const documentNumberConfig = {
+    invoice: { field: 'invoiceNumber', label: 'Invoice Number' },
+    quote: { field: 'quoteNumber', label: 'Quote Number' },
+    receipt: { field: 'receiptNumber', label: 'Receipt Number' },
+    delivery_order: { field: 'doNumber', label: 'DO Number' }
+  }[type] || { field: 'documentNumber', label: 'Document Number' }
+
   // State untuk form data
   const [formData, setFormData] = useState({
     // Header information
     customerId: '',
     companyId: '',
+    customNumber: '',
     date: new Date().toISOString().split('T')[0],
     dueDate: type === 'invoice' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '', // 30 hari untuk invoice
     validUntil: type === 'quote' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '', // 30 hari untuk quote
@@ -521,6 +530,26 @@ const DocumentForm = ({
                     />
                     {errors.companyId && (
                       <p className="text-red-500 text-xs mt-1">{errors.companyId}</p>
+                    )}
+                  </div>
+
+                  {/* Custom Document Number */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      {documentNumberConfig.label}
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.customNumber ?? ''}
+                      onChange={(e) => handleInputChange('customNumber', e.target.value)}
+                      placeholder="Auto-generate"
+                      className={`w-full h-11 px-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 text-sm ${
+                        errors.customNumber ? 'border-red-400' : 'border-gray-200'
+                      }`}
+                    />
+                    <p className="text-gray-400 text-xs mt-1">Leave blank to auto-generate</p>
+                    {errors.customNumber && (
+                      <p className="text-red-500 text-xs mt-1">{errors.customNumber}</p>
                     )}
                   </div>
 

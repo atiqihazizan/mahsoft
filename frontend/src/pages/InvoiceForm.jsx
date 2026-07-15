@@ -26,6 +26,7 @@ const InvoiceForm = () => {
       id: invoice.id, // Pastikan ID dikekalkan untuk edit mode
       customerId: invoice.customerId,
       companyId: invoice.companyId,
+      customNumber: invoice.invoiceNumber || '',
       date: new Date(invoice.date).toISOString().split('T')[0],
       dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
       subject: invoice.subject || '',
@@ -141,6 +142,7 @@ const InvoiceForm = () => {
       const apiData = {
         companyId: formData.companyId,
         customerId: formData.customerId,
+        ...(formData.customNumber?.trim() && { invoiceNumber: formData.customNumber.trim() }),
         date: formData.date,
         dueDate: formData.dueDate,
         subject: formData.subject,

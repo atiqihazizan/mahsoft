@@ -12,6 +12,7 @@ const createQuoteValidation = [
   body('companyId').notEmpty().withMessage('ID syarikat diperlukan'),
   body('userId').notEmpty().withMessage('ID pengguna diperlukan'),
   body('customerId').notEmpty().withMessage('ID pelanggan diperlukan'),
+  body('quoteNumber').optional().isString().trim().notEmpty().withMessage('Nombor sebut harga tidak boleh kosong'),
   body('date').isISO8601().withMessage('Format tarikh tidak sah'),
   body('validUntil').isISO8601().withMessage('Format tarikh sah hingga tidak sah'),
   body('subject').optional().isString().withMessage('Subjek mestilah teks'),
@@ -28,6 +29,7 @@ const updateQuoteValidation = [
   body('companyId').optional().notEmpty().withMessage('ID syarikat tidak boleh kosong'),
   body('userId').optional().notEmpty().withMessage('ID pengguna tidak boleh kosong'),
   body('customerId').optional().notEmpty().withMessage('ID pelanggan tidak boleh kosong'),
+  body('quoteNumber').optional().isString().trim().notEmpty().withMessage('Nombor sebut harga tidak boleh kosong'),
   body('date').optional().isISO8601().withMessage('Format tarikh tidak sah'),
   body('validUntil').optional().isISO8601().withMessage('Format tarikh sah hingga tidak sah'),
   body('subject').optional().isString().withMessage('Subjek mestilah teks'),
@@ -167,7 +169,7 @@ router.get('/:id', [
 // POST /api/v1/quotes - Cipta sebut harga baru
 router.post('/', createQuoteValidation, async (req, res) => {
   try {
-    const { companyId, userId, customerId, date, validUntil, subject, items, notes, discountPercent, discountAmount, discountLabel } = req.body;
+    const { companyId, userId, customerId, quoteNumber: customQuoteNumber, date, validUntil, subject, items, notes, discountPercent, discountAmount, discountLabel } = req.body;
 
     // Verify related records exist
     const [company, user, customer] = await Promise.all([
@@ -180,8 +182,15 @@ router.post('/', createQuoteValidation, async (req, res) => {
     if (!user) return badRequest(res, 'Pengguna tidak ditemui');
     if (!customer) return badRequest(res, 'Pelanggan tidak ditemui');
 
-    // Generate quote number using company sequence
-    const quoteNumber = await generateQuoteNumber(companyId);
+    // Guna nombor custom jika diberi, jika tidak generate ikut sequence syarikat
+    let quoteNumber;
+    if (customQuoteNumber) {
+      const existing = await prisma.quote.findUnique({ where: { quoteNumber: customQuoteNumber } });
+      if (existing) return badRequest(res, 'Nombor sebut harga ini sudah digunakan');
+      quoteNumber = customQuoteNumber;
+    } else {
+      quoteNumber = await generateQuoteNumber(companyId);
+    }
 
     // Calculate totals (respect client taxRate if provided; else default 0.06)
   const inputTaxRate = typeof req.body.taxRate === 'number' ? (req.body.taxRate / 100) : 0.06;
@@ -265,6 +274,12 @@ router.put('/:id', updateQuoteValidation, async (req, res) => {
       if (!customer) return badRequest(res, 'Pelanggan tidak ditemui');
     }
 
+    // Semak keunikan nombor sebut harga jika ditukar
+    if (updateData.quoteNumber && updateData.quoteNumber !== existingQuote.quoteNumber) {
+      const clash = await prisma.quote.findUnique({ where: { quoteNumber: updateData.quoteNumber } });
+      if (clash) return badRequest(res, 'Nombor sebut harga ini sudah digunakan');
+    }
+
     // If items provided, recalc totals and map amounts
     let recalculatedFields = {};
     if (Array.isArray(updateData.items) && updateData.items.length > 0) {
@@ -312,6 +327,7 @@ router.put('/:id', updateQuoteValidation, async (req, res) => {
     const quote = await prisma.quote.update({
       where: { id },
       data: {
+        ...(updateData.quoteNumber && { quoteNumber: updateData.quoteNumber }),
         ...(updateData.date && { date: new Date(updateData.date) }),
         ...(updateData.validUntil && { validUntil: new Date(updateData.validUntil) }),
         ...(updateData.subject !== undefined && { subject: updateData.subject }),

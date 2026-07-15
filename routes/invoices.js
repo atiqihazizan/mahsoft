@@ -12,6 +12,7 @@ const createInvoiceValidation = [
   body('companyId').notEmpty().withMessage('ID syarikat diperlukan'),
   body('userId').notEmpty().withMessage('ID pengguna diperlukan'),
   body('customerId').notEmpty().withMessage('ID pelanggan diperlukan'),
+  body('invoiceNumber').optional().isString().trim().notEmpty().withMessage('Nombor invois tidak boleh kosong'),
   body('date').isISO8601().withMessage('Format tarikh tidak sah'),
   body('dueDate').isISO8601().withMessage('Format tarikh tempoh tidak sah'),
   body('subject').optional().isString().withMessage('Subjek mestilah teks'),
@@ -29,6 +30,7 @@ const updateInvoiceValidation = [
   body('companyId').optional().notEmpty().withMessage('ID syarikat tidak boleh kosong'),
   body('userId').optional().notEmpty().withMessage('ID pengguna tidak boleh kosong'),
   body('customerId').optional().notEmpty().withMessage('ID pelanggan tidak boleh kosong'),
+  body('invoiceNumber').optional().isString().trim().notEmpty().withMessage('Nombor invois tidak boleh kosong'),
   body('date').optional().isISO8601().withMessage('Format tarikh tidak sah'),
   body('dueDate').optional().isISO8601().withMessage('Format tarikh tempoh tidak sah'),
   body('subject').optional().isString().withMessage('Subjek mestilah teks'),
@@ -155,7 +157,7 @@ router.get('/:id', [
 // POST /api/v1/invoices - Cipta invois baru
 router.post('/', createInvoiceValidation, async (req, res) => {
   try {
-    const { companyId, userId, customerId, date, dueDate, subject, items, notes, quoteId, taxRate, discountPercent, discountAmount, discountLabel } = req.body;
+    const { companyId, userId, customerId, invoiceNumber: customInvoiceNumber, date, dueDate, subject, items, notes, quoteId, taxRate, discountPercent, discountAmount, discountLabel } = req.body;
 
     // Verify related records exist
     const [company, user, customer] = await Promise.all([
@@ -174,8 +176,15 @@ router.post('/', createInvoiceValidation, async (req, res) => {
       if (!quote) return badRequest(res, 'Sebut harga tidak ditemui');
     }
 
-    // Generate invoice number using company sequence
-    const invoiceNumber = await generateInvoiceNumber(companyId);
+    // Guna nombor custom jika diberi, jika tidak generate ikut sequence syarikat
+    let invoiceNumber;
+    if (customInvoiceNumber) {
+      const existing = await prisma.invoice.findUnique({ where: { invoiceNumber: customInvoiceNumber } });
+      if (existing) return badRequest(res, 'Nombor invois ini sudah digunakan');
+      invoiceNumber = customInvoiceNumber;
+    } else {
+      invoiceNumber = await generateInvoiceNumber(companyId);
+    }
 
     // Calculate totals - taxRate dari frontend dalam peratus (contoh 6), normalize ke decimal
     const normalizedTaxRate = (taxRate !== undefined && taxRate !== null) ? (parseFloat(taxRate) / 100) : 0.06;
@@ -267,8 +276,15 @@ router.put('/:id', updateInvoiceValidation, async (req, res) => {
       if (!customer) return badRequest(res, 'Pelanggan tidak ditemui');
     }
 
+    // Semak keunikan nombor invois jika ditukar
+    if (updateData.invoiceNumber && updateData.invoiceNumber !== existingInvoice.invoiceNumber) {
+      const clash = await prisma.invoice.findUnique({ where: { invoiceNumber: updateData.invoiceNumber } });
+      if (clash) return badRequest(res, 'Nombor invois ini sudah digunakan');
+    }
+
     // Prepare update data
     const invoiceUpdateData = {
+      ...(updateData.invoiceNumber && { invoiceNumber: updateData.invoiceNumber }),
       ...(updateData.date && { date: new Date(updateData.date) }),
       ...(updateData.dueDate && { dueDate: new Date(updateData.dueDate) }),
       ...(updateData.subject !== undefined && { subject: updateData.subject }),

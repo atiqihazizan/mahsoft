@@ -26,6 +26,7 @@ const QuoteForm = () => {
       id: quote.id, // Pastikan ID dikekalkan untuk edit mode
       customerId: quote.customerId,
       companyId: quote.companyId,
+      customNumber: quote.quoteNumber || '',
       date: new Date(quote.date).toISOString().split('T')[0],
       validUntil: new Date(quote.validUntil).toISOString().split('T')[0],
       subject: quote.subject || '',
@@ -141,6 +142,7 @@ const QuoteForm = () => {
       const apiData = {
         companyId: formData.companyId,
         customerId: formData.customerId,
+        ...(formData.customNumber?.trim() && { quoteNumber: formData.customNumber.trim() }),
         date: formData.date,
         validUntil: formData.validUntil,
         subject: formData.subject,

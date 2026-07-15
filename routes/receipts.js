@@ -11,6 +11,7 @@ const createReceiptValidation = [
   body('companyId').notEmpty().withMessage('ID syarikat diperlukan'),
   body('userId').notEmpty().withMessage('ID pengguna diperlukan'),
   body('customerId').notEmpty().withMessage('ID pelanggan diperlukan'),
+  body('receiptNumber').optional().isString().trim().notEmpty().withMessage('Nombor resit tidak boleh kosong'),
   body('date').isISO8601().withMessage('Format tarikh tidak sah'),
   body('subject').optional().isString().withMessage('Subjek mestilah teks'),
   body('taxRate').optional().isNumeric().withMessage('Tax rate mestilah nombor'),
@@ -27,6 +28,7 @@ const updateReceiptValidation = [
   body('companyId').optional().notEmpty().withMessage('ID syarikat tidak boleh kosong'),
   body('userId').optional().notEmpty().withMessage('ID pengguna tidak boleh kosong'),
   body('customerId').optional().notEmpty().withMessage('ID pelanggan tidak boleh kosong'),
+  body('receiptNumber').optional().isString().trim().notEmpty().withMessage('Nombor resit tidak boleh kosong'),
   body('date').optional().isISO8601().withMessage('Format tarikh tidak sah'),
   body('subject').optional().isString().withMessage('Subjek mestilah teks'),
   body('status').optional().isIn(['DRAFT', 'ISSUED', 'CANCELLED']).withMessage('Status tidak sah'),
@@ -145,7 +147,7 @@ router.get('/:id', [
 // POST /api/v1/receipts - Cipta resit baru
 router.post('/', createReceiptValidation, async (req, res) => {
   try {
-    const { companyId, userId, customerId, date, subject, items, notes, taxRate, discountPercent, discountAmount, discountLabel } = req.body;
+    const { companyId, userId, customerId, receiptNumber: customReceiptNumber, date, subject, items, notes, taxRate, discountPercent, discountAmount, discountLabel } = req.body;
 
     // Verify related records exist
     const [company, user, customer] = await Promise.all([
@@ -158,8 +160,15 @@ router.post('/', createReceiptValidation, async (req, res) => {
     if (!user) return badRequest(res, 'Pengguna tidak ditemui');
     if (!customer) return badRequest(res, 'Pelanggan tidak ditemui');
 
-    // Generate receipt number using company sequence
-    const receiptNumber = await generateReceiptNumber(companyId);
+    // Guna nombor custom jika diberi, jika tidak generate ikut sequence syarikat
+    let receiptNumber;
+    if (customReceiptNumber) {
+      const existing = await prisma.receipt.findUnique({ where: { receiptNumber: customReceiptNumber } });
+      if (existing) return badRequest(res, 'Nombor resit ini sudah digunakan');
+      receiptNumber = customReceiptNumber;
+    } else {
+      receiptNumber = await generateReceiptNumber(companyId);
+    }
 
     // Calculate totals dengan taxRate dari request (peratus → decimal). Default 0.06 jika tidak diberi.
     const normalizedTaxRate = (taxRate !== undefined && taxRate !== null) ? (parseFloat(taxRate) / 100) : 0.06;
@@ -247,6 +256,12 @@ router.put('/:id', updateReceiptValidation, async (req, res) => {
       if (!customer) return badRequest(res, 'Pelanggan tidak ditemui');
     }
 
+    // Semak keunikan nombor resit jika ditukar
+    if (updateData.receiptNumber && updateData.receiptNumber !== existingReceipt.receiptNumber) {
+      const clash = await prisma.receipt.findUnique({ where: { receiptNumber: updateData.receiptNumber } });
+      if (clash) return badRequest(res, 'Nombor resit ini sudah digunakan');
+    }
+
     // If items provided, recalc totals and map amounts
     let recalculatedFields = {};
     if (Array.isArray(updateData.items) && updateData.items.length > 0) {
@@ -296,6 +311,7 @@ router.put('/:id', updateReceiptValidation, async (req, res) => {
     const receipt = await prisma.receipt.update({
       where: { id },
       data: {
+        ...(updateData.receiptNumber && { receiptNumber: updateData.receiptNumber }),
         ...(updateData.date && { date: new Date(updateData.date) }),
         ...(updateData.subject !== undefined && { subject: updateData.subject }),
         ...(updateData.status && { status: updateData.status }),

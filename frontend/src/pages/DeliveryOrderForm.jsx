@@ -51,6 +51,7 @@ const DeliveryOrderForm = () => {
               id: doData.id,
               customerId: doData.customerId,
               companyId: doData.companyId,
+              customNumber: doData.doNumber || '',
               date: doData.date ? new Date(doData.date).toISOString().split('T')[0] : '',
               deliveryDate: doData.deliveryDate ? new Date(doData.deliveryDate).toISOString().split('T')[0] : '',
               deliveryAddress: doData.deliveryAddress || '',
@@ -137,6 +138,7 @@ const DeliveryOrderForm = () => {
       const apiData = {
         companyId: formData.companyId,
         customerId: formData.customerId,
+        ...(formData.customNumber?.trim() && { doNumber: formData.customNumber.trim() }),
         date: formData.date,
         deliveryDate: formData.deliveryDate,
         deliveryAddress: formData.deliveryAddress,

@@ -26,6 +26,7 @@ const ReceiptForm = () => {
       id: receipt.id, // Pastikan ID dikekalkan untuk edit mode
       customerId: receipt.customerId,
       companyId: receipt.companyId,
+      customNumber: receipt.receiptNumber || '',
       date: new Date(receipt.date).toISOString().split('T')[0],
       subject: receipt.subject || '',
       notes: receipt.notes || '',
@@ -140,6 +141,7 @@ const ReceiptForm = () => {
       const apiData = {
         companyId: formData.companyId,
         customerId: formData.customerId,
+        ...(formData.customNumber?.trim() && { receiptNumber: formData.customNumber.trim() }),
         date: formData.date,
         subject: formData.subject,
         taxRate: typeof formData.taxRate === 'number' ? formData.taxRate : 0,
