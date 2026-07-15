@@ -83,7 +83,6 @@ const generatePdf = async (docType, id) => {
 
   const FONTS_PATH = path.join(__dirname, '..', 'public', 'fonts')
   const fontPath = path.join(FONTS_PATH, 'Audiowide-Regular.ttf')
-
   const html = generateHTML({
     documentType: docType,
     company: doc.company,
@@ -120,10 +119,10 @@ const generatePdf = async (docType, id) => {
       `"${WKHTMLTOPDF}" ` +
       `--encoding UTF-8 ` +
       `--page-size A4 ` +
-      `--margin-top 0mm ` +
-      `--margin-bottom 0mm ` +
-      `--margin-left 0mm ` +
-      `--margin-right 0mm ` +
+      `--margin-top 15mm ` +
+      `--margin-bottom 15mm ` +
+      `--margin-left 20mm ` +
+      `--margin-right 20mm ` +
       `--dpi 96 ` +
       `--zoom 1.0 ` +
       `--disable-smart-shrinking ` +

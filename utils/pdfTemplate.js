@@ -50,11 +50,9 @@ blockquote, dl, dd, h1, h2, h3, h4, h5, h6, hr, figure, p, pre { margin: 0; padd
 ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 
 .sheet {
-  padding: 15mm 20mm;
-  width: 210mm;
-  min-height: 277mm;
+  width: 100%;
   box-sizing: border-box;
-  margin: auto;
+  margin: 0;
   background: white;
   line-height: 1.65;
   color: #212529;
@@ -66,7 +64,6 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 }
 
 .closing-section {
-  page-break-inside: avoid;
   margin-top: 10px;
 }
 
@@ -86,19 +83,19 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 .hr--minor { margin: .6rem 0 .8rem; border: none; border-bottom: 1px solid rgba(0,0,0,0.08); }
 
 .issuence table { width: 100%; border-collapse: collapse; }
-.issuence table th { text-align: left; font-weight: 600; font-size: 0.6rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.3rem 0.4rem; border-bottom: 1px solid rgba(0,0,0,0.08); }
+.issuence table th { text-align: left; font-weight: 600; font-size: 0.6rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.3rem 0.4rem; border-bottom: 1px solid rgba(0,0,0,0.10);border-top: 1px solid rgba(0,0,0,0.45); }
 .issuence table td { padding: 0.4rem 0.3rem 0.2rem; vertical-align: top; font-size: 0.7rem; line-height: 1.5; }
 .issuence table td:first-child { text-align: left; }
 .issuence table th.amount-cell, .issuence table td.amount-cell { text-align: right; white-space: nowrap; font-weight: 600; width: 1%; }
 .issuence table th.qty-cell, .issuence table td.qty-cell { text-align: center; white-space: nowrap; width: 1%; }
 .issuence table th.price-cell, .issuence table td.price-cell { text-align: right; white-space: nowrap; width: 1%; }
 .issuence table td div { line-height: 1.5; font-size: 0.7rem; }
-.issuence table tr.last-billable td { border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 0.5rem; }
+/*.issuence table tr.last-billable td { border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 0.5rem; }*/
 
 .info-section { margin-top: 1.5rem; page-break-inside: avoid; }
 .info-row { font-size: 0.6rem; line-height: 1.6; color: #374151; margin-bottom: 0.5rem; }
 
-.footer-table { width: 100%; border-collapse: collapse; margin-top: 0.4rem; }
+.footer-table { width: 100%; border-collapse: collapse; margin-top: 0.4rem; page-break-inside: avoid; }
 .footer-table td { width: 50%; vertical-align: top; }
 .footer-table td:last-child { text-align: right; }
 
@@ -124,11 +121,12 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
   font-size: 0.65rem;
   color: #6b7280;
   text-align: center;
+  font-style: italic;
 }
 
-.notes-section { margin-top: 0.8rem; font-size: 0.8rem; }
+.notes-section { margin-top: 0.8rem; font-size: 0.8rem; page-break-inside: avoid; }
 .notes-section p { margin: 0.15rem 0; }
-.notes-section strong { font-weight: 600; }
+.notes-section strong { font-weight: 700; }
 
 .print-header table { width: 100%; margin-bottom: 0; }
 .print-header table td { vertical-align: top; }
@@ -147,7 +145,6 @@ ol, ul, menu { list-style: none; margin: 0; padding: 0; }
 
 @media print {
   .sheet { margin: 0; box-shadow: none; }
-  .closing-section { page-break-inside: avoid; }
 }
 `
 
@@ -278,7 +275,7 @@ ${fontFace}
       </tr>
     </table>
 
-    <hr class="hr--minor" />
+    <!--hr class="hr--minor" /-->
 
     <div class="issuence">
       <table>

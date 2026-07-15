@@ -4,7 +4,13 @@ import { renderWhatsAppText } from './TextFormatting'
 import logoImage from '../assets/logo/logo.png'
 
 const printStyles = `
-@import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
+@font-face {
+  font-family: 'Audiowide';
+  src: url('${window.location.origin}/fonts/Audiowide-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 @page { margin: 0; padding: 0; }
 body { margin: 0; padding: 0; }
 .print-content { width: 100%; }
