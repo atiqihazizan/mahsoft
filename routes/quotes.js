@@ -353,17 +353,29 @@ router.put('/:id', updateQuoteValidation, async (req, res) => {
 });
 
 // POST /api/v1/quotes/:id/convert-to-invoice - Tukar sebut harga kepada invois
+// Bagi pilihan tambahan `createDeliveryOrder: true` untuk terus cipta Delivery Order
+// sekali dalam tindakan yang sama (quote diterima -> invois + DO serentak).
 router.post('/:id/convert-to-invoice', [
   param('id').isString().withMessage('ID tidak sah'),
+  body('dueDate').optional().isISO8601().withMessage('Format tarikh tempoh tidak sah'),
+  body('createDeliveryOrder').optional().isBoolean().withMessage('createDeliveryOrder mestilah boolean'),
+  body('deliveryDate').optional().isISO8601().withMessage('Format tarikh penghantaran tidak sah'),
+  body('deliveryAddress').optional().isString().withMessage('Alamat penghantaran mestilah teks'),
+  body('contactPerson').optional().isString().withMessage('Nama kontak mestilah teks'),
+  body('contactPhone').optional().isMobilePhone('any').withMessage('Format telefon kontak tidak sah'),
   handleValidationErrors
 ], async (req, res) => {
   try {
     const { id } = req.params;
-    const { dueDate } = req.body;
+    const { dueDate, createDeliveryOrder, deliveryDate, deliveryAddress, contactPerson, contactPhone } = req.body;
+    const wantsDeliveryOrder = createDeliveryOrder === true || createDeliveryOrder === 'true';
 
-    // Get quote
+    // Get quote (sertakan customer untuk default alamat/kontak DO jika diperlukan)
     const quote = await prisma.quote.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        customer: { select: { id: true, name: true, address: true, phone: true } }
+      }
     });
 
     if (!quote) {
@@ -374,37 +386,96 @@ router.post('/:id/convert-to-invoice', [
       return badRequest(res, 'Hanya sebut harga yang diterima boleh ditukar kepada invois');
     }
 
-    // Generate invoice number using company sequence
+    // Generate nombor invois (dan nombor DO jika diminta) mengikut sequence syarikat
     const invoiceNumber = await generateInvoiceNumber(quote.companyId);
+    let doNumber = null;
+    if (wantsDeliveryOrder) {
+      const { generateDeliveryOrderNumber } = require('../utils/numberGenerator');
+      doNumber = await generateDeliveryOrderNumber(quote.companyId);
+    }
 
-    // Create invoice from quote
-    const invoice = await prisma.invoice.create({
-      data: {
-        invoiceNumber,
-        date: new Date(),
-        dueDate: new Date(dueDate || Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days
-        subtotal: quote.subtotal,
-        discountPercent: quote.discountPercent,
-        discountAmount: quote.discountAmount,
-        discountLabel: quote.discountLabel,
-        taxAmount: quote.taxAmount,
-        total: quote.total,
-        notes: quote.notes,
-        items: quote.items, // Copy items from quote
-        companyId: quote.companyId,
-        userId: quote.userId,
-        customerId: quote.customerId,
-        quoteId: quote.id
-      },
-      include: {
-        company: { select: { id: true, name: true } },
-        user: { select: { id: true, name: true } },
-        customer: { select: { id: true, name: true } },
-        quote: { select: { id: true, quoteNumber: true } }
+    // Cipta invois (dan delivery order jika diminta) dalam satu transaction Prisma -
+    // jika penciptaan DO gagal separuh jalan, invois tidak akan "orphan" dalam database
+    const result = await prisma.$transaction(async (tx) => {
+      const invoice = await tx.invoice.create({
+        data: {
+          invoiceNumber,
+          date: new Date(),
+          dueDate: new Date(dueDate || Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days
+          subtotal: quote.subtotal,
+          discountPercent: quote.discountPercent,
+          discountAmount: quote.discountAmount,
+          discountLabel: quote.discountLabel,
+          taxAmount: quote.taxAmount,
+          total: quote.total,
+          notes: quote.notes,
+          items: quote.items, // Copy items from quote
+          companyId: quote.companyId,
+          userId: quote.userId,
+          customerId: quote.customerId,
+          quoteId: quote.id
+        },
+        include: {
+          company: { select: { id: true, name: true } },
+          user: { select: { id: true, name: true } },
+          customer: { select: { id: true, name: true } },
+          quote: { select: { id: true, quoteNumber: true } }
+        }
+      });
+
+      let deliveryOrder = null;
+      if (wantsDeliveryOrder) {
+        const deliveryDetails = (quote.items || []).map(item => ({
+          description: item.description,
+          quantity: parseFloat(item.quantity),
+          unitPrice: parseFloat(item.unitPrice),
+          amount: parseFloat(item.quantity) * parseFloat(item.unitPrice),
+          deliveredQty: 0 // Belum dihantar
+        }));
+
+        deliveryOrder = await tx.deliveryOrder.create({
+          data: {
+            doNumber,
+            date: new Date(),
+            deliveryDate: new Date(deliveryDate || Date.now() + 7 * 24 * 60 * 60 * 1000), // Default 7 hari
+            subtotal: invoice.subtotal,
+            discountPercent: invoice.discountPercent,
+            discountAmount: invoice.discountAmount,
+            discountLabel: invoice.discountLabel,
+            taxAmount: invoice.taxAmount,
+            total: invoice.total,
+            deliveryAddress: deliveryAddress || quote.customer?.address,
+            contactPerson: contactPerson || quote.customer?.name,
+            contactPhone: contactPhone || quote.customer?.phone,
+            notes: `Created from Invoice ${invoice.invoiceNumber}`,
+            companyId: quote.companyId,
+            userId: quote.userId,
+            customerId: quote.customerId,
+            invoiceId: invoice.id,
+            details: {
+              create: deliveryDetails
+            }
+          },
+          include: {
+            company: { select: { id: true, name: true } },
+            user: { select: { id: true, name: true } },
+            customer: { select: { id: true, name: true } },
+            invoice: { select: { id: true, invoiceNumber: true } },
+            details: true
+          }
+        });
       }
+
+      return { invoice, deliveryOrder };
     });
 
-    success(res, invoice, 'Sebut harga berjaya ditukar kepada invois', 201);
+    // Kekalkan bentuk respons sedia ada (invois sahaja) bila DO tidak diminta,
+    // supaya flow convert-to-invoice sedia ada tidak terjejas.
+    if (!result.deliveryOrder) {
+      return success(res, result.invoice, 'Sebut harga berjaya ditukar kepada invois', 201);
+    }
+
+    success(res, result, 'Sebut harga berjaya ditukar kepada invois dan delivery order', 201);
   } catch (err) {
     console.error('Error converting quote to invoice:', err);
     error(res, 'Ralat menukar sebut harga kepada invois');

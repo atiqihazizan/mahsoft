@@ -68,6 +68,49 @@ const DocumentPreview = ({
     }
   }
 
+  // Convert Quote -> Invoice (dan pilihan terus cipta Delivery Order sekali)
+  const [showConvertDialog, setShowConvertDialog] = useState(false)
+  const [converting, setConverting] = useState(false)
+  const [convertCreateDO, setConvertCreateDO] = useState(false)
+  const [convertDueDate, setConvertDueDate] = useState('')
+  const [convertDeliveryDate, setConvertDeliveryDate] = useState('')
+  const canConvertToInvoice = documentType === 'QUOTATION' && doc?.status === 'accepted'
+
+  const openConvertDialog = () => {
+    setConvertCreateDO(false)
+    setConvertDueDate('')
+    setConvertDeliveryDate('')
+    setShowConvertDialog(true)
+  }
+
+  const handleConvertToInvoice = async () => {
+    if (converting) return
+    setConverting(true)
+    try {
+      const payload = {
+        ...(convertDueDate && { dueDate: convertDueDate }),
+        ...(convertCreateDO && { createDeliveryOrder: true }),
+        ...(convertCreateDO && convertDeliveryDate && { deliveryDate: convertDeliveryDate })
+      }
+      const res = await quotesAPI.convertToInvoice(id, payload)
+      if (res?.success) {
+        setShowConvertDialog(false)
+        const createdInvoice = res.data?.invoice || res.data
+        const createdDO = res.data?.deliveryOrder
+        if (createdDO) {
+          alert(`Invois ${createdInvoice.invoiceNumber} dan Delivery Order ${createdDO.doNumber} berjaya dicipta`)
+        }
+        navigate(`/invoices/${createdInvoice.id}`)
+      } else {
+        alert(res?.message || 'Ralat menukar sebut harga kepada invois')
+      }
+    } catch (err) {
+      alert(err?.message || 'Ralat menukar sebut harga kepada invois')
+    } finally {
+      setConverting(false)
+    }
+  }
+
   const [sending, setSending] = useState(null)
   const [showEmailDialog, setShowEmailDialog] = useState(false)
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false)
@@ -225,6 +268,17 @@ const DocumentPreview = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {canConvertToInvoice && (
+              <button
+                onClick={openConvertDialog}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                Tukar kepada Invois
+              </button>
+            )}
             {hasPdfSupport && (
               <button
                 onClick={handleRegenerate}
@@ -382,6 +436,63 @@ const DocumentPreview = ({
                     Download PDF
                   </a>
                 </div>
+
+                {/* Convert to Invoice Dialog */}
+                {showConvertDialog && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Tukar kepada Invois</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Tarikh Tempoh Bayar (Due Date)</label>
+                          <input
+                            type="date"
+                            value={convertDueDate}
+                            onChange={(e) => setConvertDueDate(e.target.value)}
+                            className="w-full h-11 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 text-sm"
+                          />
+                          <p className="text-xs text-gray-400 mt-1.5">Kosongkan untuk default 30 hari dari hari ini.</p>
+                        </div>
+                        <label className="flex items-start gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={convertCreateDO}
+                            onChange={(e) => setConvertCreateDO(e.target.checked)}
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span className="text-sm text-gray-700">Turut cipta Delivery Order sekali (hantar barang serta-merta selepas invois dicipta)</span>
+                        </label>
+                        {convertCreateDO && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Tarikh Penghantaran</label>
+                            <input
+                              type="date"
+                              value={convertDeliveryDate}
+                              onChange={(e) => setConvertDeliveryDate(e.target.value)}
+                              className="w-full h-11 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 text-sm"
+                            />
+                            <p className="text-xs text-gray-400 mt-1.5">Kosongkan untuk default 7 hari dari hari ini. Alamat & kontak penghantaran akan guna maklumat pelanggan.</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex justify-end gap-3 mt-6">
+                        <button
+                          onClick={() => setShowConvertDialog(false)}
+                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          onClick={handleConvertToInvoice}
+                          disabled={converting}
+                          className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                        >
+                          {converting ? 'Memproses...' : 'Tukar kepada Invois'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Email Dialog */}
                 {showEmailDialog && (
