@@ -428,7 +428,7 @@ const DocumentForm = ({
                                   const name = e.target.value
                                   setNewCustomer(prev => {
                                     const short = prev.short || autoShort(name)
-                                    return { name, short }
+                                    return { ...prev, name, short }
                                   })
                                 }}
                                 placeholder="Enter customer name"
