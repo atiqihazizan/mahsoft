@@ -1,0 +1,384 @@
+const formatDate = (date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+const formatCurrency = (amount) => {
+  const num = Number(amount) || 0
+  const sign = num < 0 ? '-' : ''
+  return sign + 'RM ' + new Intl.NumberFormat('en-MY', { minimumFractionDigits: 2 }).format(Math.abs(num))
+}
+
+const generateDocDefinition = ({ documentType, company, customer, documentNumber, date, validUntil, items, subtotal, discountPercent, discountAmount, discountLabel, tax, total, bank, issuedBy, notes, logoData }) => {
+  const isInvoice = documentType === 'INVOICE'
+  const hasDiscount = Number(discountAmount) > 0
+  const hasTax = Number(tax) > 0 || (isInvoice && Number(tax) !== 0)
+  const showBreakdown = hasDiscount || hasTax
+  const hasBank = isInvoice && (bank?.accountNumber || bank?.bankName || bank?.accountHolder)
+
+  const isBillable = (item) => Number(item.amount) > 0
+  const needsQtyPrice = (item) => {
+    if (!isBillable(item)) return false
+    const qty = Number(item.quantity)
+    const price = Number(item.unitPrice)
+    return qty > 1 || (qty && price && Number(item.amount) !== price * qty)
+  }
+
+  const showQtyPrice = (items || []).some(needsQtyPrice)
+  const billableItems = (items || []).filter(isBillable)
+  const infoItems = (items || []).filter(item => !isBillable(item))
+  const issuedByName = issuedBy || company?.manager || ''
+
+  const FONT_SIZES = {
+    xs: 7,
+    sm: 8,
+    base: 9,
+    lg: 11,
+    xl: 14,
+    title: 16
+  }
+
+  const majorHr = { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.5, lineColor: '#6b7280' }], margin: [0, 6, 0, 8] }
+  const minorHr = { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.3, lineColor: '#d0d0d0' }], margin: [0, 4, 0, 6] }
+
+  const header = {
+    columns: [
+      {
+        width: 'auto',
+        stack: [
+          logoData
+            ? { image: logoData, width: 55, alignment: 'left', margin: [0, 2, 10, 0] }
+            : { text: '', width: 65 }
+        ]
+      },
+      {
+        width: '*',
+        stack: [
+          {
+            columns: [
+              {
+                width: '*',
+                stack: [
+                  { text: company?.name || '', font: 'Audiowide', fontSize: FONT_SIZES.xl, color: '#333', margin: [0, 0, 0, 0] },
+                  company?.registration
+                    ? { text: company.registration, fontSize: FONT_SIZES.xs, color: '#666', margin: [0, 0, 0, 3] }
+                    : { text: '', margin: [0, 0, 0, 3] },
+                  { text: company?.address || '', fontSize: FONT_SIZES.xs, color: '#333', lineHeight: 1.4 },
+                  {
+                    text: [
+                      company?.email ? { text: `Email: ${company?.email || ''}`, fontSize: FONT_SIZES.xs, color: '#333' } : null,
+                      company?.phone ? { text: `    Phone: ${company?.phone || ''}`, fontSize: FONT_SIZES.xs, color: '#333' } : null,
+                    ].filter(Boolean),
+                    margin: [0, 2, 0, 0]
+                  }
+                ]
+              },
+              {
+                width: 'auto',
+                stack: [
+                  { text: documentType, font: 'Audiowide', fontSize: FONT_SIZES.lg, color: '#333', alignment: 'right', margin: [0, 2, 0, 0] }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    margin: [0, 0, 0, 0]
+  }
+
+  const clientSection = {
+    columns: [
+      {
+        width: '50%',
+        stack: [
+          { text: customer?.name || '', bold: true, fontSize: 8, margin: [0, 0, 0, 1] },
+          { text: customer?.address || '', fontSize: 8, color: '#374151', lineHeight: 1.4, margin: [0, 0, 0, 2] },
+          ...(customer?.phone || customer?.mobile
+            ? [{
+                text: [
+                  customer.phone ? { text: `Tel: ${customer.phone}`, fontSize: 8, color: '#374151' } : null,
+                  customer.mobile ? { text: `    Mobile: ${customer.mobile}`, fontSize: 8, color: '#374151' } : null
+                ].filter(Boolean),
+                margin: [0, 0, 0, 2]
+              }]
+            : []),
+          ...(customer?.attn
+            ? [{ text: `Attn : ${customer.attn}`, bold: true, fontSize: 8, margin: [0, 4, 0, 0] }]
+            : [])
+        ]
+      },
+      {
+        width: '50%',
+        stack: [
+          { text: `No : ${documentNumber}`, fontSize: 8, bold: true, alignment: 'right' },
+          { text: `Date : ${formatDate(date)}`, fontSize: 8, color: '#6b7280', alignment: 'right', margin: [0, 1, 0, 0] },
+          ...(validUntil
+            ? [{ text: `${isInvoice ? 'Due' : 'Validity'} : ${formatDate(validUntil)}`, fontSize: 8, color: '#6b7280', alignment: 'right', margin: [0, 1, 0, 0] }]
+            : [])
+        ]
+      }
+    ],
+    margin: [0, 4, 0, 0]
+  }
+
+  const tableHeaderStyle = {
+    fontSize: 7,
+    color: '#6b7280',
+    bold: true,
+    fillColor: '#f3f4f6',
+    margin: [3, 4, 3, 4]
+  }
+
+  const itemTableHeader = () => {
+    const cols = [
+      { text: 'Description', style: 'tableHeader', alignment: 'left' }
+    ]
+    if (showQtyPrice) {
+      cols.push({ text: 'Qty', style: 'tableHeader', alignment: 'center' })
+      cols.push({ text: 'Price', style: 'tableHeader', alignment: 'right' })
+    }
+    cols.push({ text: 'Amount', style: 'tableHeader', alignment: 'right' })
+    return cols
+  }
+
+  const itemTableWidths = () => {
+    const widths = ['*']
+    if (showQtyPrice) {
+      widths.push(30)
+      widths.push(55)
+    }
+    widths.push(75)
+    return widths
+  }
+
+  const itemRows = billableItems.map((item, i) => {
+    const show = showQtyPrice && needsQtyPrice(item)
+    const qtyVal = show ? (Number(item.quantity) || '') + (item.unit ? ` ${item.unit}` : '') : ''
+    const priceVal = show && Number(item.unitPrice) ? formatCurrency(item.unitPrice) : ''
+    const isLast = i === billableItems.length - 1
+    const row = [
+      { text: item.description || '', fontSize: 8, margin: [3, 4, 3, isLast ? 6 : 4] }
+    ]
+    if (showQtyPrice) {
+      row.push({ text: qtyVal, alignment: 'center', fontSize: 8, margin: [3, 4, 3, isLast ? 6 : 4] })
+      row.push({ text: priceVal, alignment: 'right', fontSize: 8, margin: [3, 4, 3, isLast ? 6 : 4] })
+    }
+    row.push({
+      text: Number(item.amount) ? formatCurrency(item.amount) : '',
+      alignment: 'right',
+      bold: true,
+      fontSize: 8,
+      margin: [3, 4, 3, isLast ? 6 : 4]
+    })
+    return row
+  })
+
+  const itemTable = {
+    table: {
+      headerRows: 1,
+      widths: itemTableWidths(),
+      body: [
+        itemTableHeader(),
+        ...(itemRows.length
+          ? itemRows
+          : [[
+              {
+                text: 'No items',
+                alignment: 'center',
+                color: '#9ca3af',
+                margin: [0, 20, 0, 20],
+                colSpan: showQtyPrice ? 4 : 2,
+                fontSize: 8
+              }
+            ]])
+      ]
+    },
+    layout: {
+      hLineWidth: (i, node) => {
+        if (i === 0) return 0
+        if (i === 1) return 0.5
+        if (i === node.table.body.length) return 0.3
+        return 0.3
+      },
+      vLineWidth: () => 0,
+      hLineColor: () => '#d1d5db',
+      paddingLeft: () => 0,
+      paddingRight: () => 0,
+      paddingTop: () => 0,
+      paddingBottom: () => 0
+    },
+    margin: [0, 0, 0, 0]
+  }
+
+  const infoSection = infoItems.length > 0
+    ? {
+        stack: infoItems.map(item => ({
+          text: item.description || '',
+          fontSize: 8,
+          color: '#374151',
+          margin: [0, 0, 0, 4]
+        })),
+        margin: [0, 12, 0, 0]
+      }
+    : null
+
+  const pricingRows = []
+  if (showBreakdown) {
+    pricingRows.push([
+      { text: 'Subtotal', alignment: 'left', fontSize: 8, color: '#374151' },
+      { text: formatCurrency(subtotal), alignment: 'right', fontSize: 8, color: '#000' }
+    ])
+    if (hasDiscount) {
+      const label = discountLabel || 'Discount'
+      const pct = discountPercent > 0 ? ` (${discountPercent}%)` : ''
+      pricingRows.push([
+        { text: `${label}${pct}`, alignment: 'left', fontSize: 8, color: '#374151' },
+        { text: formatCurrency(-discountAmount), alignment: 'right', fontSize: 8, color: '#dc2626' }
+      ])
+    }
+    if (hasTax) {
+      pricingRows.push([
+        { text: 'Tax', alignment: 'left', fontSize: 8, color: '#374151' },
+        { text: formatCurrency(tax), alignment: 'right', fontSize: 8, color: '#000' }
+      ])
+    }
+    pricingRows.push([
+      { text: 'Grand Total', alignment: 'left', fontSize: 9, bold: true, margin: [0, 3, 0, 0] },
+      { text: formatCurrency(total), alignment: 'right', fontSize: 9, bold: true, margin: [0, 3, 0, 0] }
+    ])
+  } else {
+    pricingRows.push([
+      { text: 'Total', alignment: 'left', fontSize: 9, bold: true },
+      { text: formatCurrency(total), alignment: 'right', fontSize: 9, bold: true }
+    ])
+  }
+
+  const pricingTable = {
+    table: {
+      widths: ['*', 100],
+      body: pricingRows
+    },
+    layout: {
+      hLineWidth: () => 0,
+      vLineWidth: () => 0,
+      paddingLeft: () => 0,
+      paddingRight: () => 0,
+      paddingTop: () => 1,
+      paddingBottom: () => 1
+    }
+  }
+
+  const bankSection = hasBank
+    ? {
+        stack: [
+          { text: 'Bank Details', bold: true, fontSize: 8, margin: [0, 0, 0, 3] },
+          {
+            table: {
+              widths: ['auto', 'auto', '*'],
+              body: [
+                [
+                  { text: 'Acc No.', fontSize: 7, color: '#374151' },
+                  { text: ':', fontSize: 7, color: '#374151' },
+                  { text: bank.accountNumber || '', fontSize: 7 }
+                ],
+                [
+                  { text: 'Acc Name', fontSize: 7, color: '#374151' },
+                  { text: ':', fontSize: 7, color: '#374151' },
+                  { text: bank.bankName || '', fontSize: 7 }
+                ],
+                [
+                  { text: 'Acc Holder', fontSize: 7, color: '#374151' },
+                  { text: ':', fontSize: 7, color: '#374151' },
+                  { text: bank.accountHolder || '', fontSize: 7 }
+                ]
+              ]
+            },
+            layout: {
+              hLineWidth: () => 0,
+              vLineWidth: () => 0,
+              paddingLeft: () => 0,
+              paddingRight: () => 2,
+              paddingTop: () => 0,
+              paddingBottom: () => 0
+            }
+          }
+        ],
+        margin: [0, 0, 0, 8]
+      }
+    : null
+
+  const issuedBySection = {
+    stack: [
+      { text: 'Issued By,', fontSize: 8, color: '#374151' },
+      { text: issuedByName, italics: true, fontSize: 9, bold: true, margin: [0, 6, 0, 0] },
+      { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 120, y2: 0, lineWidth: 0.5, lineColor: '#374151' }], margin: [0, 4, 0, 2] },
+      { text: '(Signature)', fontSize: 7, color: '#6b7280', alignment: 'center', margin: [0, 0, 0, 0] }
+    ]
+  }
+
+  const notesSection = notes
+    ? {
+        stack: [
+          { text: 'Notes:', bold: true, fontSize: 8, margin: [0, 8, 0, 2] },
+          { text: notes, fontSize: 8, lineHeight: 1.4 }
+        ]
+      }
+    : null
+
+  const closingSection = {
+    columns: [
+      {
+        width: '50%',
+        stack: [
+          ...(bankSection ? [bankSection] : []),
+          issuedBySection
+        ]
+      },
+      {
+        width: '50%',
+        stack: [pricingTable],
+        alignment: 'right'
+      }
+    ],
+    margin: [0, 6, 0, 0]
+  }
+
+  return {
+    pageSize: 'A4',
+    pageMargins: [57, 42, 57, 42],
+    content: [
+      header,
+      majorHr,
+      clientSection,
+      minorHr,
+      itemTable,
+      ...(infoSection ? [infoSection] : []),
+      majorHr,
+      closingSection,
+      ...(notesSection ? [notesSection] : [])
+    ],
+    footer: (currentPage, pageCount) => {
+      if (pageCount <= 1) return null
+      return {
+        text: `Page ${currentPage} of ${pageCount}`,
+        alignment: 'center',
+        fontSize: 8,
+        color: '#9ca3af',
+        margin: [57, 0, 57, 0]
+      }
+    },
+    defaultStyle: {
+      font: 'Roboto',
+      fontSize: 9,
+      color: '#212529',
+      lineHeight: 1.3
+    },
+    styles: {
+      tableHeader: tableHeaderStyle
+    }
+  }
+}
+
+module.exports = { generateDocDefinition }
