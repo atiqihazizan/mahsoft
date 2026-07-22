@@ -600,7 +600,6 @@ const DocumentPreview = ({
 
                 {doc.notes && (
                   <div>
-                    {/* <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Notes</h3> */}
                     <p className="text-sm text-gray-600 whitespace-pre-wrap">{doc.notes}</p>
                   </div>
                 )}
