@@ -345,7 +345,7 @@ ${fontFace}
       </tr>
     </table>
 
-    ${notes ? `<div class="notes-section"><p><strong>Notes:</strong></p><div>${renderWhatsAppText(notes)}</div></div>` : ''}
+    ${notes ? `<div class="notes-section"><div>${renderWhatsAppText(notes)}</div></div>` : ''}
 
     <div class="issuedby-section">
       <p class="label">Issued By,</p>
@@ -524,7 +524,7 @@ ${fontFace}
       </tr>
     </table>
 
-    ${notes ? `<div class="notes-section"><p><strong>Notes:</strong></p><div>${renderWhatsAppText(notes)}</div></div>` : ''}
+    ${notes ? `<div class="notes-section"><div>${renderWhatsAppText(notes)}</div></div>` : ''}
 
     <div class="issuedby-section">
       <p class="label">Received By,</p>
