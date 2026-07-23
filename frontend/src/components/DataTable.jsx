@@ -14,9 +14,12 @@ const DataTable = ({
   onAccept = null,
   onReject = null,
   onDummy = null,
+  onIssueReceipt = null,
+  actionLoading = {},
   loading = false,
   getButtonState = null, // Function to determine button state
   hideActionsForStatus = [], // Array of statuses to hide action buttons for
+  customLabels = {}, // Custom labels for action buttons e.g. { view: 'Buka' }
   headerClassName = '', // Custom class for table header
   bodyClassName = '', // Custom class for table body
   rowClassName = '' // Custom class for table rows
@@ -46,7 +49,7 @@ const DataTable = ({
   }
 
   // Determine availability of action columns (each column auto-hide jika tiada handler)
-  const hasQuickActions = Boolean(onPaid || onAccept || onReject || onDummy)
+  const hasQuickActions = Boolean(onPaid || onAccept || onReject || onDummy || onIssueReceipt)
   const hasStandardActions = Boolean(onView || onEdit || onDelete || onDuplicate || onPreview)
 
   return (
@@ -87,95 +90,111 @@ const DataTable = ({
               {/* Quick Actions Column */}
               {hasQuickActions && (
                 <td className="py-4 pl-6 text-sm text-gray-900 whitespace-nowrap text-center">
-                  {!shouldHideActions(row) && (
-                    <div className="flex space-x-2 justify-center">
-                      {onPaid && (
-                        <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'paid') ? 'Cannot mark as paid' : 'Mark invoice as paid'}
-                          position="top"
-                          delay={300}
-                          offset={{ x: -10, y: 0 }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => onPaid(row)}
-                            disabled={getButtonState ? !getButtonState(row, 'paid') : false}
-                            className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
-                              getButtonState && !getButtonState(row, 'paid')
-                                ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
-                                : 'border-green-500 text-green-600 hover:bg-green-50'
-                            }`}
+                  <div className="flex space-x-2 justify-center">
+                    {!shouldHideActions(row) && (
+                      <>
+                        {onPaid && (
+                          <Tooltip 
+                            content={getButtonState && !getButtonState(row, 'paid') ? 'Cannot mark as paid' : 'Mark invoice as paid'}
+                            position="top"
+                            delay={300}
+                            offset={{ x: -10, y: 0 }}
                           >
-                            Paid
-                          </button>
-                        </Tooltip>
-                      )}
-                      {onAccept && (
-                        <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'accept') ? 'Cannot Accept' : 'Accept'}
-                          position="top"
-                          delay={300}
-                          offset={{ x: -10, y: 0 }}
-                        >
-                          <button type="button"
-                            onClick={() => onAccept(row)}
-                            disabled={getButtonState ? !getButtonState(row, 'accept') : false}
-                            className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'accept')
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-blue-600 hover:text-blue-900 hover:bg-blue-50'
+                            <button
+                              type="button"
+                              onClick={() => onPaid(row)}
+                              disabled={getButtonState ? !getButtonState(row, 'paid') : false}
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                                getButtonState && !getButtonState(row, 'paid')
+                                  ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                                  : 'border-green-500 text-green-600 hover:bg-green-50'
                               }`}
+                            >
+                              Paid
+                            </button>
+                          </Tooltip>
+                        )}
+                        {onAccept && (
+                          <Tooltip 
+                            content={getButtonState && !getButtonState(row, 'accept') ? 'Cannot Accept' : 'Accept'}
+                            position="top"
+                            delay={300}
+                            offset={{ x: -10, y: 0 }}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </button>
-                        </Tooltip>
-                      )}
-                      {onReject && (
-                        <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'reject') ? 'Cannot Reject' : 'Reject'}
-                          position="top"
-                          delay={300}
-                          offset={{ x: -10, y: 0 }}
+                            <button type="button"
+                              onClick={() => onAccept(row)}
+                              disabled={getButtonState ? !getButtonState(row, 'accept') : false}
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${getButtonState && !getButtonState(row, 'accept')
+                                  ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                                  : 'border-blue-500 text-blue-600 hover:bg-blue-50'
+                                }`}
+                            >
+                              Accept
+                            </button>
+                          </Tooltip>
+                        )}
+                        {onReject && (
+                          <Tooltip 
+                            content={getButtonState && !getButtonState(row, 'reject') ? 'Cannot Reject' : 'Reject'}
+                            position="top"
+                            delay={300}
+                            offset={{ x: -10, y: 0 }}
+                          >
+                            <button type="button"
+                              onClick={() => onReject(row)}
+                              disabled={getButtonState ? !getButtonState(row, 'reject') : false}
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${getButtonState && !getButtonState(row, 'reject')
+                                  ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                                  : 'border-red-500 text-red-600 hover:bg-red-50'
+                                }`}
+                            >
+                              Reject
+                            </button>
+                          </Tooltip>
+                        )}
+                        {onDummy && (
+                          <Tooltip 
+                            content={getButtonState && !getButtonState(row, 'dummy') ? 'Cannot Dummy' : 'Dummy'}
+                            position="top"
+                            delay={300}
+                            offset={{ x: -10, y: 0 }}
+                          >
+                            <button type="button"
+                              onClick={() => onDummy(row)}
+                              disabled={getButtonState ? !getButtonState(row, 'dummy') : false}
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${getButtonState && !getButtonState(row, 'dummy')
+                                  ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                                  : 'border-purple-500 text-purple-600 hover:bg-purple-50'
+                                }`}
+                            >
+                              Dummy
+                            </button>
+                          </Tooltip>
+                        )}
+                      </>
+                    )}
+                    {onIssueReceipt && row.status === 'paid' && !row.hasReceipt && (
+                      <Tooltip content="Issue Receipt for this invoice" position="top" delay={300} offset={{ x: -10, y: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => onIssueReceipt(row)}
+                          disabled={actionLoading[row.id]}
+                          className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                            actionLoading[row.id]
+                              ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                              : 'border-teal-500 text-teal-600 hover:bg-teal-50'
+                          }`}
                         >
-                          <button type="button"
-                            onClick={() => onReject(row)}
-                            disabled={getButtonState ? !getButtonState(row, 'reject') : false}
-                            className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'reject')
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-red-600 hover:text-red-900 hover:bg-red-50'
-                              }`}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </Tooltip>
-                      )}
-                      {onDummy && (
-                        <Tooltip 
-                          content={getButtonState && !getButtonState(row, 'dummy') ? 'Cannot Dummy' : 'Dummy'}
-                          position="top"
-                          delay={300}
-                          offset={{ x: -10, y: 0 }}
-                        >
-                          <button type="button"
-                            onClick={() => onDummy(row)}
-                            disabled={getButtonState ? !getButtonState(row, 'dummy') : false}
-                            className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'dummy')
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-purple-600 hover:text-purple-900 hover:bg-purple-50'
-                              }`}
-                          >
-                            {/* <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" />
-                            </svg> */}
-                            Dummy
-                          </button>
-                        </Tooltip>
-                      )}
-                    </div>
-                  )}
+                          {actionLoading[row.id] ? '...' : 'Issue Receipt'}
+                        </button>
+                      </Tooltip>
+                    )}
+                    {onIssueReceipt && row.status === 'paid' && row.hasReceipt && (
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold border border-gray-200 text-gray-400 bg-gray-50">
+                        Receipt Issued
+                      </span>
+                    )}
+                  </div>
                 </td>
               )}
               {/* Standard Actions Column */}
@@ -184,22 +203,19 @@ const DataTable = ({
                   <div className="flex space-x-2 justify-center">
                     {onView && (
                       <Tooltip
-                        content={getButtonState && !getButtonState(row, 'view') ? 'Cannot View' : 'View'}
+                        content={getButtonState && !getButtonState(row, 'view') ? 'Cannot View' : customLabels.view || 'View'}
                         position="top"
                         delay={300}
                       >
                         <button type="button"
                           onClick={() => onView(row)}
                           disabled={getButtonState ? !getButtonState(row, 'view') : false}
-                          className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'view')
-                              ? 'text-gray-400 cursor-not-allowed'
-                              : 'text-blue-600 hover:text-blue-900 hover:bg-blue-50'
+                          className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${getButtonState && !getButtonState(row, 'view')
+                              ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                              : 'border-blue-500 text-blue-600 hover:bg-blue-50'
                             }`}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
+                          {customLabels.view || 'Open'}
                         </button>
                       </Tooltip>
                     )}
@@ -214,14 +230,12 @@ const DataTable = ({
                             <button type="button"
                               onClick={() => onEdit(row)}
                               disabled={getButtonState ? !getButtonState(row, 'edit') : false}
-                              className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'edit')
-                                  ? 'text-gray-400 cursor-not-allowed'
-                                  : 'text-green-600 hover:text-green-900 hover:bg-green-50'
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${getButtonState && !getButtonState(row, 'edit')
+                                  ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                                  : 'border-green-500 text-green-600 hover:bg-green-50'
                                 }`}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
+                              Edit
                             </button>
                           </Tooltip>
                         )}
@@ -234,15 +248,12 @@ const DataTable = ({
                             <button type="button"
                               onClick={() => onPreview(row)}
                               disabled={getButtonState ? !getButtonState(row, 'preview') : false}
-                              className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'preview')
-                                  ? 'text-gray-400 cursor-not-allowed'
-                                  : 'text-orange-600 hover:text-orange-900 hover:bg-orange-50'
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${getButtonState && !getButtonState(row, 'preview')
+                                  ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                                  : 'border-orange-500 text-orange-600 hover:bg-orange-50'
                                 }`}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
+                              Preview
                             </button>
                           </Tooltip>
                         )}
@@ -255,14 +266,12 @@ const DataTable = ({
                             <button type="button"
                               onClick={() => onDuplicate(row)}
                               disabled={getButtonState ? !getButtonState(row, 'duplicate') : false}
-                              className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'duplicate')
-                                  ? 'text-gray-400 cursor-not-allowed'
-                                  : 'text-purple-600 hover:text-purple-900 hover:bg-purple-50'
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${getButtonState && !getButtonState(row, 'duplicate')
+                                  ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                                  : 'border-purple-500 text-purple-600 hover:bg-purple-50'
                                 }`}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                              </svg>
+                              Copy
                             </button>
                           </Tooltip>
                         )}
@@ -275,14 +284,12 @@ const DataTable = ({
                             <button type="button"
                               onClick={() => onDelete(row)}
                               disabled={getButtonState ? !getButtonState(row, 'delete') : false}
-                              className={`p-2 rounded-md transition-colors ${getButtonState && !getButtonState(row, 'delete')
-                                  ? 'text-gray-400 cursor-not-allowed'
-                                  : 'text-red-600 hover:text-red-900 hover:bg-red-50'
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${getButtonState && !getButtonState(row, 'delete')
+                                  ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                                  : 'border-red-500 text-red-600 hover:bg-red-50'
                                 }`}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
+                              Del
                             </button>
                           </Tooltip>
                         )}

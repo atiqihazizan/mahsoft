@@ -5,7 +5,7 @@ const router = express.Router();
 const prisma = require('../utils/prisma');
 const { success, error, notFound, badRequest } = require('../utils/response');
 const { handleValidationErrors } = require('../middleware/validation');
-const { generateInvoiceNumber } = require('../utils/numberGenerator');
+const { generateInvoiceNumber, generateReceiptNumber } = require('../utils/numberGenerator');
 
 // Validation rules
 const createInvoiceValidation = [
@@ -94,7 +94,8 @@ router.get('/', async (req, res) => {
           quote: { select: { id: true, quoteNumber: true } },
           _count: {
             select: {
-              payments: true
+              payments: true,
+              receipts: true
             }
           }
         }
@@ -362,11 +363,13 @@ router.put('/:id', updateInvoiceValidation, async (req, res) => {
 router.post('/:id/mark-paid', [
   param('id').isString().withMessage('ID tidak sah'),
   body('paidAmount').isNumeric().withMessage('Jumlah bayaran mestilah nombor'),
+  body('paidDate').optional().isISO8601().withMessage('Tarikh tidak sah'),
+  body('paymentRef').optional().isString(),
   handleValidationErrors
 ], async (req, res) => {
   try {
     const { id } = req.params;
-    const { paidAmount } = req.body;
+    const { paidAmount, paidDate, paymentRef } = req.body;
 
     const invoice = await prisma.invoice.findUnique({
       where: { id }
@@ -380,6 +383,8 @@ router.post('/:id/mark-paid', [
       where: { id },
       data: {
         paidAmount: parseFloat(paidAmount),
+        paidDate: paidDate ? new Date(paidDate) : new Date(),
+        paymentRef: paymentRef || null,
         status: parseFloat(paidAmount) >= parseFloat(invoice.total) ? 'PAID' : 'SENT'
       },
       include: {
@@ -396,6 +401,73 @@ router.post('/:id/mark-paid', [
   }
 });
 
+// POST /api/v1/invoices/:id/issue-receipt - Sediakan data untuk issue resit
+router.post('/:id/issue-receipt', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      include: {
+        company: true,
+        customer: true,
+        user: true
+      }
+    })
+
+    if (!invoice) return notFound(res, 'Invois tidak ditemui')
+    if (invoice.status !== 'PAID') return badRequest(res, 'Hanya invois yang telah dibayar boleh diissue resit')
+
+    const existingReceipt = await prisma.receipt.findFirst({ where: { invoiceId: id } })
+    if (existingReceipt) return badRequest(res, 'Resit sudah wujud untuk invois ini')
+
+    const receiptNumber = await generateReceiptNumber(invoice.companyId)
+
+    const items = Array.isArray(invoice.items) ? invoice.items.map(item => ({
+      description: typeof item.description === 'string'
+        ? item.description.split('\n')[0].trim()
+        : item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      amount: item.amount,
+      ...(item.unit && { unit: item.unit })
+    })) : []
+
+    const receipt = await prisma.receipt.create({
+      data: {
+        receiptNumber,
+        date: new Date(),
+        status: 'ISSUED',
+        subject: invoice.subject || `Payment for Invoice ${invoice.invoiceNumber}`,
+        subtotal: invoice.subtotal,
+        taxAmount: invoice.taxAmount,
+        discountPercent: invoice.discountPercent,
+        discountAmount: invoice.discountAmount,
+        discountLabel: invoice.discountLabel || '',
+        total: invoice.total,
+        notes: null,
+        items,
+        companyId: invoice.companyId,
+        userId: invoice.userId,
+        customerId: invoice.customerId,
+        invoiceId: invoice.id
+      },
+      include: {
+        company: { select: { id: true, name: true } },
+        customer: { select: { id: true, name: true } }
+      }
+    })
+
+    success(res, { receipt }, 'Resit berjaya diterbitkan', 201)
+  } catch (err) {
+    console.error('Error issuing receipt:', err)
+    error(res, 'Ralat menerbitkan resit')
+  }
+})
+
 // DELETE /api/v1/invoices/:id - Padam invois
 router.delete('/:id', [
   param('id').isString().withMessage('ID tidak sah'),
@@ -409,7 +481,9 @@ router.delete('/:id', [
       where: { id },
       include: {
         payments: true,
-        debtors: true
+        debtors: true,
+        deliveryOrders: true,
+        receipts: true
       }
     });
 
@@ -425,6 +499,16 @@ router.delete('/:id', [
     // Don't allow deletion if there are related debtors
     if (existingInvoice.debtors.length > 0) {
       return badRequest(res, 'Invois yang mempunyai rekod hutang tidak boleh dipadam');
+    }
+
+    // Don't allow deletion if invoice has linked delivery orders
+    if (existingInvoice.deliveryOrders.length > 0) {
+      return badRequest(res, 'Invois tidak boleh dipadam kerana mempunyai Delivery Order yang berkaitan');
+    }
+
+    // Don't allow deletion if invoice has linked receipts
+    if (existingInvoice.receipts.length > 0) {
+      return badRequest(res, 'Invois tidak boleh dipadam kerana mempunyai resit yang berkaitan');
     }
 
     // Delete invoice (details will be deleted automatically due to cascade)
@@ -555,6 +639,9 @@ router.get('/:id/pdf', [
     }
 
     const fullPath = getPdfPath('INVOICE', id);
+    const invoice = await prisma.invoice.findUnique({ where: { id }, select: { invoiceNumber: true } });
+    const filename = invoice?.invoiceNumber ? `INV-${invoice.invoiceNumber}.pdf` : `invoice-${id}.pdf`;
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     res.sendFile(fullPath);
   } catch (err) {
     console.error('Error serving invoice PDF:', err);
@@ -650,5 +737,55 @@ router.post('/:id/whatsapp', [
     error(res, err.message || 'Ralat menghantar melalui WhatsApp');
   }
 });
+
+// POST /api/v1/invoices/:id/revise - Cipta revisi baru
+router.post('/:id/revise', [
+  param('id').isString(),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params
+    const original = await prisma.invoice.findUnique({
+      where: { id },
+      include: { company: true }
+    })
+    if (!original) return notFound(res, 'Invois tidak ditemui')
+
+    const revCount = await prisma.invoice.count({ where: { revisionOf: id } })
+    const suffix = `-R${revCount + 1}`
+    const newNumber = `${original.invoiceNumber}${suffix}`
+
+    const revised = await prisma.$transaction(async (tx) => {
+      await tx.invoice.update({
+        where: { id },
+        data: { status: 'REVISED' }
+      })
+      return tx.invoice.create({
+        data: {
+          invoiceNumber: newNumber,
+          date: new Date(),
+          dueDate: original.dueDate,
+          status: 'DRAFT',
+          items: original.items,
+          subtotal: original.subtotal,
+          discountPercent: original.discountPercent,
+          discountAmount: original.discountAmount,
+          discountLabel: original.discountLabel,
+          taxAmount: original.taxAmount,
+          total: original.total,
+          notes: original.notes,
+          companyId: original.companyId,
+          userId: original.userId,
+          customerId: original.customerId,
+          revisionOf: id
+        }
+      })
+    })
+    success(res, revised, 'Revisi berjaya dicipta')
+  } catch (err) {
+    console.error('Error revising invoice:', err)
+    error(res, 'Ralat mencipta revisi')
+  }
+})
 
 module.exports = router;

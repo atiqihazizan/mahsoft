@@ -102,6 +102,19 @@ const CompaniesSettings = () => {
     }
   }
 
+  const handleSetDefault = async (companyId) => {
+    try {
+      const res = await companiesAPI.update(companyId, { is_default: true })
+      if (res?.success) {
+        fetchCompanies()
+      } else {
+        alert(res?.message || 'Gagal set default company')
+      }
+    } catch {
+      alert('Gagal set default company')
+    }
+  }
+
   const handleEdit = (company) => {
     setEditingCompany(company)
     setFormData({
@@ -438,6 +451,24 @@ const CompaniesSettings = () => {
         <div className="text-sm text-gray-500">
           {company.createdAt ? new Date(company.createdAt).toLocaleDateString() : 'N/A'}
         </div>
+      )
+    },
+    {
+      key: 'default',
+      header: 'Default',
+      render: (company) => (
+        company.is_default ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+            Default
+          </span>
+        ) : (
+          <button
+            onClick={() => handleSetDefault(company.id)}
+            className="text-xs text-gray-500 hover:text-green-700 underline"
+          >
+            Set as Default
+          </button>
+        )
       )
     }
   ]

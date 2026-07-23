@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { PageWrapper, DataTable, StatusBadge, CurrencyFormat, DateFormat, TableCell } from '../components'
+import { PageWrapper, DataTable, StatusBadge, CurrencyFormat, DateFormat, TableCell, PaymentModal } from '../components'
 import { invoicesAPI } from '../utils/apiClient'
 import { formatText } from '../utils/textFormatting'
 
@@ -12,6 +12,15 @@ const Invoice = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('active') // Default kepada active
   const [actionLoading, setActionLoading] = useState({})
+  const [paymentModal, setPaymentModal] = useState(null)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const currentYear = new Date().getFullYear()
+  const availableYears = (() => {
+    const historyInvoices = invoices.filter(inv => inv.status === 'paid' || inv.status === 'cancelled')
+    const years = new Set(historyInvoices.map(inv => new Date(inv.date).getFullYear()))
+    years.add(currentYear)
+    return [...years].sort((a, b) => b - a)
+  })()
 
   // Function to calculate overdue days
   const calculateOverdueDays = (dueDate) => {
@@ -63,44 +72,85 @@ const Invoice = () => {
   }
 
   // Function to handle invoice status change
-  const handleInvoiceStatusChange = async (invoiceId, action) => {
-    // Confirmation dialog to prevent accidental clicks
-    const actionText = action === 'paid' ? 'mark as paid' : 'cancel'
-    const confirmMessage = `Are you sure you want to ${actionText} this invoice?`
-    
-    if (!window.confirm(confirmMessage)) {
-      return // User cancelled, exit function
+  const handleInvoiceStatusChange = (invoiceId, action) => {
+    if (action === 'paid') {
+      const invoice = invoices.find(inv => inv.id === invoiceId)
+      if (invoice) setPaymentModal(invoice)
+      return
     }
 
+    if (action === 'cancel' && !window.confirm('Are you sure you want to cancel this invoice?')) return
+
+    doAction(invoiceId, action)
+  }
+
+  const doAction = async (invoiceId, action) => {
     try {
       setActionLoading(prev => ({ ...prev, [invoiceId]: true }))
       
       let response
-      if (action === 'paid') {
-        // Find the invoice to get its total amount
-        const invoice = invoices.find(inv => inv.id === invoiceId)
-        if (!invoice) {
-          throw new Error('Invoice not found')
-        }
-        response = await invoicesAPI.markPaid(invoiceId, { paidAmount: invoice.amount })
-      } else if (action === 'cancel') {
+      if (action === 'cancel') {
         response = await invoicesAPI.update(invoiceId, { status: 'CANCELLED' })
       }
 
       if (response?.success) {
-        const newStatus = action === 'paid' ? 'paid' : 'cancelled'
+        const newStatus = action === 'cancel' ? 'cancelled' : action
         setInvoices(prev => prev.map(invoice => invoice.id === invoiceId ? { ...invoice, status: newStatus } : invoice))
-        // alert(`Invoice ${actionText} successfully!`)
       } else {
         const errorMessage = response?.message || response?.error || 'Unknown error'
         const statusMessages = { 400: `Invalid request: ${errorMessage}`, 404: 'Invoice not found', 500: `Server error: ${errorMessage}` }
-        // alert(statusMessages[response?.status] || `Failed to ${action} invoice: ${errorMessage}`)
       }
     } catch (error) {
-      // alert(`Error ${action}ing invoice: ${error.message}`)
       console.error(`Error ${action}ing invoice: ${error.message}`)
     } finally {
       setActionLoading(prev => ({ ...prev, [invoiceId]: false }))
+    }
+  }
+
+  const handlePaymentConfirm = async ({ paidDate, paymentRef }) => {
+    const invoice = paymentModal
+    setPaymentModal(null)
+    try {
+      setActionLoading(prev => ({ ...prev, [invoice.id]: true }))
+      const response = await invoicesAPI.markPaid(invoice.id, {
+        paidAmount: invoice.amount,
+        paidDate,
+        paymentRef
+      })
+      if (response?.success) {
+        setInvoices(prev => prev.map(inv =>
+          inv.id === invoice.id ? { ...inv, status: 'paid' } : inv
+        ))
+        const receiptResponse = await invoicesAPI.issueReceipt(invoice.id)
+        if (receiptResponse?.success) {
+          setInvoices(prev => prev.map(inv =>
+            inv.id === invoice.id ? { ...inv, hasReceipt: true } : inv
+          ))
+        }
+      }
+    } catch (err) {
+      console.error('Error marking paid:', err)
+    } finally {
+      setActionLoading(prev => ({ ...prev, [invoice.id]: false }))
+    }
+  }
+
+  const handleIssueReceipt = async (row) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [row.id]: true }))
+      const response = await invoicesAPI.issueReceipt(row.id)
+      if (response?.success) {
+        setInvoices(prev => prev.map(inv =>
+          inv.id === row.id ? { ...inv, hasReceipt: true } : inv
+        ))
+      } else {
+        alert(response?.message || response?.error || 'Gagal menerbitkan resit')
+      }
+    } catch (err) {
+      console.error('Error issuing receipt:', err)
+      alert('Ralat menerbitkan resit')
+    } finally {
+      setActionLoading(prev => ({ ...prev, [row.id]: false }))
     }
   }
 
@@ -152,7 +202,8 @@ const Invoice = () => {
           amount: parseFloat(invoice.total),
           status: (invoice.status || 'draft').toLowerCase(),
           date: invoice.date,
-          dueDate: invoice.dueDate
+          dueDate: invoice.dueDate,
+          hasReceipt: (invoice.receipts && invoice.receipts.length > 0) || (invoice._count?.receipts > 0)
         }))
         
         if (transformedInvoices.length === 0) {
@@ -191,17 +242,25 @@ const Invoice = () => {
     const matchesSearch = invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          invoice.subject.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    if (filterStatus === 'all') return matchesSearch
-    if (filterStatus === 'active') return matchesSearch && (invoice.status === 'draft' || invoice.status === 'sent' || invoice.status === 'overdue')
-    if (filterStatus === 'done') return matchesSearch && (invoice.status === 'paid' || invoice.status === 'cancelled')
+
+    if (filterStatus === 'active') return matchesSearch &&
+      (invoice.status === 'draft' || invoice.status === 'sent' || invoice.status === 'overdue')
+
+    if (filterStatus === 'history') {
+      const invoiceYear = new Date(invoice.date).getFullYear()
+      const isPaid = invoice.status === 'paid'
+      const isCancelled = invoice.status === 'cancelled'
+      return matchesSearch && (isPaid || isCancelled) && invoiceYear === selectedYear
+    }
+
     return matchesSearch
   })
 
   // Function to determine button state based on invoice status
   const getButtonState = (row, action) => {
-    const isActive = row.status === 'draft' || row.status === 'sent' || row.status === 'overdue'
-    return action === 'edit' || action === 'delete' ? isActive : true
+    if (action === 'paid') return row.status === 'draft' || row.status === 'sent' || row.status === 'overdue'
+    if (action === 'edit' || action === 'delete') return row.status === 'draft' || row.status === 'sent' || row.status === 'overdue'
+    return true
   }
 
   // Table columns configuration
@@ -244,7 +303,7 @@ const Invoice = () => {
       cellClassName: 'text-center',
       render: (value) => <DateFormat date={value} />
     },
-    {
+    ...(filterStatus === 'active' ? [{
       key: 'dueDate',
       header: 'Outstanding',
       headerClassName: 'text-right w-24',
@@ -258,7 +317,7 @@ const Invoice = () => {
           ? <TableCell value={`${overdueDays} days`} className="text-red-600 font-medium" />
           : <TableCell value="No overdue" className="text-green-600" />
       }
-    }
+    }] : [])
   ]
   // Table actions configuration
   return (
@@ -267,10 +326,10 @@ const Invoice = () => {
       newButtonText="+ CREATE NEW INVOICE"
       onNewClick={() => navigate('/invoices/new')}
       buttonColor="blue"
-      filterOptions={["ALL", "ACTIVE", "DONE"]}
-      activeFilter={{ 'all': 'ALL', 'active': 'ACTIVE', 'done': 'DONE' }[filterStatus] || 'ACTIVE'}
+      filterOptions={["ACTIVE", "HISTORY"]}
+      activeFilter={{ 'active': 'ACTIVE', 'history': 'HISTORY' }[filterStatus] || 'ACTIVE'}
       onFilterChange={(filter) => {
-        const statusMap = { 'ALL': 'all', 'ACTIVE': 'active', 'DONE': 'done' }
+        const statusMap = { 'ACTIVE': 'active', 'HISTORY': 'history' }
         setFilterStatus(statusMap[filter] || 'active')
       }}
       additionalActions={[
@@ -280,27 +339,36 @@ const Invoice = () => {
           className: 'bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm'
         }
       ]}
+      historyYearAddon={filterStatus === 'history' ? (
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          className="text-xs border-0 bg-transparent p-0 focus:outline-none focus:ring-0 cursor-pointer"
+        >
+          {availableYears.map(year => (
+            <option key={year} value={year}>{year}</option>
+          ))}
+        </select>
+      ) : null}
     >
       <DataTable
         data={filteredInvoices}
         columns={columns}
         loading={loading}
+        actionLoading={actionLoading}
         getButtonState={getButtonState}
-        onPaid={(row) => handleInvoiceStatusChange(row.id, 'paid')}
-        onEdit={(row) => {
-          const isActive = row.status === 'draft' || row.status === 'sent' || row.status === 'overdue'
-          isActive ? navigate(`/invoices/${row.id}/edit`) : alert('Hanya invoice yang aktif boleh diedit')
-        }}
+        onPaid={filterStatus !== 'history' ? (row) => handleInvoiceStatusChange(row.id, 'paid') : null}
+        onIssueReceipt={(row) => handleIssueReceipt(row)}
+        onView={(row) => navigate(`/invoices/${row.id}`)}
+        customLabels={{ view: 'Open' }}
         onDuplicate={async (row) => {
           const duplicateData = { ...row }
           delete duplicateData.id
           localStorage.setItem('duplicateInvoiceData', JSON.stringify(duplicateData))
           navigate('/invoices/new?duplicate=1')
         }}
-        onView={(row) => navigate(`/invoices/${row.id}`)}
-        onPreview={(row) => navigate(`/invoices/${row.id}`)}
         onConvert={(row) => handleConvertToDeliveryOrder(row.id)}
-        onDelete={async (row) => {
+        onDelete={filterStatus === 'active' ? async (row) => {
           const isActive = row.status === 'draft' || row.status === 'sent' || row.status === 'overdue'
           if (isActive && confirm('Are you sure you want to delete this invoice?')) {
             try {
@@ -317,9 +385,16 @@ const Invoice = () => {
           } else if (!isActive) {
             alert('Only active invoices can be deleted')
           }
-        }}
-        hideActionsForStatus={['paid', 'cancelled']}
+        } : null}
+        hideActionsForStatus={['cancelled']}
       />
+      {paymentModal && (
+        <PaymentModal
+          invoice={paymentModal}
+          onConfirm={handlePaymentConfirm}
+          onCancel={() => setPaymentModal(null)}
+        />
+      )}
     </PageWrapper>
   )
 }

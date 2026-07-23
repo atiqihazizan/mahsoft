@@ -1,21 +1,10 @@
 import React from 'react'
 import { useParams } from 'react-router-dom'
-import { DocumentPreview } from '../components'
-import { receiptsAPI } from '../utils/apiClient'
+import ReceiptInlineEditor from '../components/ReceiptInlineEditor'
 
 const ReceiptPreview = () => {
   const { id } = useParams()
-  return (
-    <DocumentPreview
-      id={id}
-      documentType="RECEIPT"
-      backPath="/receipts"
-      editPath={(docId) => `/receipts/${docId}/edit`}
-      apiGetById={receiptsAPI.getById}
-      apiGeneratePdf={receiptsAPI.generatePdf}
-      apiGetPdfUrl={receiptsAPI.getPdfUrl}
-    />
-  )
+  return <ReceiptInlineEditor id={id} />
 }
 
 export default ReceiptPreview

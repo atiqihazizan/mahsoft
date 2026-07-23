@@ -12,8 +12,8 @@ const Receipt = () => {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('active') // Default kepada active
-  const [showHistory, setShowHistory] = useState(false) // Toggle untuk sejarah
-
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const currentYear = new Date().getFullYear()
 
   // Function to fetch receipts
   const fetchReceipts = async () => {
@@ -68,15 +68,29 @@ const Receipt = () => {
     if (location.state?.refresh) fetchReceipts()
   }, [location])
 
+  const availableYears = (() => {
+    const historyReceipts = receipts.filter(r =>
+      r.status === 'issued' || r.status === 'cancelled'
+    )
+    const years = new Set(historyReceipts.map(r => new Date(r.date).getFullYear()))
+    years.add(currentYear)
+    return [...years].sort((a, b) => b - a)
+  })()
+
   const filteredReceipts = receipts.filter(receipt => {
     const matchesSearch = receipt.receiptNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       receipt.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       receipt.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (receipt.notes && receipt.notes.toLowerCase().includes(searchTerm.toLowerCase()))
 
-    if (filterStatus === 'all') return matchesSearch
-    if (filterStatus === 'active') return matchesSearch && (receipt.status === 'draft' || receipt.status === 'issued')
-    if (filterStatus === 'done') return matchesSearch && receipt.status === 'cancelled'
+    if (filterStatus === 'active') return matchesSearch && receipt.status === 'draft'
+
+    if (filterStatus === 'history') {
+      const receiptYear = new Date(receipt.date).getFullYear()
+      const isDone = receipt.status === 'issued' || receipt.status === 'cancelled'
+      return matchesSearch && isDone && receiptYear === selectedYear
+    }
+
     return matchesSearch
   })
 
@@ -134,97 +148,49 @@ const Receipt = () => {
 
   // Quick actions tidak diperlukan untuk Resit (tiada paid/accept/reject/dummy)
 
-  // Stats configuration
-  const stats = [
-    {
-      label: 'Total Receipts',
-      value: receipts.length,
-      icon: '🧾',
-      bgGradient: 'bg-purple-500',
-      textColor: 'text-white',
-      subtitle: `${receipts.length} receipts in total`
-    },
-    {
-      label: 'Issued',
-      value: receipts.filter(r => r.status === 'issued').length,
-      icon: '✅',
-      bgGradient: 'bg-green-500',
-      textColor: 'text-white',
-      subtitle: 'Issued receipts'
-    },
-    {
-      label: 'Draft',
-      value: receipts.filter(r => r.status === 'draft').length,
-      icon: '📝',
-      bgGradient: 'bg-blue-500',
-      textColor: 'text-white',
-      subtitle: 'Draft receipts'
-    },
-    {
-      label: 'Cancelled',
-      value: receipts.filter(r => r.status === 'cancelled').length,
-      icon: '❌',
-      bgGradient: 'bg-red-500',
-      textColor: 'text-white',
-      subtitle: 'Cancelled receipts'
-    }
-  ]
-
-  // Filter options for history mode
-  const filterOptions = [
-    { value: 'all', label: 'All Status' },
-    { value: 'active', label: 'Active' },
-    { value: 'cancelled', label: 'Cancelled' }
-  ]
-
   return (
     <PageWrapper
       title="RECEIPT MANAGEMENT"
       newButtonText="+ CREATE NEW RECEIPT"
       onNewClick={() => navigate('/receipts/new')}
       buttonColor="purple"
-      filterOptions={["ALL", "ACTIVE", "DONE"]}
-      activeFilter={{ 'all': 'ALL', 'active': 'ACTIVE', 'done': 'DONE' }[filterStatus] || 'ACTIVE'}
+      filterOptions={["ACTIVE", "HISTORY"]}
+      activeFilter={{ 'active': 'ACTIVE', 'history': 'HISTORY' }[filterStatus] || 'ACTIVE'}
       onFilterChange={(filter) => {
-        const statusMap = { 'ALL': 'all', 'ACTIVE': 'active', 'DONE': 'done' }
+        const statusMap = { 'ACTIVE': 'active', 'HISTORY': 'history' }
         setFilterStatus(statusMap[filter] || 'active')
       }}
-      searchValue={searchTerm}
-      onSearchChange={setSearchTerm}
-      searchPlaceholder="Search by receipt number, customer, or subject..."
-      additionalActions={[
-        {
-          label: 'Refresh',
-          onClick: fetchReceipts,
-          className: 'bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm'
-        }
-      ]}
-      stats={stats}
+      historyYearAddon={filterStatus === 'history' ? (
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          className="text-xs border-0 bg-transparent p-0 focus:outline-none focus:ring-0 cursor-pointer"
+        >
+          {availableYears.map(year => (
+            <option key={year} value={year}>{year}</option>
+          ))}
+        </select>
+      ) : null}
     >
       <DataTable
         data={filteredReceipts}
         columns={columns}
         loading={loading}
         onView={(row) => navigate(`/receipts/${row.id}`)}
-        onEdit={(row) => {
-          const isActive = row.status === 'draft' || row.status === 'issued'
-          isActive ? navigate(`/receipts/${row.id}/edit`) : alert('Only active receipts can be edited')
-        }}
         onDuplicate={(row) => {
           const duplicateData = { ...row }
           delete duplicateData.id
           localStorage.setItem('duplicateReceiptData', JSON.stringify(duplicateData))
           navigate('/receipts/new?duplicate=1')
         }}
-        onPreview={(row) => navigate(`/receipts/${row.id}`)}
-        onDelete={async (row) => {
+        onDelete={filterStatus === 'active' ? async (row) => {
           const isActive = row.status === 'draft' || row.status === 'issued'
           if (isActive && confirm(`Are you sure you want to delete receipt ${row.receiptNumber}?`)) {
             try {
               const response = await receiptsAPI.delete(row.id)
               if (response.success) {
                 alert('Receipt deleted successfully')
-                fetchReceipts() // Refresh data
+                fetchReceipts()
               } else {
                 alert(response.message || 'Failed to delete receipt')
               }
@@ -235,13 +201,13 @@ const Receipt = () => {
           } else if (!isActive) {
             alert('Only active receipts can be deleted')
           }
-        }}
+        } : null}
         getButtonState={(row, action) => {
           const isActive = row.status === 'draft' || row.status === 'issued'
 
           // For non-active receipts, only allow view and duplicate
           if (!isActive) {
-            return action === 'view' || action === 'duplicate' || action === 'preview'
+            return action === 'view' || action === 'duplicate'
           }
 
           // For active receipts, allow all actions

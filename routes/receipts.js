@@ -11,6 +11,7 @@ const createReceiptValidation = [
   body('companyId').notEmpty().withMessage('ID syarikat diperlukan'),
   body('userId').notEmpty().withMessage('ID pengguna diperlukan'),
   body('customerId').notEmpty().withMessage('ID pelanggan diperlukan'),
+  body('invoiceId').optional().isString().withMessage('ID invois tidak sah'),
   body('receiptNumber').optional().isString().trim().notEmpty().withMessage('Nombor resit tidak boleh kosong'),
   body('date').isISO8601().withMessage('Format tarikh tidak sah'),
   body('subject').optional().isString().withMessage('Subjek mestilah teks'),
@@ -124,6 +125,7 @@ router.get('/:id', [
         company: true,
         user: { select: { id: true, name: true, email: true } },
         customer: true,
+        invoice: { select: { id: true, invoiceNumber: true, status: true } },
         payments: {
           orderBy: { createdAt: 'desc' }
         },
@@ -147,7 +149,7 @@ router.get('/:id', [
 // POST /api/v1/receipts - Cipta resit baru
 router.post('/', createReceiptValidation, async (req, res) => {
   try {
-    const { companyId, userId, customerId, receiptNumber: customReceiptNumber, date, subject, items, notes, taxRate, discountPercent, discountAmount, discountLabel } = req.body;
+    const { companyId, userId, customerId, invoiceId, receiptNumber: customReceiptNumber, date, subject, items, notes, taxRate, discountPercent, discountAmount, discountLabel } = req.body;
 
     // Verify related records exist
     const [company, user, customer] = await Promise.all([
@@ -159,6 +161,13 @@ router.post('/', createReceiptValidation, async (req, res) => {
     if (!company) return badRequest(res, 'Syarikat tidak ditemui');
     if (!user) return badRequest(res, 'Pengguna tidak ditemui');
     if (!customer) return badRequest(res, 'Pelanggan tidak ditemui');
+
+    if (invoiceId) {
+      const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId } })
+      if (!invoice) return badRequest(res, 'Invois tidak ditemui')
+      const existingReceipt = await prisma.receipt.findFirst({ where: { invoiceId } })
+      if (existingReceipt) return badRequest(res, 'Invois ini sudah mempunyai resit')
+    }
 
     // Guna nombor custom jika diberi, jika tidak generate ikut sequence syarikat
     let receiptNumber;
@@ -204,7 +213,8 @@ router.post('/', createReceiptValidation, async (req, res) => {
         items: itemsWithAmounts,
         companyId,
         userId,
-        customerId
+        customerId,
+        ...(invoiceId && { invoiceId })
       },
       include: {
         company: { select: { id: true, name: true } },
@@ -356,6 +366,11 @@ router.delete('/:id', [
       return notFound(res, 'Resit tidak ditemui');
     }
 
+    // Don't allow deletion if receipt is linked to an invoice
+    if (existingReceipt.invoiceId) {
+      return badRequest(res, 'Resit tidak boleh dipadam kerana ia berkaitan dengan invois. Batalkan resit dahulu.');
+    }
+
     // Don't allow deletion if receipt is issued and has payments
     if (existingReceipt.status === 'ISSUED' && existingReceipt.payments.length > 0) {
       return badRequest(res, 'Resit yang telah dikeluarkan dan mempunyai pembayaran tidak boleh dipadam');
@@ -410,6 +425,7 @@ router.get('/:id/pdf', [
     }
 
     const fullPath = getPdfPath('RECEIPT', id);
+    res.setHeader('Content-Disposition', 'inline');
     res.sendFile(fullPath);
   } catch (err) {
     console.error('Error serving receipt PDF:', err);

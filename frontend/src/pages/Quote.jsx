@@ -11,8 +11,17 @@ const Quote = () => {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('active') // Default kepada active
-  const [showHistory, setShowHistory] = useState(false) // Toggle untuk sejarah
   const [actionLoading, setActionLoading] = useState({})
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const currentYear = new Date().getFullYear()
+  const availableYears = (() => {
+    const historyQuotes = quotes.filter(q =>
+      q.status === 'accepted' || q.status === 'rejected' || q.status === 'dummy' || q.status === 'cancelled'
+    )
+    const years = new Set(historyQuotes.map(q => new Date(q.date).getFullYear()))
+    years.add(currentYear)
+    return [...years].sort((a, b) => b - a)
+  })()
 
   // Function to calculate days until expiry
   const calculateDaysUntilExpiry = (validUntil) => {
@@ -142,10 +151,17 @@ const Quote = () => {
     const matchesSearch = quote.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       quote.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       quote.subject.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    if (filterStatus === 'all') return matchesSearch
-    if (filterStatus === 'active') return matchesSearch && (quote.status === 'draft' || quote.status === 'sent' || quote.status === 'expired')
-    if (filterStatus === 'done') return matchesSearch && (quote.status === 'accepted' || quote.status === 'rejected' || quote.status === 'dummy')
+
+    if (filterStatus === 'active') return matchesSearch &&
+      (quote.status === 'draft' || quote.status === 'sent' || quote.status === 'expired')
+
+    if (filterStatus === 'history') {
+      const quoteYear = new Date(quote.date).getFullYear()
+      const isDone = quote.status === 'accepted' || quote.status === 'rejected' ||
+                     quote.status === 'dummy' || quote.status === 'cancelled'
+      return matchesSearch && isDone && quoteYear === selectedYear
+    }
+
     return matchesSearch
   })
   // Table columns configuration
@@ -209,35 +225,46 @@ const Quote = () => {
       newButtonText="+ CREATE NEW QUOTE"
       onNewClick={() => navigate('/quotes/new')}
       buttonColor="green"
-      filterOptions={["ALL", "ACTIVE", "DONE"]}
-      activeFilter={{ 'all': 'ALL', 'active': 'ACTIVE', 'done': 'DONE' }[filterStatus] || 'ACTIVE'}
+      filterOptions={["ACTIVE", "HISTORY"]}
+      activeFilter={{ 'active': 'ACTIVE', 'history': 'HISTORY' }[filterStatus] || 'ACTIVE'}
       onFilterChange={(filter) => {
-        const statusMap = { 'ALL': 'all', 'ACTIVE': 'active', 'DONE': 'done' }
+        const statusMap = { 'ACTIVE': 'active', 'HISTORY': 'history' }
         setFilterStatus(statusMap[filter] || 'active')
       }}
       onRefresh={fetchQuotes}
+      historyYearAddon={filterStatus === 'history' ? (
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          className="text-xs border-0 bg-transparent p-0 focus:outline-none focus:ring-0 cursor-pointer"
+        >
+          {availableYears.map(year => (
+            <option key={year} value={year}>{year}</option>
+          ))}
+        </select>
+      ) : null}
     >
       <DataTable
         data={filteredQuotes}
         columns={columns}
         loading={loading}
-        onAccept={(row) => handleQuoteStatusChange(row.id, 'accept')}
-        onReject={(row) => handleQuoteStatusChange(row.id, 'reject')}
-        onDummy={(row) => handleQuoteStatusChange(row.id, 'dummy')}
+        onAccept={filterStatus !== 'history' ? (row) => handleQuoteStatusChange(row.id, 'accept') : null}
+        onReject={filterStatus !== 'history' ? (row) => handleQuoteStatusChange(row.id, 'reject') : null}
+        onDummy={filterStatus !== 'history' ? (row) => handleQuoteStatusChange(row.id, 'dummy') : null}
         onView={(row) => navigate(`/quotes/${row.id}`)}
+        customLabels={{ view: 'Open' }}
         onDuplicate={(row) => {
           const duplicateData = { ...row }
           delete duplicateData.id
           localStorage.setItem('duplicateQuoteData', JSON.stringify(duplicateData))
           navigate('/quotes/new?duplicate=1')
         }}
-        onDelete={async (row) => {
+        onDelete={filterStatus === 'active' ? async (row) => {
           if (confirm('Are you sure you want to delete this quote?')) {
             try {
               const response = await quotesAPI.delete(row.id)
               if (response.success) {
                 alert('Quote deleted successfully!')
-                // Refresh the quote list
                 fetchQuotes()
               } else {
                 alert(response.error || 'Failed to delete quote. Please try again.')
@@ -247,7 +274,7 @@ const Quote = () => {
               alert('An error occurred while deleting quote. Please try again.')
             }
           }
-        }}
+        } : null}
         hideActionsForStatus={['accepted', 'rejected', 'dummy']}
       />
     </PageWrapper>

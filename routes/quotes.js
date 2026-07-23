@@ -595,6 +595,8 @@ router.get('/:id/pdf', [
     }
 
     const fullPath = getPdfPath('QUOTATION', id);
+    const filename = quote?.quoteNumber ? `QUO-${quote.quoteNumber}.pdf` : `quote-${id}.pdf`;
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     res.sendFile(fullPath);
   } catch (err) {
     console.error('Error serving quote PDF:', err);
@@ -690,5 +692,55 @@ router.post('/:id/whatsapp', [
     error(res, err.message || 'Ralat menghantar melalui WhatsApp');
   }
 });
+
+// POST /api/v1/quotes/:id/revise - Cipta revisi baru
+router.post('/:id/revise', [
+  param('id').isString(),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params
+    const original = await prisma.quote.findUnique({
+      where: { id },
+      include: { company: true }
+    })
+    if (!original) return notFound(res, 'Sebut harga tidak ditemui')
+
+    const revCount = await prisma.quote.count({ where: { revisionOf: id } })
+    const suffix = `-R${revCount + 1}`
+    const newNumber = `${original.quoteNumber}${suffix}`
+
+    const revised = await prisma.$transaction(async (tx) => {
+      await tx.quote.update({
+        where: { id },
+        data: { status: 'REVISED' }
+      })
+      return tx.quote.create({
+        data: {
+          quoteNumber: newNumber,
+          date: new Date(),
+          validUntil: original.validUntil,
+          status: 'DRAFT',
+          items: original.items,
+          subtotal: original.subtotal,
+          discountPercent: original.discountPercent,
+          discountAmount: original.discountAmount,
+          discountLabel: original.discountLabel,
+          taxAmount: original.taxAmount,
+          total: original.total,
+          notes: original.notes,
+          companyId: original.companyId,
+          userId: original.userId,
+          customerId: original.customerId,
+          revisionOf: id
+        }
+      })
+    })
+    success(res, revised, 'Revisi berjaya dicipta')
+  } catch (err) {
+    console.error('Error revising quote:', err)
+    error(res, 'Ralat mencipta revisi')
+  }
+})
 
 module.exports = router;

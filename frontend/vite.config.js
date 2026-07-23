@@ -15,6 +15,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/logo': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+        secure: false,
+      },
     },
     // proxy: {
     //   '/api': {

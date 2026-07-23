@@ -368,170 +368,263 @@ const PAYMENT_METHOD_LABELS = {
 }
 
 // Template PDF Resit (Receipt) - saiz A5, ringkas berbanding invois/quotation A4.
-const generateReceiptHTML = ({ company, customer, documentNumber, date, items, subtotal, discountPercent, discountAmount, discountLabel, tax, total, payments, notes, logoData, audiowideFontPath, issuedBy }) => {
-  const hasDiscount = Number(discountAmount) > 0
-  const hasTax = Number(tax) > 0
-  const showBreakdown = hasDiscount || hasTax
+const numberToMalayWords = (amount) => {
+  const ones = ['', 'SATU', 'DUA', 'TIGA', 'EMPAT', 'LIMA', 'ENAM', 'TUJUH', 'LAPAN', 'SEMBILAN',
+    'SEPULUH', 'SEBELAS', 'DUA BELAS', 'TIGA BELAS', 'EMPAT BELAS', 'LIMA BELAS',
+    'ENAM BELAS', 'TUJUH BELAS', 'LAPAN BELAS', 'SEMBILAN BELAS']
+  const tens = ['', '', 'DUA PULUH', 'TIGA PULUH', 'EMPAT PULUH', 'LIMA PULUH',
+    'ENAM PULUH', 'TUJUH PULUH', 'LAPAN PULUH', 'SEMBILAN PULUH']
 
-  const isBillable = (item) => Number(item.amount) > 0
-  const needsQtyPrice = (item) => {
-    if (!isBillable(item)) return false
-    const qty = Number(item.quantity)
-    const price = Number(item.unitPrice)
-    return qty > 1 || (qty && price && Number(item.amount) !== price * qty)
+  const toWords = (n) => {
+    if (n === 0) return ''
+    if (n < 20) return ones[n]
+    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '')
+    if (n < 1000) {
+      const h = Math.floor(n / 100)
+      const r = n % 100
+      const prefix = h === 1 ? 'SERATUS' : ones[h] + ' RATUS'
+      return prefix + (r ? ' ' + toWords(r) : '')
+    }
+    if (n < 1000000) {
+      const t = Math.floor(n / 1000)
+      const r = n % 1000
+      const prefix = t === 1 ? 'SERIBU' : toWords(t) + ' RIBU'
+      return prefix + (r ? ' ' + toWords(r) : '')
+    }
+    if (n < 1000000000) {
+      const m = Math.floor(n / 1000000)
+      const r = n % 1000000
+      return toWords(m) + ' JUTA' + (r ? ' ' + toWords(r) : '')
+    }
+    return n.toString()
   }
-  const billableItems = (items || []).filter(isBillable)
-  const showQtyPrice = billableItems.some(needsQtyPrice)
 
-  const itemRows = billableItems.map((item) => {
-    const show = showQtyPrice && needsQtyPrice(item)
-    const qtyUnit = show ? (() => {
-      const qty = Number(item.quantity) || ''
-      const unit = item.unit || ''
-      return unit ? `${qty}<br><span style="font-size:0.55rem;color:#666;display:inline-block">${unit}</span>` : qty
-    })() : ''
-    const priceVal = show && Number(item.unitPrice) ? formatCurrency(item.unitPrice) : ''
-    return `
-    <tr>
-      <td><div>${renderWhatsAppText(item.description || '')}</div></td>
-      ${showQtyPrice ? `<td class="qty-cell">${qtyUnit}</td>` : ''}
-      ${showQtyPrice ? `<td class="price-cell">${priceVal}</td>` : ''}
-      <td class="amount-cell">${Number(item.amount) ? formatCurrency(item.amount) : ''}</td>
-    </tr>`
-  }).join('')
+  const total = Math.round(parseFloat(amount) * 100)
+  const ringgit = Math.floor(total / 100)
+  const sen = total % 100
+
+  if (ringgit === 0 && sen === 0) return 'SIFAR SAHAJA'
+
+  let words = ''
+  if (ringgit > 0) words += toWords(ringgit) + ' RINGGIT'
+  if (sen > 0) words += (ringgit > 0 ? ' DAN ' : '') + toWords(sen) + ' SEN'
+  return words + ' SAHAJA'
+}
+
+const generateReceiptHTML = ({ company, customer, documentNumber, date, items, subtotal, discountPercent, discountAmount, discountLabel, tax, total, payments, notes, logoData, audiowideFontPath, issuedBy }) => {
 
   const logoHtml = logoData
-    ? `<img src="${logoData}" alt="Logo" />`
-    : `<div class="logo-placeholder"></div>`
-
-  let pricingRows = ''
-  if (showBreakdown) {
-    pricingRows += `<tr><td>Subtotal</td><td class="positive">${formatCurrency(subtotal)}</td></tr>`
-    if (hasDiscount) {
-      const label = discountLabel || 'Discount'
-      const pct = discountPercent > 0 ? ` (${discountPercent}%)` : ''
-      pricingRows += `<tr><td style="white-space: nowrap;">${label}${pct}</td><td class="negative">${formatCurrency(-discountAmount)}</td></tr>`
-    }
-    if (hasTax) {
-      pricingRows += `<tr><td>Tax</td><td class="positive">${formatCurrency(tax)}</td></tr>`
-    }
-    pricingRows += `<tr class="divider1 grand"><td>Grand Total</td><td>${formatCurrency(total)}</td></tr>`
-  } else {
-    pricingRows += `<tr class="grand"><td>Total</td><td>${formatCurrency(total)}</td></tr>`
-  }
-
-  // Maklumat bayaran - guna rekod Payment yang berkaitan jika ada, jika tiada anggap resit
-  // ini merekodkan bayaran penuh sejumlah `total` (resit = bukti bayaran diterima)
-  const paymentList = (payments || []).filter(p => p && Number(p.amount) > 0)
-  const totalPaid = paymentList.length > 0
-    ? paymentList.reduce((sum, p) => sum + Number(p.amount), 0)
-    : Number(total) || 0
-  const methodLine = paymentList.length > 0
-    ? paymentList.map(p => PAYMENT_METHOD_LABELS[p.method] || p.method).join(', ')
-    : ''
-  const referenceLine = paymentList.length > 0
-    ? paymentList.map(p => p.reference).filter(Boolean).join(', ')
-    : ''
-
-  const issuedByName = issuedBy || company?.manager || ''
+    ? `<img src="${logoData}" alt="Logo" style="max-width:70px;max-height:70px;object-fit:contain;" />`
+    : `<div style="width:70px;height:70px;border:1px solid #ccc;"></div>`
 
   const fontFace = audiowideFontPath
     ? `<style>@font-face{font-family:'Audiowide';src:url('file://${audiowideFontPath}') format('truetype');}</style>`
-    : `<link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">`
+    : ''
+
+  const amountWords = numberToMalayWords(total)
+
+  const formattedDate = (() => {
+    const d = new Date(date)
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+  })()
+
+  const formattedTotal = (() => {
+    const n = parseFloat(total)
+    const cents = Math.round((n % 1) * 100)
+    return `RM ${Math.floor(n).toLocaleString()}${cents ? `.${String(cents).padStart(2,'0')}` : ''}/=`
+  })()
+
+  const untukBayaran = (() => {
+    if (items && items.length > 0) {
+      return items.map(item => item.description || '').filter(Boolean).join('\n')
+    }
+    return notes || ''
+  })()
+
+  const bayaranLines = untukBayaran.split('\n').filter(Boolean)
+
+  const companySsm = company?.ssm ? `(${company.ssm})` : ''
 
   return `<!DOCTYPE html>
 <html>
 <head>
 ${fontFace}
-<style>${css}</style></head>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 11pt;
+    background: white;
+    color: #000;
+  }
+  .receipt-wrap {
+    width: 148mm;
+    min-height: 210mm;
+    margin: 0 auto;
+    padding: 12mm 14mm;
+    position: relative;
+  }
+  .header-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 6mm;
+  }
+  .header-table td { vertical-align: middle; }
+  .logo-td { width: 22mm; }
+  .company-td { text-align: center; padding: 0 4mm; }
+  .company-name {
+    font-size: 13pt;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+  }
+  .company-ssm {
+    font-size: 8.5pt;
+    font-weight: normal;
+  }
+  .company-address {
+    font-size: 8pt;
+    margin-top: 3px;
+    line-height: 1.5;
+  }
+  .title-row {
+    text-align: center;
+    margin: 4mm 0 6mm 0;
+  }
+  .title-row h2 {
+    font-size: 14pt;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-decoration: underline;
+  }
+  .no-date-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5mm;
+  }
+  .no-date-table td { padding: 1mm 0; font-size: 10.5pt; }
+  .no-date-table .label-col { width: 55%; }
+  .no-date-table .value-col { border-bottom: 1px solid #000; padding-left: 3mm; min-width: 35mm; }
+  .field-row {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5mm;
+  }
+  .field-row td { font-size: 10.5pt; vertical-align: bottom; }
+  .field-label { white-space: nowrap; padding-right: 3mm; width: 1%; }
+  .field-value {
+    border-bottom: 1px solid #000;
+    padding-bottom: 1px;
+    padding-left: 3mm;
+    width: 100%;
+  }
+  .bayaran-section { margin-bottom: 8mm; }
+  .bayaran-label { font-size: 10.5pt; margin-bottom: 2mm; }
+  .bayaran-line {
+    border-bottom: 1px solid #000;
+    min-height: 7mm;
+    margin-bottom: 2mm;
+    padding-left: 3mm;
+    font-size: 10.5pt;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 1px;
+  }
+  .bayaran-empty {
+    border-bottom: 1px solid #000;
+    min-height: 7mm;
+    margin-bottom: 2mm;
+  }
+  .ringgit-section { margin-bottom: 10mm; }
+  .ringgit-section td { font-size: 10.5pt; vertical-align: bottom; }
+  .ringgit-label { white-space: nowrap; padding-right: 5mm; }
+  .ringgit-value { font-size: 11pt; font-weight: bold; }
+  .issued-section { margin-top: 8mm; }
+  .issued-section .label { font-size: 10.5pt; margin-bottom: 15mm; }
+  .issued-section .sig-line {
+    border-top: 1px solid #000;
+    width: 50mm;
+    margin-top: 2mm;
+    padding-top: 1mm;
+    font-size: 8pt;
+    text-align: center;
+  }
+  .hr-main {
+    border: none;
+    border-top: 1.5px solid #000;
+    margin: 3mm 0;
+  }
+</style>
+</head>
 <body>
-<div class="sheet receipt-sheet">
-  <div class="main-content">
-    <table class="print-header" style="width:100% !important;">
-      <tr>
-        <td class="logo-cell">${logoHtml}</td>
-        <td class="company-cell">
-          <div>
-            <h1 class="audiowide-regular" style="font-size:0.95rem;font-weight:700;margin:0;padding:0;color:#333;">
-              ${company?.name || ''}
-              <span style="font-family: ui-sans-serif, system-ui, sans-serif; font-weight:400; font-size:0.55rem;padding-left:.2rem;color:#666">${company?.registration || ''}</span>
-            </h1>
-          </div>
-          <div class="company-info">
-            <p>${company?.address || ''}</p>
-            <p>Email: ${company?.email || ''}  Phone: ${company?.phone || ''}</p>
-          </div>
-        </td>
-        <td class="doctype-cell" align="right">
-          <h1 class="audiowide-regular" style="font-size:0.9rem;font-weight:700;margin:0;text-align:center !important;width:100%;color:#333">RECEIPT</h1>
-        </td>
-      </tr>
-    </table>
+<div class="receipt-wrap">
 
-    <hr class="hr--major" />
+  <table class="header-table">
+    <tr>
+      <td class="logo-td">${logoHtml}</td>
+      <td class="company-td">
+        <div class="company-name">
+          ${company?.name || ''}
+          ${companySsm ? `<span class="company-ssm">${companySsm}</span>` : ''}
+        </div>
+        <div class="company-address">
+          ${(company?.address || '').replace(/\n/g, '<br>')}
+        </div>
+      </td>
+    </tr>
+  </table>
 
-    <table class="clientinfo-container">
-      <tr>
-        <td class="clientinfo">
-          <p>${customer?.name || ''}</p>
-          <p>${customer?.address || ''}</p>
-          ${(customer?.phone || customer?.mobile) ? `<p style="margin-top:8px">${customer.phone ? `Tel: ${customer.phone}` : ''}${customer.mobile ? `  Mobile: ${customer.mobile}` : ''}</p>` : ''}
-        </td>
-        <td class="docinfo">
-          <table>
-            <tr><td style="font-weight:900">No</td><td>:</td><td>${documentNumber}</td></tr>
-            <tr><td style="color:#666">Date</td><td style="color:#666">:</td><td style="color:#666">${formatDate(date)}</td></tr>
-          </table>
-        </td>
-      </tr>
-    </table>
+  <hr class="hr-main" />
 
-    <div class="issuence">
-      <table>
-        <thead>
-          <tr>
-            <th>Description</th>
-            ${showQtyPrice ? '<th class="qty-cell">Qty</th><th class="price-cell">Price</th>' : ''}
-            <th class="amount-cell">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemRows || `<tr><td style="text-align:center;color:#999;padding:1.5rem 0" colspan="${showQtyPrice ? 4 : 2}">No items</td></tr>`}
-        </tbody>
-      </table>
-    </div>
+  <div class="title-row"><h2>RESIT</h2></div>
+
+  <table class="no-date-table">
+    <tr>
+      <td class="label-col"></td>
+      <td style="text-align:right; padding-right:3mm; white-space:nowrap;">No :</td>
+      <td class="value-col">${documentNumber}</td>
+    </tr>
+    <tr>
+      <td class="label-col"></td>
+      <td style="text-align:right; padding-right:3mm; white-space:nowrap;">Tarikh :</td>
+      <td class="value-col">${formattedDate}</td>
+    </tr>
+  </table>
+
+  <table class="field-row" style="margin-bottom:5mm;">
+    <tr>
+      <td class="field-label">Diterima Dari :</td>
+      <td class="field-value">${customer?.name || ''}</td>
+    </tr>
+  </table>
+
+  <table class="field-row" style="margin-bottom:6mm;">
+    <tr>
+      <td class="field-label">Wang Yang Diterima :</td>
+      <td class="field-value">${amountWords}</td>
+    </tr>
+  </table>
+
+  <div class="bayaran-section">
+    <div class="bayaran-label">Untuk Bayaran :</div>
+    ${bayaranLines.length > 0
+      ? bayaranLines.map(line => `<div class="bayaran-line">${line}</div>`).join('')
+      : '<div class="bayaran-empty"></div><div class="bayaran-empty"></div>'
+    }
+    ${bayaranLines.length < 2 ? '<div class="bayaran-empty"></div>' : ''}
   </div>
 
-  <div class="closing-section">
-    <hr class="hr--major" />
+  <table class="ringgit-section" style="width:auto;">
+    <tr>
+      <td class="ringgit-label">Ringgit :</td>
+      <td class="ringgit-value">${formattedTotal}</td>
+    </tr>
+  </table>
 
-    <table class="footer-table">
-      <tr>
-        <td>
-          <div class="payment-info">
-            <table>
-              ${methodLine ? `<tr><td>Kaedah Bayaran</td><td>:</td><td>${methodLine}</td></tr>` : ''}
-              ${referenceLine ? `<tr><td>Rujukan</td><td>:</td><td>${referenceLine}</td></tr>` : ''}
-              <tr class="paid-amount"><td colspan="3">Jumlah Dibayar: ${formatCurrency(totalPaid)}</td></tr>
-            </table>
-          </div>
-        </td>
-        <td>
-          <table class="pricing-table">
-            ${pricingRows}
-          </table>
-        </td>
-      </tr>
-    </table>
-
-    ${notes ? `<div class="notes-section"><div>${renderWhatsAppText(notes)}</div></div>` : ''}
-
-    <div class="issuedby-section">
-      <p class="label">Received By,</p>
-      <p class="name" style="font-style: italic; margin-top:0.5rem; padding-bottom:1px">${issuedByName}</p>
-      <div class="signature-line">(Signature)</div>
-    </div>
+  <div class="issued-section">
+    <div class="label">Dikeluarkan :</div>
+    <div class="sig-line">(Tandatangan / Cop Syarikat)</div>
   </div>
+
 </div>
 </body>
 </html>`

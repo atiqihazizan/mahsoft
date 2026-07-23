@@ -1,6 +1,6 @@
 import React from 'react'
 
-const PageWrapper = ({ 
+const PageWrapper = ({
   title = "INVOICE",
   newButtonText = "+ NEW",
   onNewClick,
@@ -8,6 +8,7 @@ const PageWrapper = ({
   activeFilter = "ALL",
   onFilterChange,
   buttonColor = "blue", // blue, green, purple, orange
+  historyYearAddon,
   children
 }) => {
   // Button color configurations
@@ -68,20 +69,35 @@ const PageWrapper = ({
           </h1>
 
           {/* Filter Options */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            {filterOptions.map((option) => (
-              <button
-                key={option}
-                onClick={() => onFilterChange && onFilterChange(option)}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                  activeFilter === option
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                {option}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              {filterOptions.map((option) => {
+                if (option === 'HISTORY' && activeFilter === 'HISTORY' && historyYearAddon) {
+                  return (
+                    <div
+                      key={option}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium bg-white text-gray-900 shadow-sm"
+                    >
+                      <span>{option}</span>
+                      {historyYearAddon}
+                    </div>
+                  )
+                }
+                return (
+                  <button
+                    key={option}
+                    onClick={() => onFilterChange && onFilterChange(option)}
+                    className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                      activeFilter === option
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
 

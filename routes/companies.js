@@ -276,10 +276,16 @@ router.put('/:id', updateCompanyValidation, async (req, res) => {
       name, label, address, phone, email, taxNumber,
       bankholder, bankname, bankacc, bankbranch,
       ssm, manager, assist, accountant, technical,
+      is_default,
       // Prefix and Sequence fields
       invoicePrefix, quotePrefix, receiptPrefix, deliveryOrderPrefix,
       invoiceSeq, quoteSeq, receiptSeq, deliveryOrderSeq
     } = req.body;
+
+    // Handle is_default: true — reset all others first
+    if (is_default === true) {
+      await prisma.company.updateMany({ data: { is_default: false } })
+    }
 
     // Convert empty strings to 0 for sequence numbers
     const processedData = {
@@ -306,9 +312,9 @@ router.put('/:id', updateCompanyValidation, async (req, res) => {
       ...(invoiceSeq !== undefined && { invoiceSeq: invoiceSeq === '' ? 0 : parseInt(invoiceSeq) }),
       ...(quoteSeq !== undefined && { quoteSeq: quoteSeq === '' ? 0 : parseInt(quoteSeq) }),
       ...(receiptSeq !== undefined && { receiptSeq: receiptSeq === '' ? 0 : parseInt(receiptSeq) }),
-      ...(deliveryOrderSeq !== undefined && { deliveryOrderSeq: deliveryOrderSeq === '' ? 0 : parseInt(deliveryOrderSeq) })
+      ...(deliveryOrderSeq !== undefined && { deliveryOrderSeq: deliveryOrderSeq === '' ? 0 : parseInt(deliveryOrderSeq) }),
+      ...(is_default !== undefined && { is_default })
     };
-
 
     // Check if company exists
     const existingCompany = await prisma.company.findUnique({

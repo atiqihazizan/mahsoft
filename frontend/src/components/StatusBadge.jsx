@@ -12,12 +12,13 @@ const StatusBadge = ({ status, statusConfig = {} }) => {
     rejected: { color: 'bg-red-100 text-red-800', text: 'Rejected' },
     expired: { color: 'bg-gray-100 text-gray-800', text: 'Expired' },
     sent: { color: 'bg-blue-100 text-blue-800', text: 'Sent' },
-    draft: { color: 'bg-gray-100 text-gray-800', text: 'Issued' },
+    draft: { color: 'bg-gray-100 text-gray-800', text: 'Draft' },
+    revised: { color: 'bg-purple-100 text-purple-800', text: 'Revised' },
     active: { color: 'bg-green-100 text-green-800', text: 'Active' }
   }
 
   const config = { ...defaultConfig, ...statusConfig }
-  const statusInfo = config[status] || config.pending
+  const statusInfo = config[status?.toLowerCase()] || config.pending
 
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
