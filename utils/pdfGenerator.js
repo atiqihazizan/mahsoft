@@ -30,7 +30,7 @@ const WKHTMLTOPDF = (() => {
 const DOC_CONFIG = {
   INVOICE: { model: 'invoice', dir: 'invoices', pageSize: 'A4' },
   QUOTATION: { model: 'quote', dir: 'quotes', pageSize: 'A4' },
-  RECEIPT: { model: 'receipt', dir: 'receipts', pageSize: 'A5' }
+  RECEIPT: { model: 'receipt', dir: 'receipts', pageSize: 'A4' }
 }
 
 const getDocConfig = (docType) => {
@@ -77,6 +77,7 @@ const loadLogoData = () => {
   return ''
 }
 
+
 const generatePdf = async (docType, id) => {
   const { model, pageSize } = getDocConfig(docType)
 
@@ -94,10 +95,6 @@ const generatePdf = async (docType, id) => {
   const bank = doc.company?.bank || {}
   const logoData = loadLogoData()
 
-  const FONTS_PATH = path.join(__dirname, '..', 'public', 'fonts')
-  const fontPath = path.join(FONTS_PATH, 'Audiowide-Regular.ttf')
-  const audiowideFontPath = fs.existsSync(fontPath) ? fontPath : ''
-
   const html = docType === 'RECEIPT'
     ? generateReceiptHTML({
         company: { ...doc.company, registration: doc.company?.ssm },
@@ -113,9 +110,8 @@ const generatePdf = async (docType, id) => {
         tax: Number(doc.taxAmount) || 0,
         total: Number(doc.total) || 0,
         payments: doc.payments || [],
-        issuedBy: doc.issuedBy,
-        notes: doc.notes,
-        audiowideFontPath
+        issuedBy: doc.issuedBy || doc.company?.manager,
+        notes: doc.notes
       })
     : generateHTML({
         documentType: docType,
@@ -135,8 +131,7 @@ const generatePdf = async (docType, id) => {
         paidAmount: docType === 'INVOICE' ? (Number(doc.paidAmount) || 0) : 0,
         bank,
         issuedBy: doc.issuedBy,
-        notes: doc.notes,
-        audiowideFontPath
+        notes: doc.notes
       })
 
   const pdfDir = getDocDir(docType)
@@ -170,7 +165,7 @@ const generatePdf = async (docType, id) => {
       `--javascript-delay 500 ` +
       `--no-stop-slow-scripts ` +
       `"${tmpHtml}" "${pdfPath}"`,
-      { timeout: 30000 }
+      { timeout: 3000 }
     )
   } finally {
     try { fs.unlinkSync(tmpHtml) } catch (e) {}

@@ -417,6 +417,10 @@ export const receiptsAPI = {
     return apiClient.post(`/api/v1/receipts/${id}/pdf`, {})
   },
 
+  generatePdfFromHtml: async (id, html) => {
+    return apiClient.post(`/api/v1/receipts/${id}/pdf-from-html`, { html })
+  },
+
   getPdfUrl: (id) => {
     return `${baseURL}/api/v1/receipts/${id}/pdf`
   },

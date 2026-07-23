@@ -4,10 +4,17 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+
+// Load Audiowide font ke memory sebagai base64 data URI (supaya PDF template tak perlu baca disk)
+const audiowideFontPath = path.join(__dirname, 'public', 'fonts', 'Audiowide-Regular.ttf');
+global.__AUDIOWIDE_FONT_DATA_URI = fs.existsSync(audiowideFontPath)
+  ? `data:font/ttf;base64,${fs.readFileSync(audiowideFontPath).toString('base64')}`
+  : '';
 
 // Middleware
 app.use(helmet({

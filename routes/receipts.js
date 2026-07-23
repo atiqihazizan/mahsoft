@@ -2,9 +2,11 @@ const express = require('express');
 const { body, param } = require('express-validator');
 const router = express.Router();
 const prisma = require('../utils/prisma');
+const fs = require('fs');
 const { success, error, notFound, badRequest } = require('../utils/response');
 const { handleValidationErrors } = require('../middleware/validation');
 const { generateReceiptNumber } = require('../utils/numberGenerator');
+const { authenticateToken } = require('../utils/auth');
 
 // Validation rules
 const createReceiptValidation = [
@@ -110,6 +112,49 @@ router.get('/', async (req, res) => {
     error(res, 'Ralat mengambil senarai resit');
   }
 });
+
+// GET /api/v1/receipts/:id/html - Papar HTML template resit (preview sebelum PDF)
+router.get('/:id/html', async (req, res) => {
+  try {
+    const { generateReceiptHTML } = require('../utils/pdfTemplate')
+    const path = require('path')
+
+    const receipt = await prisma.receipt.findUnique({
+      where: { id: req.params.id },
+      include: { customer: true, company: true }
+    })
+
+    if (!receipt) return res.status(404).send('Receipt not found')
+
+    const LOGO_PATH = path.join(__dirname, '..', 'public', 'logo', 'logo.png')
+    const logoData = fs.existsSync(LOGO_PATH)
+      ? `data:image/png;base64,${fs.readFileSync(LOGO_PATH).toString('base64')}`
+      : ''
+
+    const html = generateReceiptHTML({
+      company: { ...receipt.company, registration: receipt.company?.ssm },
+      customer: receipt.customer,
+      documentNumber: receipt.receiptNumber,
+      date: receipt.date,
+      items: receipt.items || [],
+      subtotal: Number(receipt.subtotal) || 0,
+      discountPercent: Number(receipt.discountPercent) || 0,
+      discountAmount: Number(receipt.discountAmount) || 0,
+      discountLabel: receipt.discountLabel || '',
+      tax: Number(receipt.taxAmount) || 0,
+      total: Number(receipt.total) || 0,
+      notes: receipt.notes || '',
+      issuedBy: receipt.issuedBy || receipt.company?.manager,
+      logoData,
+      audiowideFontPath: `http://localhost:${process.env.PORT || 5001}/fonts/Audiowide-Regular.ttf`
+    })
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.send(html)
+  } catch (err) {
+    res.status(500).send(`<pre>${err.message}\n${err.stack}</pre>`)
+  }
+})
 
 // GET /api/v1/receipts/:id - Dapatkan resit mengikut ID
 router.get('/:id', [
@@ -393,7 +438,7 @@ router.delete('/:id', [
   }
 });
 
-// POST /api/v1/receipts/:id/pdf - Generate PDF untuk resit (saiz A5)
+// POST /api/v1/receipts/:id/pdf - Generate PDF untuk resit (backend-rendered)
 router.post('/:id/pdf', [
   param('id').isString().withMessage('ID tidak sah'),
   handleValidationErrors
@@ -409,6 +454,33 @@ router.post('/:id/pdf', [
   }
 });
 
+// POST /api/v1/receipts/:id/pdf-from-html - Generate PDF dari frontend HTML
+router.post('/:id/pdf-from-html', [
+  param('id').isString().withMessage('ID tidak sah'),
+  handleValidationErrors
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { html } = req.body;
+    if (!html) return badRequest(res, 'HTML diperlukan');
+
+    const prisma = require('../utils/prisma');
+    const { htmlToPdf } = require('../utils/htmlToPdf');
+    const { relativePath } = await htmlToPdf(html, 'RECEIPT', id);
+
+    await prisma.receipt.update({
+      where: { id },
+      data: { pdfPath: relativePath, pdfGeneratedAt: new Date() }
+    });
+
+    success(res, { pdfPath: relativePath }, 'PDF berjaya dijana');
+  } catch (err) {
+    console.error('Error generating receipt PDF from HTML:', err);
+    error(res, 'Ralat menjana PDF');
+  }
+});
+
+
 // GET /api/v1/receipts/:id/pdf - Serve PDF untuk resit
 router.get('/:id/pdf', [
   param('id').isString().withMessage('ID tidak sah'),
@@ -416,15 +488,11 @@ router.get('/:id/pdf', [
 ], async (req, res) => {
   try {
     const { id } = req.params;
-    const { generatePdf, needsRegeneration, getPdfPath } = require('../utils/pdfGenerator');
-
-    const needsGen = await needsRegeneration('RECEIPT', id);
-
-    if (needsGen) {
-      await generatePdf('RECEIPT', id);
-    }
-
+    const { getPdfPath } = require('../utils/pdfGenerator');
     const fullPath = getPdfPath('RECEIPT', id);
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).json({ success: false, message: 'PDF belum dijana. Sila buka resit dan jana PDF dahulu.' });
+    }
     res.setHeader('Content-Disposition', 'inline');
     res.sendFile(fullPath);
   } catch (err) {
@@ -452,15 +520,14 @@ router.post('/:id/email', [
     const recipient = to || receipt.customer?.email;
     if (!recipient) return badRequest(res, 'Sila masukkan alamat emel penerima');
 
-    const { generatePdf, getPdfPath } = require('../utils/pdfGenerator');
-    const pdfPath = getPdfPath('RECEIPT', id);
-    const { existsSync } = require('fs');
-    if (!existsSync(pdfPath)) {
-      await generatePdf('RECEIPT', id);
+    const { getPdfPath } = require('../utils/pdfGenerator');
+    const fullPath = getPdfPath('RECEIPT', id);
+    if (!fs.existsSync(fullPath)) {
+      return badRequest(res, 'PDF belum dijana. Sila jana PDF dari halaman resit dahulu.');
     }
+    const pdfBuffer = fs.readFileSync(fullPath);
 
     const { sendEmail } = require('../utils/email');
-    const pdfBuffer = require('fs').readFileSync(pdfPath);
 
     await sendEmail({
       to: recipient,
@@ -494,11 +561,10 @@ router.post('/:id/whatsapp', [
 
     if (!receipt) return notFound(res, 'Resit tidak ditemui');
 
-    const { generatePdf, getPdfPath } = require('../utils/pdfGenerator');
-    const pdfPath = getPdfPath('RECEIPT', id);
-    const { existsSync } = require('fs');
-    if (!existsSync(pdfPath)) {
-      await generatePdf('RECEIPT', id);
+    const { getPdfPath } = require('../utils/pdfGenerator');
+    const fullPath = getPdfPath('RECEIPT', id);
+    if (!fs.existsSync(fullPath)) {
+      return badRequest(res, 'PDF belum dijana. Sila jana PDF dari halaman resit dahulu.');
     }
 
     const { getStatus, sendPdf, waitForQrCode } = require('../utils/whatsappClient');
@@ -507,13 +573,13 @@ router.post('/:id/whatsapp', [
       await waitForQrCode();
       const updatedStatus = getStatus();
       if (updatedStatus.ready) {
-        await sendPdf(phone, pdfPath, `Receipt ${receipt.receiptNumber} from ${receipt.company?.name || ''}`);
+        await sendPdf(phone, fullPath, `Receipt ${receipt.receiptNumber} from ${receipt.company?.name || ''}`);
         return success(res, null, 'PDF berjaya dihantar melalui WhatsApp');
       }
       return success(res, { needsAuth: true, ...updatedStatus }, 'WhatsApp belum sedia. Sila imbas QR code.');
     }
 
-    await sendPdf(phone, pdfPath, `Receipt ${receipt.receiptNumber} from ${receipt.company?.name || ''}`);
+    await sendPdf(phone, fullPath, `Receipt ${receipt.receiptNumber} from ${receipt.company?.name || ''}`);
 
     success(res, null, 'PDF berjaya dihantar melalui WhatsApp');
   } catch (err) {

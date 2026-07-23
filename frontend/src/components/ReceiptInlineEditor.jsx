@@ -359,10 +359,22 @@ const ReceiptInlineEditor = ({ id }) => {
     }
   }
 
+  const receiptRef = useRef(null)
+
   const handleViewPdf = async () => {
     setPdfLoading(true)
     try {
-      await receiptsAPI.generatePdf(id)
+      const el = receiptRef.current
+      if (!el) throw new Error('Receipt element not found')
+
+      const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>body{margin:0;padding:0}</style></head>
+<body>${el.innerHTML}</body>
+</html>`
+
+      const res = await receiptsAPI.generatePdfFromHtml(id, html)
+      if (!res?.success) throw new Error(res?.message || 'PDF generation failed')
       const pdfUrl = receiptsAPI.getPdfUrl(id)
       const a = document.createElement('a')
       a.href = pdfUrl
@@ -434,7 +446,7 @@ const ReceiptInlineEditor = ({ id }) => {
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden bg-gray-100">
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-[210mm] mx-auto bg-white shadow-sm border border-gray-200 p-8 md:p-10" style={{ fontFamily: "'Times New Roman', Times, serif", minHeight: '297mm' }}>
+            <div ref={receiptRef} className="max-w-[210mm] mx-auto bg-white shadow-sm border border-gray-200 p-8 md:p-10" style={{ fontFamily: "'Times New Roman', Times, serif", minHeight: '297mm' }}>
               {/* HEADER */}
               <div className="flex items-center gap-4 mb-5">
                 <div className="flex-shrink-0">
@@ -469,7 +481,7 @@ const ReceiptInlineEditor = ({ id }) => {
                 <tbody>
                   <tr>
                     <td className="w-[75%]" />
-                    <td className="text-right text-sm whitespace-nowrap align-bottom pr-2">No :</td>
+                    <td className="text-right text-sm whitespace-nowrap align-bottom pr-2 pb-0">No :</td>
                     <td className="border-b border-black text-sm px-2 min-w-[120px] text-center">
                       {isCreateMode ? (
                         <span className="text-gray-400 italic">(auto)</span>
@@ -491,8 +503,8 @@ const ReceiptInlineEditor = ({ id }) => {
                   </tr>
                   <tr>
                     <td />
-                    <td className="text-right text-sm whitespace-nowrap align-bottom pr-2">Tarikh :</td>
-                    <td className="border-b border-black text-sm px-2 text-center">
+                    <td className="text-right text-sm whitespace-nowrap align-bottom pr-2 pb-0">Tarikh :</td>
+                    <td className="border-b border-black text-sm px-2 pt-2 text-center">
                       {editingDate ? (
                         <input
                           type="date"
@@ -512,60 +524,49 @@ const ReceiptInlineEditor = ({ id }) => {
                 </tbody>
               </table>
 
-              {/* Diterima Dari */}
-              <div className="mb-4 relative ">
-                <p className="text-sm whitespace-nowrap">
-                  <span className="inline-block w-[130px]">Diterima Dari :</span>
-                  {editingCustomer ? (
-                    <select
-                      value={selectedCustomerId || ''}
-                      onChange={handleCustomerSelect}
-                      className="inline-block text-xs border border-green-500 rounded px-2 py-1 focus:outline-none min-w-[200px]"
-                      autoFocus
-                    >
-                      <option value="">Select customer...</option>
-                      {customers.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="inline-block border-b border-black w-[calc(100%-130px)] cursor-pointer hover:text-green-700" onClick={() => setEditingCustomer(true)}>
-                      {doc?.customer?.name || '-'}
-                    </span>
-                  )}
-                </p>
-              </div>
-
-              {/* Wang Yang Diterima */}
-              <div className="mb-4">
-                <p className="text-sm whitespace-nowrap">
-                  <span className="inline-block w-[130px]">Wang Yang Diterima :</span>
-                  <span className="inline-block border-b border-black w-[calc(100%-130px)] leading-relaxed">{numberToMalay(total)}</span>
-                </p>
-              </div>
-
-              <div className="mb-3 text-sm">
-                <div className="flex items-baseline gap-0">
-                  <span className="whitespace-nowrap flex-shrink-0 w-[126px]">Untuk Bayaran :</span>
-                  <div className="flex-1 border-b border-black ml-1 min-h-[1.4rem]"
-                    onClick={() => activeRowIdx === null && setActiveRowIdx(0)}>
-                    {items.map((item, index) => {
-                      const isActive = activeRowIdx === index
-                      return (
-                        <div key={item.id || index}
-                          className={index > 0 ? 'border-t-0 mt-0.5' : ''}
+              {/* Diterima Dari + Wang Yang Diterima + Untuk Bayaran */}
+              <table className="w-full border-collapse mb-3 text-sm">
+                <tbody>
+                  {/* Diterima Dari */}
+                  <tr>
+                    <td className="whitespace-nowrap pr-2 align-bottom w-[145px]">Diterima Dari :</td>
+                    <td className="border-b border-black pt-1 align-bottom w-full">
+                      {editingCustomer ? (
+                        <select
+                          value={selectedCustomerId || ''}
+                          onChange={handleCustomerSelect}
+                          className="text-xs border border-green-500 rounded px-2 py-1 focus:outline-none w-full"
+                          autoFocus
                         >
-                          {isActive ? (
-                            // <textarea
-                            //   value={item.description}
-                            //   onChange={(e) => { handleDescriptionChange(index, e.target.value); markDirty() }}
-                            //   onClick={(e) => e.stopPropagation()}
-                            //   onBlur={() => setActiveRowIdx(null)}
-                            //   className="w-full text-sm border-0 outline-none resize-none bg-transparent p-0"
-                            //   rows={2}
-                            //   autoFocus
-                            //   placeholder="Klik untuk edit..."
-                            // />
+                          <option value="">Select customer...</option>
+                          {customers.map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="cursor-pointer hover:text-green-700" onClick={() => setEditingCustomer(true)}>
+                          {doc?.customer?.name || '-'}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+
+                  {/* Wang Yang Diterima */}
+                  <tr>
+                    <td className="whitespace-nowrap pr-2 align-bottom">Wang Yang Diterima :</td>
+                    <td className="border-b border-black pt-3 align-bottom leading-relaxed">
+                      {numberToMalay(total)}
+                    </td>
+                  </tr>
+
+                  {/* Untuk Bayaran */}
+                  <tr>
+                    <td className="whitespace-nowrap pr-2 align-top pt-3">Untuk Bayaran :</td>
+                    <td className="border-b border-black align-top"
+                      onClick={() => activeRowIdx === null && setActiveRowIdx(0)}>
+                      {items.map((item, index) => (
+                        <div key={item.id || index} className={index > 0 ? 'mt-1' : ''}>
+                          {activeRowIdx === index ? (
                             <div
                               ref={descFieldRef}
                               onClick={(e) => e.stopPropagation()}
@@ -586,7 +587,7 @@ const ReceiptInlineEditor = ({ id }) => {
                           ) : (
                             <div
                               onClick={(e) => { e.stopPropagation(); setActiveRowIdx(index) }}
-                              className="cursor-pointer hover:text-green-700 leading-relaxed"
+                              className="cursor-pointer hover:text-green-700 pt-3"
                               dangerouslySetInnerHTML={{
                                 __html: renderMarkdown(item.description) ||
                                 '<span class="text-gray-400 italic text-xs">Klik untuk edit</span>'
@@ -594,11 +595,11 @@ const ReceiptInlineEditor = ({ id }) => {
                             />
                           )}
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
+                      ))}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
               {/*
               <div className="flex gap-2 mt-2 mb-4">
@@ -617,7 +618,7 @@ const ReceiptInlineEditor = ({ id }) => {
               <div className="flex justify-between items-end mt-10">
                 <div className="text-sm">
                   <p 
-                    className="mb-1"
+                    className="mb-2"
                     onClick={() => { setEditingTotal(true); setTotalEditValue(String(total || '')) }}
                   >Ringgit :
                     {editingTotal ? (
@@ -638,12 +639,12 @@ const ReceiptInlineEditor = ({ id }) => {
                         autoFocus
                       />
                     ) : (
-                      <p
-                        className="font-bold text-base cursor-pointer hover:text-green-700"
+                      <span
+                        className="ml-2 font-bold text-base cursor-pointer hover:text-green-700"
                         onClick={() => { setEditingTotal(true); setTotalEditValue(String(total || '')) }}
                       >
                         {formatCurrency(total)}
-                      </p>
+                      </span>
                     )}
                   </p>
                 </div>

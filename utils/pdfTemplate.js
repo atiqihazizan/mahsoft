@@ -1,3 +1,5 @@
+const { getFontFace, AUDIOWIDE_DATA_URI } = require('./audiowideFont')
+
 const formatDate = (date) => {
   if (!date) return ''
   const d = new Date(date)
@@ -248,9 +250,7 @@ const generateHTML = ({ documentType, company, customer, documentNumber, date, v
 
   const issuedByName = issuedBy || company?.manager || ''
 
-  const fontFace = audiowideFontPath
-    ? `<style>@font-face{font-family:'Audiowide';src:url('file://${audiowideFontPath}') format('truetype');}</style>`
-    : `<link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">`
+  const fontFace = getFontFace(audiowideFontPath)
 
   return `<!DOCTYPE html>
 <html>
@@ -411,16 +411,17 @@ const numberToMalayWords = (amount) => {
   return words + ' SAHAJA'
 }
 
-const generateReceiptHTML = ({ company, customer, documentNumber, date, items, subtotal, discountPercent, discountAmount, discountLabel, tax, total, payments, notes, logoData, audiowideFontPath, issuedBy }) => {
+const generateReceiptHTML = ({ company, customer, documentNumber, date, items, subtotal, discountPercent, discountAmount, discountLabel, tax, total, payments, notes, logoData, issuedBy, fontSrc }) => {
 
   const logoHtml = logoData
     ? `<img src="${logoData}" alt="Logo" style="max-width:70px;max-height:70px;object-fit:contain;" />`
     : `<div style="width:70px;height:70px;border:1px solid #ccc;"></div>`
 
-  const fontFace = audiowideFontPath
-    ? `<style>@font-face{font-family:'Audiowide';src:url('file://${audiowideFontPath}') format('truetype');}</style>`
-    : ''
-
+  const fontFace = fontSrc
+    ? getFontFace(fontSrc)
+    : AUDIOWIDE_DATA_URI
+      ? getFontFace()
+      : ''
   const amountWords = numberToMalayWords(total)
 
   const formattedDate = (() => {
@@ -428,11 +429,7 @@ const generateReceiptHTML = ({ company, customer, documentNumber, date, items, s
     return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
   })()
 
-  const formattedTotal = (() => {
-    const n = parseFloat(total)
-    const cents = Math.round((n % 1) * 100)
-    return `RM ${Math.floor(n).toLocaleString()}${cents ? `.${String(cents).padStart(2,'0')}` : ''}/=`
-  })()
+  const formattedTotal = `RM ${parseFloat(total).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
   const untukBayaran = (() => {
     if (items && items.length > 0) {
@@ -452,34 +449,37 @@ ${fontFace}
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: 'Times New Roman', Times, serif;
+    font-family: Arial, Helvetica, sans-serif;
     font-size: 11pt;
     background: white;
     color: #000;
   }
   .receipt-wrap {
-    width: 148mm;
-    min-height: 210mm;
+    /* width: 148mm; */
+    /* min-height: 210mm; */
     margin: 0 auto;
-    padding: 12mm 14mm;
+    /* padding: 12mm 14mm; */
+    padding: 0mm 0mm;
     position: relative;
   }
   .header-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 6mm;
+    margin-bottom: 2mm;
   }
   .header-table td { vertical-align: middle; }
   .logo-td { width: 22mm; }
   .company-td { text-align: center; padding: 0 4mm; }
   .company-name {
     font-size: 13pt;
-    font-weight: bold;
+    font-weight: normal;
     letter-spacing: 0.5px;
+    font-family:"Audiowide", Arial, sans-serif;
   }
   .company-ssm {
     font-size: 8.5pt;
     font-weight: normal;
+    font-family: Arial, sans-serif;
   }
   .company-address {
     font-size: 8pt;
@@ -494,7 +494,6 @@ ${fontFace}
     font-size: 14pt;
     font-weight: bold;
     letter-spacing: 2px;
-    text-decoration: underline;
   }
   .no-date-table {
     width: 100%;
@@ -502,20 +501,20 @@ ${fontFace}
     margin-bottom: 5mm;
   }
   .no-date-table td { padding: 1mm 0; font-size: 10.5pt; }
-  .no-date-table .label-col { width: 55%; }
-  .no-date-table .value-col { border-bottom: 1px solid #000; padding-left: 3mm; min-width: 35mm; }
+  .no-date-table .label-col { width: 75%; }
+  .no-date-table .value-col { border-bottom: 1px solid #000; padding-left: 3mm; min-width: 25mm; text-align:center; vertical-align:bottom }
   .field-row {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 5mm;
   }
   .field-row td { font-size: 10.5pt; vertical-align: bottom; }
-  .field-label { white-space: nowrap; padding-right: 3mm; width: 1%; }
+  .field-label { white-space: nowrap; padding-right: 3mm; width: 140px; }
   .field-value {
     border-bottom: 1px solid #000;
     padding-bottom: 1px;
     padding-left: 3mm;
-    width: 100%;
+    width1: 100%;
   }
   .bayaran-section { margin-bottom: 8mm; }
   .bayaran-label { font-size: 10.5pt; margin-bottom: 2mm; }
@@ -534,24 +533,10 @@ ${fontFace}
     min-height: 7mm;
     margin-bottom: 2mm;
   }
-  .ringgit-section { margin-bottom: 10mm; }
-  .ringgit-section td { font-size: 10.5pt; vertical-align: bottom; }
-  .ringgit-label { white-space: nowrap; padding-right: 5mm; }
-  .ringgit-value { font-size: 11pt; font-weight: bold; }
-  .issued-section { margin-top: 8mm; }
-  .issued-section .label { font-size: 10.5pt; margin-bottom: 15mm; }
-  .issued-section .sig-line {
-    border-top: 1px solid #000;
-    width: 50mm;
-    margin-top: 2mm;
-    padding-top: 1mm;
-    font-size: 8pt;
-    text-align: center;
-  }
   .hr-main {
     border: none;
     border-top: 1.5px solid #000;
-    margin: 3mm 0;
+    margin: 1mm 0;
   }
 </style>
 </head>
@@ -567,63 +552,73 @@ ${fontFace}
           ${companySsm ? `<span class="company-ssm">${companySsm}</span>` : ''}
         </div>
         <div class="company-address">
-          ${(company?.address || '').replace(/\n/g, '<br>')}
+          ${(company?.address || '')}
         </div>
+        ${company?.phone || company?.email ? `
+        <div class="company-contact" style="font-size:8pt; margin-top:2px;">
+          ${company?.phone ? `Tel: ${company.phone}` : ''}
+          ${company?.phone && company?.email ? ' | ' : ''}
+          ${company?.email ? company.email : ''}
+        </div>` : ''}
       </td>
     </tr>
   </table>
 
   <hr class="hr-main" />
 
-  <div class="title-row"><h2>RESIT</h2></div>
+  <div class="title-row"><h2 style="font-family:'Audiowide',Arial,sans-serif; letter-spacing:0.2em;">RESIT</h2></div>
 
   <table class="no-date-table">
     <tr>
       <td class="label-col"></td>
-      <td style="text-align:right; padding-right:3mm; white-space:nowrap;">No :</td>
+      <td style="text-align:right; padding-right:3mm; white-space:nowrap; vertical-align:bottom">No :</td>
       <td class="value-col">${documentNumber}</td>
     </tr>
     <tr>
       <td class="label-col"></td>
-      <td style="text-align:right; padding-right:3mm; white-space:nowrap;">Tarikh :</td>
+      <td style="text-align:right; padding-right:3mm; white-space:nowrap; vertical-align:bottom">Tarikh :</td>
       <td class="value-col">${formattedDate}</td>
     </tr>
   </table>
 
-  <table class="field-row" style="margin-bottom:5mm;">
+  <table class="field-row" style="margin-bottom:8mm;">
     <tr>
       <td class="field-label">Diterima Dari :</td>
       <td class="field-value">${customer?.name || ''}</td>
     </tr>
-  </table>
-
-  <table class="field-row" style="margin-bottom:6mm;">
+    <tr><td colspan="2" style="padding-top:5mm"></td></tr>
     <tr>
       <td class="field-label">Wang Yang Diterima :</td>
       <td class="field-value">${amountWords}</td>
     </tr>
-  </table>
-
-  <div class="bayaran-section">
-    <div class="bayaran-label">Untuk Bayaran :</div>
-    ${bayaranLines.length > 0
-      ? bayaranLines.map(line => `<div class="bayaran-line">${line}</div>`).join('')
-      : '<div class="bayaran-empty"></div><div class="bayaran-empty"></div>'
-    }
-    ${bayaranLines.length < 2 ? '<div class="bayaran-empty"></div>' : ''}
-  </div>
-
-  <table class="ringgit-section" style="width:auto;">
+    <tr><td colspan="2" style="padding-top:5mm"></td></tr>
     <tr>
-      <td class="ringgit-label">Ringgit :</td>
-      <td class="ringgit-value">${formattedTotal}</td>
+      <td class="field-label">
+        Untuk Bayaran :
+      </td>
+      <td style="border-bottom:1px solid #000; font-size:10.5pt; padding-bottom:2px; padding-left:3mm; vertical-align:top; line-height:1.6;">
+        ${bayaranLines.length ? bayaranLines.join('<br>') : '&nbsp;'}
+      </td>
     </tr>
   </table>
 
-  <div class="issued-section">
-    <div class="label">Dikeluarkan :</div>
-    <div class="sig-line">(Tandatangan / Cop Syarikat)</div>
-  </div>
+  <table style="width:100%; border-collapse:collapse; margin-top:10mm;">
+    <tr>
+      <td style="vertical-align:bottom; width:50%;">
+        <div style="font-size:10.5pt; padding-bottom:3mm">Ringgit :</div>
+        <div style="font-size:11pt; font-weight:bold;">${formattedTotal}</div>
+      </td>
+      <td style="vertical-align:bottom; text-align:center; width:10%;">
+        ${(issuedBy || company?.manager) ? `<div style="font-size:10.5pt; margin-bottom:15mm;">Dikeluarkan :</div>` : ''}
+        <div style="border-top:1px solid #000; padding-top:2mm; min-width:50mm; display:inline-block; text-align:center;">
+          ${(issuedBy || company?.manager)
+            ? `<span style="font-style:italic; font-weight:bold; font-size:10.5pt;">${issuedBy || company?.manager}</span>`
+            : `<span style="font-size:8pt; color:#999;">(Tandatangan / Cop Syarikat)</span>`
+          }
+        </div>
+      </td>
+    </tr>
+  </table>
 
 </div>
 </body>
