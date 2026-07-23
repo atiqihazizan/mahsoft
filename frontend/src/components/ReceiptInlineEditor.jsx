@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DescriptionField } from './FormFields'
 import CurrencyFormat from './CurrencyFormat'
@@ -103,7 +103,6 @@ const ReceiptInlineEditor = ({ id }) => {
   const [amountEditValue, setAmountEditValue] = useState('')
   const [editingTotal, setEditingTotal] = useState(false)
   const [totalEditValue, setTotalEditValue] = useState('')
-  const [editingNotes, setEditingNotes] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [editingDocNo, setEditingDocNo] = useState(false)
   const [editingDiscount, setEditingDiscount] = useState(false)
@@ -209,6 +208,18 @@ const ReceiptInlineEditor = ({ id }) => {
 
   const markDirty = useCallback(() => setIsDirty(true), [])
 
+  const descFieldRef = useRef(null)
+
+  useEffect(() => {
+    if (activeRowIdx !== null && descFieldRef.current) {
+      const textarea = descFieldRef.current.querySelector('textarea')
+      if (textarea) {
+        textarea.focus()
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length)
+      }
+    }
+  }, [activeRowIdx])
+
   const handleQtyChange = (index, value) => {
     const qty = Math.max(0, parseInt(value) || 0)
     setItems(prev => prev.map((item, i) =>
@@ -237,11 +248,6 @@ const ReceiptInlineEditor = ({ id }) => {
     setItems(prev => prev.map((item, i) =>
       i === index ? { ...item, description: value } : item
     ))
-    markDirty()
-  }
-
-  const handleNotesChange = (value) => {
-    setNotes(value)
     markDirty()
   }
 
@@ -435,9 +441,9 @@ const ReceiptInlineEditor = ({ id }) => {
                   <img src={logoUrl} alt="Logo" className="h-16 w-auto object-contain" onError={(e) => { e.target.style.display = 'none' }} />
                 </div>
                 <div className="flex-1 text-center">
-                  <h1 className="text-lg font-bold tracking-wide text-gray-900">
+                  <h1 className="text-lg font-bold tracking-wide text-gray-900" style={{ fontFamily: "'Audiowide', cursive" }}>
                     {company?.name || '-'}
-                    {company?.registration && <span className="text-xs font-normal text-gray-600 pl-1">{company.registration}</span>}
+                    {company?.registration && <span className="text-xs font-normal text-gray-600 pl-1" style={{fontFamily:"arial"}}>{company.registration}</span>}
                   </h1>
                   {/* {company?.registration && <p className="text-xs text-gray-600">{company.registration}</p>} */}
                   {company?.address && (
@@ -456,15 +462,15 @@ const ReceiptInlineEditor = ({ id }) => {
               </div>
 
               <hr className="border-gray-700 mb-4" />
-              <h2 className="text-center text-base font-bold tracking-widest underline underline-offset-4 mb-5">RESIT</h2>
+              <h2 className="text-center text-base font-bold underline underline-offset-4 mb-5" style={{ fontFamily: "'Audiowide', cursive", letterSpacing: '0.2em' }}>RESIT</h2>
 
               {/* No + Tarikh */}
               <table className="w-full border-collapse mb-5">
                 <tbody>
                   <tr>
-                    <td className="w-[55%]" />
+                    <td className="w-[75%]" />
                     <td className="text-right text-sm whitespace-nowrap align-bottom pr-2">No :</td>
-                    <td className="border-b border-black text-sm px-2 min-w-[120px]">
+                    <td className="border-b border-black text-sm px-2 min-w-[120px] text-center">
                       {isCreateMode ? (
                         <span className="text-gray-400 italic">(auto)</span>
                       ) : editingDocNo ? (
@@ -486,7 +492,7 @@ const ReceiptInlineEditor = ({ id }) => {
                   <tr>
                     <td />
                     <td className="text-right text-sm whitespace-nowrap align-bottom pr-2">Tarikh :</td>
-                    <td className="border-b border-black text-sm px-2">
+                    <td className="border-b border-black text-sm px-2 text-center">
                       {editingDate ? (
                         <input
                           type="date"
@@ -507,7 +513,7 @@ const ReceiptInlineEditor = ({ id }) => {
               </table>
 
               {/* Diterima Dari */}
-              <div className="mb-4">
+              <div className="mb-4 relative ">
                 <p className="text-sm whitespace-nowrap">
                   <span className="inline-block w-[130px]">Diterima Dari :</span>
                   {editingCustomer ? (
@@ -523,7 +529,7 @@ const ReceiptInlineEditor = ({ id }) => {
                       ))}
                     </select>
                   ) : (
-                    <span className="inline-block border-b border-black min-w-[200px] cursor-pointer hover:text-green-700" onClick={() => setEditingCustomer(true)}>
+                    <span className="inline-block border-b border-black w-[calc(100%-130px)] cursor-pointer hover:text-green-700" onClick={() => setEditingCustomer(true)}>
                       {doc?.customer?.name || '-'}
                     </span>
                   )}
@@ -534,67 +540,67 @@ const ReceiptInlineEditor = ({ id }) => {
               <div className="mb-4">
                 <p className="text-sm whitespace-nowrap">
                   <span className="inline-block w-[130px]">Wang Yang Diterima :</span>
-                  <span className="inline-block border-b border-black min-w-[200px] leading-relaxed">{numberToMalay(total)}</span>
+                  <span className="inline-block border-b border-black w-[calc(100%-130px)] leading-relaxed">{numberToMalay(total)}</span>
                 </p>
               </div>
 
-              <table className="w-full border-collapse mb-2">
-                <tbody>
-                  {items.map((item, index) => {
-                    const isFirst = index === 0
-                    const isSection = item.variant === 'section'
-                    const isActive = activeRowIdx === index
-                    return (
-                      <tr key={item.id || index}
-                        className={`group ${isActive ? 'bg-green-50' : 'hover:bg-gray-50'} ${isSection ? 'bg-gray-50' : ''} cursor-pointer`}
-                        onClick={() => {
-                          if (!isSection) setActiveRowIdx(isActive ? null : index)
-                          if (!isActive) { setQtyEditValue(String(item.quantity)); setPriceEditValue(String(item.unitPrice)); setAmountEditValue(String(item.amount || item.unitPrice || '')) }
-                        }}
-                      >
-                        <td className="py-1 align-top border-b border-black text-sm">
-                          <div className="flex items-start gap-1">
-                            {isFirst && (
-                              <span className="whitespace-nowrap text-sm mr-1">
-                                Untuk Bayaran :
-                              </span>
-                            )}
-                            <div className="flex-1">
-                              {isSection ? (
-                                <span className="font-bold" dangerouslySetInnerHTML={{ __html: renderMarkdown(item.description) || 'Section' }} />
-                              ) : isActive ? (
-                                <div onClick={(e) => e.stopPropagation()}>
-                                  <DescriptionField
-                                    value={item.description}
-                                    onChange={(e) => { handleDescriptionChange(index, e.target.value); markDirty() }}
-                                    minHeight={60}
-                                    placeholder="Description..."
-                                  />
-                                </div>
-                              ) : item.description ? (
-                                <span onClick={() => setActiveRowIdx(index)} className="hover:text-green-700" dangerouslySetInnerHTML={{ __html: renderMarkdown(item.description) }} />
-                              ) : (
-                                <span className="text-gray-400 italic" onClick={() => setActiveRowIdx(index)}>Click to edit</span>
-                              )}
+              <div className="mb-3 text-sm">
+                <div className="flex items-baseline gap-0">
+                  <span className="whitespace-nowrap flex-shrink-0 w-[126px]">Untuk Bayaran :</span>
+                  <div className="flex-1 border-b border-black ml-1 min-h-[1.4rem]"
+                    onClick={() => activeRowIdx === null && setActiveRowIdx(0)}>
+                    {items.map((item, index) => {
+                      const isActive = activeRowIdx === index
+                      return (
+                        <div key={item.id || index}
+                          className={index > 0 ? 'border-t-0 mt-0.5' : ''}
+                        >
+                          {isActive ? (
+                            // <textarea
+                            //   value={item.description}
+                            //   onChange={(e) => { handleDescriptionChange(index, e.target.value); markDirty() }}
+                            //   onClick={(e) => e.stopPropagation()}
+                            //   onBlur={() => setActiveRowIdx(null)}
+                            //   className="w-full text-sm border-0 outline-none resize-none bg-transparent p-0"
+                            //   rows={2}
+                            //   autoFocus
+                            //   placeholder="Klik untuk edit..."
+                            // />
+                            <div
+                              ref={descFieldRef}
+                              onClick={(e) => e.stopPropagation()}
+                              onBlur={(e) => {
+                                if (!e.currentTarget.contains(e.relatedTarget)) {
+                                  setActiveRowIdx(null)
+                                }
+                              }}
+                              tabIndex={-1}
+                            >
+                              <DescriptionField
+                                value={item.description}
+                                onChange={(e) => { handleDescriptionChange(index, e.target.value); markDirty() }}
+                                minHeight={60}
+                                placeholder="Description..."
+                              />
                             </div>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDeleteItem(index) }}
-                              disabled={items.length <= 1}
-                              className={`text-sm leading-none transition-opacity mt-1 ${
-                                items.length <= 1
-                                  ? 'opacity-20 cursor-not-allowed'
-                                  : 'opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600'
-                              }`}
-                              title={items.length <= 1 ? 'Cannot delete last item' : 'Delete item'}
-                            >×</button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                          ) : (
+                            <div
+                              onClick={(e) => { e.stopPropagation(); setActiveRowIdx(index) }}
+                              className="cursor-pointer hover:text-green-700 leading-relaxed"
+                              dangerouslySetInnerHTML={{
+                                __html: renderMarkdown(item.description) ||
+                                '<span class="text-gray-400 italic text-xs">Klik untuk edit</span>'
+                              }}
+                            />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
 
+              {/*
               <div className="flex gap-2 mt-2 mb-4">
                 <button onClick={handleAddItem} className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -605,6 +611,7 @@ const ReceiptInlineEditor = ({ id }) => {
                   Add Section
                 </button>
               </div>
+              */}
 
               {/* FOOTER */}
               <div className="flex justify-between items-end mt-10">
@@ -821,21 +828,6 @@ const ReceiptInlineEditor = ({ id }) => {
         </div>
       </div>
 
-      {/* NOTES BAR */}
-      <div className="h-12 bg-white border-t border-gray-200 flex items-center px-6">
-        <div className="flex items-center gap-4 text-xs text-gray-500 flex-1">
-          {editingNotes ? (
-            <div className="flex items-center gap-2 flex-1" data-color-mode="light">
-              <DescriptionField value={notes} onChange={(e) => handleNotesChange(e.target.value)} minHeight={60} placeholder="Click to add notes..." />
-              <button onClick={() => setEditingNotes(false)} className="px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 transition-colors whitespace-nowrap">Done</button>
-            </div>
-          ) : (
-            <div className="cursor-pointer hover:text-green-700 flex-1" onClick={() => setEditingNotes(true)}>
-              {notes ? <span dangerouslySetInnerHTML={{ __html: renderMarkdown(notes) }} /> : <span className="text-gray-400 italic">Click to add notes...</span>}
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
