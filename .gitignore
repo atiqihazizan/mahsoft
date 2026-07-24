@@ -69,4 +69,3 @@ storage/app/public/receipts/
 
 # Prisma
 .bak
-prisma/migrations/
