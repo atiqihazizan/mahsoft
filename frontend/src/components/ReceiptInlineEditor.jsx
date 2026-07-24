@@ -303,6 +303,17 @@ const ReceiptInlineEditor = ({ id }) => {
     markDirty()
   }
 
+  const handleStatusChange = async (newStatus) => {
+    const labels = { ISSUED: 'issued', CANCELLED: 'cancelled' }
+    if (!window.confirm(`Mark receipt as ${labels[newStatus]}?`)) return
+    try {
+      const res = await receiptsAPI.update(id, { status: newStatus })
+      if (res?.success) setDoc(d => ({ ...d, status: newStatus }))
+    } catch (err) {
+      alert('Failed to update status')
+    }
+  }
+
   const handleSave = async () => {
     if (isCreateMode && !selectedCustomerId) {
       alert('Please select a customer')
@@ -822,6 +833,18 @@ const ReceiptInlineEditor = ({ id }) => {
                   ) : (
                     <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>View PDF</>
                   )}
+                </button>
+              )}
+              {!isCreateMode && doc?.status === 'DRAFT' && (
+                <button onClick={() => handleStatusChange('ISSUED')} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Issue Receipt
+                </button>
+              )}
+              {!isCreateMode && doc?.status !== 'CANCELLED' && (
+                <button onClick={() => handleStatusChange('CANCELLED')} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-lg border border-red-200 hover:bg-red-100 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  Cancel Receipt
                 </button>
               )}
             </div>
