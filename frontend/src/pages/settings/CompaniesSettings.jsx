@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { companiesAPI } from '../../utils/apiClient'
 import SettingsTable from '../../components/SettingsTable'
 import SettingsDialog from '../../components/SettingsDialog'
@@ -6,6 +6,8 @@ import SettingsDialog from '../../components/SettingsDialog'
 const CompaniesSettings = () => {
   const [companies, setCompanies] = useState([])
   const [loading, setLoading] = useState(true)
+  const [logoUploading, setLogoUploading] = useState(null)
+  const fileInputRefs = useRef({})
 
   const [showDialog, setShowDialog] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
@@ -99,6 +101,31 @@ const CompaniesSettings = () => {
         console.error('Error deleting company:', error)
         alert('Error deleting company. Please try again.')
       }
+    }
+  }
+
+  const handleLogoUpload = async (companyId, file) => {
+    if (!file) return
+    setLogoUploading(companyId)
+    try {
+      const res = await companiesAPI.uploadLogo(companyId, file)
+      if (res?.success) fetchCompanies()
+      else alert(res?.message || 'Gagal muat naik logo')
+    } catch {
+      alert('Ralat memuat naik logo')
+    } finally {
+      setLogoUploading(null)
+    }
+  }
+
+  const handleLogoDelete = async (companyId) => {
+    if (!confirm('Padam logo syarikat ini?')) return
+    try {
+      const res = await companiesAPI.deleteLogo(companyId)
+      if (res?.success) fetchCompanies()
+      else alert(res?.message || 'Gagal padam logo')
+    } catch {
+      alert('Ralat memadam logo')
     }
   }
 
@@ -375,6 +402,39 @@ const CompaniesSettings = () => {
 
   // Define table columns
   const columns = [
+    {
+      key: 'logo',
+      header: 'Logo',
+      render: (company) => (
+        <div className="flex flex-col items-center gap-1">
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            ref={el => { fileInputRefs.current[company.id] = el }}
+            onChange={e => handleLogoUpload(company.id, e.target.files[0])}
+          />
+          {company.logo
+            ? <img src={`/uploads/${company.logo}`} alt="logo" className="h-10 w-auto object-contain rounded border border-gray-200" />
+            : <div className="h-10 w-14 bg-gray-100 rounded border border-dashed border-gray-300 flex items-center justify-center text-xs text-gray-400">no logo</div>
+          }
+          <div className="flex gap-1">
+            <button
+              onClick={() => fileInputRefs.current[company.id]?.click()}
+              disabled={logoUploading === company.id}
+              className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+            >
+              {logoUploading === company.id ? '...' : company.logo ? 'Tukar' : 'Upload'}
+            </button>
+            {company.logo && (
+              <button onClick={() => handleLogoDelete(company.id)} className="text-xs text-red-500 hover:underline">
+                Padam
+              </button>
+            )}
+          </div>
+        </div>
+      )
+    },
     {
       key: 'company',
       header: 'Company',

@@ -255,6 +255,22 @@ export const companiesAPI = {
 
   delete: async (id) => {
     return apiClient.delete(`/api/v1/companies/${id}`)
+  },
+
+  uploadLogo: async (id, file) => {
+    const form = new FormData()
+    form.append('logo', file)
+    const token = apiClient.defaultHeaders['Authorization']
+    const res = await fetch(`/api/v1/companies/${id}/logo`, {
+      method: 'POST',
+      headers: token ? { Authorization: token } : {},
+      body: form
+    })
+    return res.json()
+  },
+
+  deleteLogo: async (id) => {
+    return apiClient.delete(`/api/v1/companies/${id}/logo`)
   }
 }
 

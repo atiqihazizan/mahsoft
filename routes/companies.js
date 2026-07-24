@@ -1,9 +1,31 @@
 const express = require('express');
 const { body, param, query } = require('express-validator');
 const router = express.Router();
+const path = require('path')
+const fs = require('fs')
+const multer = require('multer')
 const prisma = require('../utils/prisma');
 const { success, error, notFound, badRequest, conflict } = require('../utils/response');
 const { handleValidationErrors } = require('../middleware/validation');
+
+const UPLOADS_DIR = path.join(__dirname, '..', 'public', 'uploads')
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true })
+
+const logoStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.png'
+    cb(null, `logo-${req.params.id}${ext}`)
+  }
+})
+const uploadLogo = multer({
+  storage: logoStorage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (/^image\/(jpeg|png|gif|webp|svg\+xml)$/.test(file.mimetype)) cb(null, true)
+    else cb(new Error('Hanya fail imej dibenarkan'))
+  }
+})
 
 // Validation rules
 const createCompanyValidation = [
@@ -487,5 +509,52 @@ router.get('/prefixes/total', async (req, res) => {
     error(res, 'Ralat mengambil total prefix company');
   }
 });
+
+// POST /api/v1/companies/:id/logo - Upload logo syarikat
+router.post('/:id/logo', uploadLogo.single('logo'), async (req, res) => {
+  try {
+    const { id } = req.params
+    if (!req.file) return badRequest(res, 'Fail imej diperlukan')
+
+    const existing = await prisma.company.findUnique({ where: { id } })
+    if (!existing) return notFound(res, 'Syarikat tidak dijumpai')
+
+    // Delete old logo file if different filename
+    if (existing.logo && existing.logo !== req.file.filename) {
+      const oldPath = path.join(UPLOADS_DIR, existing.logo)
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath)
+    }
+
+    const company = await prisma.company.update({
+      where: { id },
+      data: { logo: req.file.filename }
+    })
+
+    success(res, { logo: company.logo }, 'Logo berjaya dimuat naik')
+  } catch (err) {
+    console.error('Error uploading logo:', err)
+    error(res, 'Ralat memuat naik logo')
+  }
+})
+
+// DELETE /api/v1/companies/:id/logo - Padam logo syarikat
+router.delete('/:id/logo', async (req, res) => {
+  try {
+    const { id } = req.params
+    const existing = await prisma.company.findUnique({ where: { id } })
+    if (!existing) return notFound(res, 'Syarikat tidak dijumpai')
+
+    if (existing.logo) {
+      const logoPath = path.join(UPLOADS_DIR, existing.logo)
+      if (fs.existsSync(logoPath)) fs.unlinkSync(logoPath)
+    }
+
+    await prisma.company.update({ where: { id }, data: { logo: null } })
+    success(res, null, 'Logo berjaya dipadam')
+  } catch (err) {
+    console.error('Error deleting logo:', err)
+    error(res, 'Ralat memadam logo')
+  }
+})
 
 module.exports = router;
