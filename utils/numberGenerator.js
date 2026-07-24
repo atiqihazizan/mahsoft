@@ -16,18 +16,12 @@ function formatPrefixWithYear(prefix, currentYear) {
 
 function buildNumber(prefix, seq, currentYear) {
   const formattedPrefix = formatPrefixWithYear(prefix, currentYear);
-  
+
   if (!formattedPrefix) {
     return seq.toString().padStart(4, '0');
   }
-  
-  const hasYearCode = prefix.includes('[yyyy]') || prefix.includes('[yy]') || prefix.includes('[year]');
-  
-  if (hasYearCode) {
-    return `${formattedPrefix}${seq.toString().padStart(4, '0')}`;
-  } else {
-    return `${formattedPrefix}${currentYear}${seq.toString().padStart(4, '0')}`;
-  }
+
+  return `${formattedPrefix}${seq.toString().padStart(4, '0')}`;
 }
 
 async function generateSequenceNumber(companyId, field) {

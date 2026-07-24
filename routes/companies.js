@@ -449,15 +449,11 @@ router.get('/prefixes/total', async (req, res) => {
     const prefixTotals = companies.map(company => {
       const formatPrefix = (prefix, seq) => {
         if (!prefix) return `${seq + 1}`;
-        const hasYearCode = prefix.includes('[yyyy]') || prefix.includes('[yy]') || prefix.includes('[year]');
-        if (hasYearCode) {
-          const formattedPrefix = prefix
-            .replace('[yyyy]', currentYear.toString())
-            .replace('[yy]', currentYear.toString().slice(-2))
-            .replace('[year]', currentYear.toString());
-          return `${formattedPrefix}${(seq + 1).toString().padStart(4, '0')}`;
-        }
-        return `${prefix}${currentYear}${(seq + 1).toString().padStart(4, '0')}`;
+        const formattedPrefix = prefix
+          .replace('[yyyy]', currentYear.toString())
+          .replace('[yy]', currentYear.toString().slice(-2))
+          .replace('[year]', currentYear.toString());
+        return `${formattedPrefix}${(seq + 1).toString().padStart(4, '0')}`;
       };
 
       return {
