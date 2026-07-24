@@ -10,6 +10,7 @@ const Receipt = () => {
   const navigate = useNavigate()
   const [receipts, setReceipts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState({})
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('active') // Default kepada active
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
@@ -104,7 +105,18 @@ const Receipt = () => {
     return icons[method] || '💰'
   }
 
-  // Debug logging removed for production
+  const handleIssue = async (row) => {
+    if (!window.confirm(`Issue receipt ${row.receiptNumber}?`)) return
+    setActionLoading(prev => ({ ...prev, [row.id]: true }))
+    try {
+      const res = await receiptsAPI.update(row.id, { status: 'ISSUED' })
+      if (res?.success) fetchReceipts()
+    } catch (err) {
+      alert('Failed to issue receipt')
+    } finally {
+      setActionLoading(prev => ({ ...prev, [row.id]: false }))
+    }
+  }
 
   // Table columns configuration
   const columns = [
@@ -132,11 +144,13 @@ const Receipt = () => {
       cellClassName: 'text-right font-bold',
       render: (value) => <CurrencyFormat amount={value} />
     },
-    // {
-    //   key: 'status',
-    //   header: 'Status',
-    //   render: (value) => <StatusBadge status={value} />
-    // },
+    {
+      key: 'status',
+      header: 'Status',
+      headerClassName: 'text-center',
+      cellClassName: 'text-center',
+      render: (value) => <StatusBadge status={value} />
+    },
     {
       key: 'date',
       header: 'Date',
@@ -176,6 +190,8 @@ const Receipt = () => {
         data={filteredReceipts}
         columns={columns}
         loading={loading}
+        actionLoading={actionLoading}
+        onIssue={filterStatus === 'active' ? handleIssue : null}
         onView={(row) => navigate(`/receipts/${row.id}`)}
         onDuplicate={(row) => {
           const duplicateData = { ...row }

@@ -15,6 +15,7 @@ const DataTable = ({
   onReject = null,
   onDummy = null,
   onIssueReceipt = null,
+  onIssue = null,
   actionLoading = {},
   loading = false,
   getButtonState = null, // Function to determine button state
@@ -49,7 +50,7 @@ const DataTable = ({
   }
 
   // Determine availability of action columns (each column auto-hide jika tiada handler)
-  const hasQuickActions = Boolean(onPaid || onAccept || onReject || onDummy || onIssueReceipt)
+  const hasQuickActions = Boolean(onPaid || onAccept || onReject || onDummy || onIssueReceipt || onIssue)
   const hasStandardActions = Boolean(onView || onEdit || onDelete || onDuplicate || onPreview)
 
   return (
@@ -173,6 +174,22 @@ const DataTable = ({
                         )}
                       </>
                     )}
+                        {onIssue && row.status === 'draft' && (
+                          <Tooltip content="Issue this receipt" position="top" delay={300} offset={{ x: -10, y: 0 }}>
+                            <button
+                              type="button"
+                              onClick={() => onIssue(row)}
+                              disabled={actionLoading[row.id]}
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                                actionLoading[row.id]
+                                  ? 'border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50'
+                                  : 'border-purple-500 text-purple-600 hover:bg-purple-50'
+                              }`}
+                            >
+                              {actionLoading[row.id] ? '...' : 'Issue'}
+                            </button>
+                          </Tooltip>
+                        )}
                     {onIssueReceipt && row.status === 'paid' && !row.hasReceipt && (
                       <Tooltip content="Issue Receipt for this invoice" position="top" delay={300} offset={{ x: -10, y: 0 }}>
                         <button
